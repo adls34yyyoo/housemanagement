@@ -14,7 +14,8 @@ import {
   TeamOutlined,
   ShareAltOutlined,
   BarChartOutlined,
-  DeleteRowOutlined
+  DeleteRowOutlined,
+  CustomerServiceOutlined
 } from '@ant-design/icons';
 import { createClient } from '@supabase/supabase-js';
 
@@ -34,20 +35,27 @@ function App() {
   const [password, setPassword] = useState('');
   const [properties, setProperties] = useState([]);
   const [communities, setCommunities] = useState([]);
+  const [customers, setCustomers] = useState([]);
   const [recycledProperties, setRecycledProperties] = useState([]);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [communityDrawerVisible, setCommunityDrawerVisible] = useState(false);
+  const [customerDrawerVisible, setCustomerDrawerVisible] = useState(false);
   const [mobileMenuVisible, setMobileMenuVisible] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [selectedCommunity, setSelectedCommunity] = useState(null);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [communityModalVisible, setCommunityModalVisible] = useState(false);
+  const [customerModalVisible, setCustomerModalVisible] = useState(false);
   const [form] = Form.useForm();
   const [communityForm] = Form.useForm();
+  const [customerForm] = Form.useForm();
   const [searchText, setSearchText] = useState('');
   const [filteredProperties, setFilteredProperties] = useState([]);
   const [filteredCommunities, setFilteredCommunities] = useState([]);
+  const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [communitySearchText, setCommunitySearchText] = useState('');
+  const [customerSearchText, setCustomerSearchText] = useState('');
 
   // 登录处理
   const handleLogin = async () => {
@@ -72,6 +80,7 @@ function App() {
     if (isLoggedIn) {
       fetchProperties();
       fetchCommunities();
+      fetchCustomers();
       fetchRecycledProperties();
     }
   }, [isLoggedIn]);
@@ -88,6 +97,20 @@ function App() {
       setFilteredCommunities(communities);
     }
   }, [communitySearchText, communities]);
+
+  // 搜索客户
+  useEffect(() => {
+    if (customerSearchText) {
+      const filtered = customers.filter(customer => 
+        customer.name.toLowerCase().includes(customerSearchText.toLowerCase()) ||
+        customer.phone.toLowerCase().includes(customerSearchText.toLowerCase()) ||
+        customer.email.toLowerCase().includes(customerSearchText.toLowerCase())
+      );
+      setFilteredCustomers(filtered);
+    } else {
+      setFilteredCustomers(customers);
+    }
+  }, [customerSearchText, customers]);
 
   const fetchProperties = async () => {
     try {
@@ -435,6 +458,161 @@ function App() {
     }
   };
 
+  // 获取客户数据
+  const fetchCustomers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('customers')
+        .select('*');
+      
+      if (error) {
+        console.error('获取客户数据失败:', error);
+        message.error('获取客户数据失败，使用本地数据');
+        // 使用本地模拟数据
+        const mockData = [
+          {
+            id: 1,
+            name: '张三',
+            phone: '13800138000',
+            email: 'zhangsan@example.com',
+            address: '北京市朝阳区',
+           需求: '两居室，交通便利',
+            status: 'active'
+          },
+          {
+            id: 2,
+            name: '李四',
+            phone: '13900139000',
+            email: 'lisi@example.com',
+            address: '上海市浦东新区',
+           需求: '三居室，带车位',
+            status: 'inactive'
+          }
+        ];
+        setCustomers(mockData);
+        setFilteredCustomers(mockData);
+      } else {
+        setCustomers(data || []);
+        setFilteredCustomers(data || []);
+      }
+    } catch (error) {
+      console.error('获取客户数据异常:', error);
+      message.error('获取客户数据异常，使用本地数据');
+      // 使用本地模拟数据
+      const mockData = [
+        {
+          id: 1,
+          name: '张三',
+          phone: '13800138000',
+          email: 'zhangsan@example.com',
+          address: '北京市朝阳区',
+          需求: '两居室，交通便利',
+          status: 'active'
+        },
+        {
+          id: 2,
+          name: '李四',
+          phone: '13900139000',
+          email: 'lisi@example.com',
+          address: '上海市浦东新区',
+          需求: '三居室，带车位',
+          status: 'inactive'
+        }
+      ];
+      setCustomers(mockData);
+      setFilteredCustomers(mockData);
+    }
+  };
+
+  // 添加客户
+  const handleAddCustomer = async (values) => {
+    try {
+      const { data, error } = await supabase
+        .from('customers')
+        .insert({
+          name: values.name,
+          phone: values.phone,
+          email: values.email,
+          address: values.address,
+          需求: values.需求,
+          status: values.status
+        })
+        .select();
+      
+      if (error) {
+        console.error('添加客户失败:', error);
+        message.error('添加客户失败');
+      } else {
+        message.success('添加客户成功');
+        setCustomerDrawerVisible(false);
+        customerForm.resetFields();
+        fetchCustomers();
+      }
+    } catch (error) {
+      console.error('添加客户异常:', error);
+      message.error('添加客户异常');
+    }
+  };
+
+  // 更新客户
+  const handleUpdateCustomer = async (values) => {
+    try {
+      const { data, error } = await supabase
+        .from('customers')
+        .update({
+          name: values.name,
+          phone: values.phone,
+          email: values.email,
+          address: values.address,
+          需求: values.需求,
+          status: values.status
+        })
+        .eq('id', selectedCustomer.id)
+        .select();
+      
+      if (error) {
+        console.error('更新客户失败:', error);
+        message.error('更新客户失败');
+      } else {
+        message.success('更新客户成功');
+        setCustomerModalVisible(false);
+        customerForm.resetFields();
+        fetchCustomers();
+      }
+    } catch (error) {
+      console.error('更新客户异常:', error);
+      message.error('更新客户异常');
+    }
+  };
+
+  // 删除客户
+  const handleDeleteCustomer = async (id) => {
+    try {
+      const { error } = await supabase
+        .from('customers')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        console.error('删除客户失败:', error);
+        message.error('删除客户失败');
+      } else {
+        message.success('删除客户成功');
+        fetchCustomers();
+      }
+    } catch (error) {
+      console.error('删除客户异常:', error);
+      message.error('删除客户异常');
+    }
+  };
+
+  // 打开编辑客户模态框
+  const openEditCustomerModal = (customer) => {
+    setSelectedCustomer(customer);
+    customerForm.setFieldsValue(customer);
+    setCustomerModalVisible(true);
+  };
+
   // 搜索房源
   useEffect(() => {
     if (searchText) {
@@ -648,24 +826,30 @@ function App() {
                 },
                 {
                   key: '4',
+                  icon: <CustomerServiceOutlined />,
+                  label: '客户管理',
+                  path: '/customers'
+                },
+                {
+                  key: '5',
                   icon: <BarChartOutlined />,
                   label: '数据统计',
                   path: '/statistics'
                 },
                 {
-                  key: '5',
+                  key: '6',
                   icon: <DeleteRowOutlined />,
                   label: '回收站',
                   path: '/recycle'
                 },
                 {
-                  key: '6',
+                  key: '7',
                   icon: <UserOutlined />,
                   label: '个人中心',
                   path: '/profile'
                 },
                 {
-                  key: '7',
+                  key: '8',
                   icon: <LogoutOutlined />,
                   label: '退出登录',
                   onClick: handleLogout
@@ -1014,6 +1198,83 @@ function App() {
                     />
                   </div>
                 } />
+                <Route path="/customers" element={
+                  <div>
+                    <div style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center', 
+                      marginBottom: 24
+                    }}>
+                      <h2>客户管理</h2>
+                      <Button 
+                        type="primary" 
+                        icon={<PlusOutlined />}
+                        onClick={() => setCustomerDrawerVisible(true)}
+                      >
+                        添加客户
+                      </Button>
+                    </div>
+                    <div style={{ marginBottom: 16, display: 'flex', gap: 16 }}>
+                      <Input
+                        placeholder="搜索客户..."
+                        prefix={<SearchOutlined />}
+                        value={customerSearchText}
+                        onChange={(e) => setCustomerSearchText(e.target.value)}
+                        style={{ width: 300 }}
+                      />
+                    </div>
+                    <List
+                      itemLayout="horizontal"
+                      dataSource={filteredCustomers}
+                      renderItem={customer => (
+                        <List.Item
+                          actions={[
+                            <Button 
+                              key="edit" 
+                              type="text" 
+                              icon={<EditOutlined />}
+                              onClick={() => openEditCustomerModal(customer)}
+                            >
+                              编辑
+                            </Button>,
+                            <Button 
+                              key="delete" 
+                              type="text" 
+                              danger 
+                              icon={<DeleteOutlined />}
+                              onClick={() => handleDeleteCustomer(customer.id)}
+                            >
+                              删除
+                            </Button>
+                          ]}
+                        >
+                          <List.Item.Meta
+                            avatar={<Avatar style={{ backgroundColor: '#1890ff' }}>{customer.name.charAt(0)}</Avatar>}
+                            title={
+                              <div>
+                                <span>{customer.name}</span>
+                                <Badge 
+                                  status={customer.status === 'active' ? 'success' : 'default'} 
+                                  text={customer.status === 'active' ? '活跃' : '非活跃'} 
+                                  style={{ marginLeft: 8 }}
+                                />
+                              </div>
+                            }
+                            description={
+                              <div>
+                                <p>电话: {customer.phone}</p>
+                                <p>邮箱: {customer.email}</p>
+                                <p>地址: {customer.address}</p>
+                                <p>需求: {customer.需求}</p>
+                              </div>
+                            }
+                          />
+                        </List.Item>
+                      )}
+                    />
+                  </div>
+                } />
                 <Route path="/statistics" element={
                   <div>
                     <h2>数据统计</h2>
@@ -1200,6 +1461,15 @@ function App() {
                 },
                 {
                   key: '4',
+                  icon: <CustomerServiceOutlined />,
+                  label: '客户管理',
+                  onClick: () => {
+                    window.location.href = '/customers';
+                    setMobileMenuVisible(false);
+                  }
+                },
+                {
+                  key: '5',
                   icon: <BarChartOutlined />,
                   label: '数据统计',
                   onClick: () => {
@@ -1208,7 +1478,7 @@ function App() {
                   }
                 },
                 {
-                  key: '5',
+                  key: '6',
                   icon: <DeleteRowOutlined />,
                   label: '回收站',
                   onClick: () => {
@@ -1217,7 +1487,7 @@ function App() {
                   }
                 },
                 {
-                  key: '6',
+                  key: '7',
                   icon: <UserOutlined />,
                   label: '个人中心',
                   onClick: () => {
@@ -1226,7 +1496,7 @@ function App() {
                   }
                 },
                 {
-                  key: '7',
+                  key: '8',
                   icon: <LogoutOutlined />,
                   label: '退出登录',
                   onClick: () => {
@@ -1522,6 +1792,141 @@ function App() {
                   提交
                 </Button>
                 <Button onClick={() => setCommunityModalVisible(false)}>
+                  取消
+                </Button>
+              </Form.Item>
+            </Form>
+          </Modal>
+
+          {/* 添加客户抽屉 */}
+          <Drawer
+            title="添加客户"
+            placement="right"
+            onClose={() => setCustomerDrawerVisible(false)}
+            open={customerDrawerVisible}
+            width={500}
+          >
+            <Form
+              form={customerForm}
+              layout="vertical"
+              onFinish={handleAddCustomer}
+            >
+              <Form.Item
+                label="姓名"
+                name="name"
+                rules={[{ required: true, message: '请输入客户姓名' }]}
+              >
+                <Input placeholder="请输入客户姓名" />
+              </Form.Item>
+              <Form.Item
+                label="电话"
+                name="phone"
+                rules={[{ required: true, message: '请输入客户电话' }]}
+              >
+                <Input placeholder="请输入客户电话" />
+              </Form.Item>
+              <Form.Item
+                label="邮箱"
+                name="email"
+                rules={[{ required: true, message: '请输入客户邮箱' }]}
+              >
+                <Input placeholder="请输入客户邮箱" />
+              </Form.Item>
+              <Form.Item
+                label="地址"
+                name="address"
+                rules={[{ required: true, message: '请输入客户地址' }]}
+              >
+                <Input placeholder="请输入客户地址" />
+              </Form.Item>
+              <Form.Item
+                label="需求"
+                name="需求"
+              >
+                <Input.TextArea placeholder="请输入客户需求" />
+              </Form.Item>
+              <Form.Item
+                label="状态"
+                name="status"
+                rules={[{ required: true, message: '请选择客户状态' }]}
+              >
+                <Select placeholder="请选择客户状态">
+                  <Option value="active">活跃</Option>
+                  <Option value="inactive">非活跃</Option>
+                </Select>
+              </Form.Item>
+              <Form.Item>
+                <Button type="primary" htmlType="submit" style={{ marginRight: 8 }}>
+                  提交
+                </Button>
+                <Button onClick={() => setCustomerDrawerVisible(false)}>
+                  取消
+                </Button>
+              </Form.Item>
+            </Form>
+          </Drawer>
+
+          {/* 编辑客户模态框 */}
+          <Modal
+            title="编辑客户"
+            open={customerModalVisible}
+            onCancel={() => setCustomerModalVisible(false)}
+            footer={null}
+          >
+            <Form
+              form={customerForm}
+              layout="vertical"
+              onFinish={handleUpdateCustomer}
+            >
+              <Form.Item
+                label="姓名"
+                name="name"
+                rules={[{ required: true, message: '请输入客户姓名' }]}
+              >
+                <Input placeholder="请输入客户姓名" />
+              </Form.Item>
+              <Form.Item
+                label="电话"
+                name="phone"
+                rules={[{ required: true, message: '请输入客户电话' }]}
+              >
+                <Input placeholder="请输入客户电话" />
+              </Form.Item>
+              <Form.Item
+                label="邮箱"
+                name="email"
+                rules={[{ required: true, message: '请输入客户邮箱' }]}
+              >
+                <Input placeholder="请输入客户邮箱" />
+              </Form.Item>
+              <Form.Item
+                label="地址"
+                name="address"
+                rules={[{ required: true, message: '请输入客户地址' }]}
+              >
+                <Input placeholder="请输入客户地址" />
+              </Form.Item>
+              <Form.Item
+                label="需求"
+                name="需求"
+              >
+                <Input.TextArea placeholder="请输入客户需求" />
+              </Form.Item>
+              <Form.Item
+                label="状态"
+                name="status"
+                rules={[{ required: true, message: '请选择客户状态' }]}
+              >
+                <Select placeholder="请选择客户状态">
+                  <Option value="active">活跃</Option>
+                  <Option value="inactive">非活跃</Option>
+                </Select>
+              </Form.Item>
+              <Form.Item>
+                <Button type="primary" htmlType="submit" style={{ marginRight: 8 }}>
+                  提交
+                </Button>
+                <Button onClick={() => setCustomerModalVisible(false)}>
                   取消
                 </Button>
               </Form.Item>
