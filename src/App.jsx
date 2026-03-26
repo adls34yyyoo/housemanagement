@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { Layout, Menu, Button, Drawer, List, Card, Avatar, Badge, Input, Select, DatePicker, Modal, Form, message } from 'antd';
 import { 
   HomeOutlined, 
@@ -125,6 +125,7 @@ const { Option } = Select;
 const { RangePicker } = DatePicker;
 
 function App() {
+  const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -364,10 +365,6 @@ function App() {
     message.success('更新客户成功');
     setCustomerModalVisible(false);
     customerForm.resetFields();
-    } catch (error) {
-      console.error('更新客户异常:', error);
-      message.error('更新客户异常');
-    }
   };
 
   // 删除客户
@@ -595,7 +592,7 @@ function App() {
               ].filter(item => item.path ? true : true)}
               onClick={({ key, item }) => {
                 if (item.props.path) {
-                  window.location.href = item.props.path;
+                  navigate(item.props.path);
                 }
               }}
             />
@@ -1175,7 +1172,7 @@ function App() {
                   icon: <HomeOutlined />,
                   label: '首页',
                   onClick: () => {
-                    window.location.href = '/';
+                    navigate('/');
                     setMobileMenuVisible(false);
                   }
                 },
@@ -1184,7 +1181,7 @@ function App() {
                   icon: <ApartmentOutlined />,
                   label: '房源管理',
                   onClick: () => {
-                    window.location.href = '/properties';
+                    navigate('/properties');
                     setMobileMenuVisible(false);
                   }
                 },
@@ -1193,7 +1190,7 @@ function App() {
                   icon: <TeamOutlined />,
                   label: '小区管理',
                   onClick: () => {
-                    window.location.href = '/communities';
+                    navigate('/communities');
                     setMobileMenuVisible(false);
                   }
                 },
@@ -1202,7 +1199,7 @@ function App() {
                   icon: <CustomerServiceOutlined />,
                   label: '客户管理',
                   onClick: () => {
-                    window.location.href = '/customers';
+                    navigate('/customers');
                     setMobileMenuVisible(false);
                   }
                 },
@@ -1211,7 +1208,7 @@ function App() {
                   icon: <BarChartOutlined />,
                   label: '数据统计',
                   onClick: () => {
-                    window.location.href = '/statistics';
+                    navigate('/statistics');
                     setMobileMenuVisible(false);
                   }
                 },
@@ -1220,7 +1217,7 @@ function App() {
                   icon: <DeleteRowOutlined />,
                   label: '回收站',
                   onClick: () => {
-                    window.location.href = '/recycle';
+                    navigate('/recycle');
                     setMobileMenuVisible(false);
                   }
                 },
@@ -1229,7 +1226,7 @@ function App() {
                   icon: <UserOutlined />,
                   label: '个人中心',
                   onClick: () => {
-                    window.location.href = '/profile';
+                    navigate('/profile');
                     setMobileMenuVisible(false);
                   }
                 },
