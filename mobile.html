@@ -984,20 +984,33 @@
             const password = document.getElementById('password').value;
 
             if (username === 'admin' && password === 'admin123') {
+                // 显示加载状态
+                showToast('登录中...');
+                
                 currentUser = username;
                 document.getElementById('loginPage').style.display = 'none';
                 document.getElementById('appContainer').style.display = 'block';
                 document.getElementById('headerUser').textContent = username;
                 document.getElementById('profileUsername').textContent = username;
                 
-                // 从Supabase加载数据
-                await loadData();
-                
-                updateStats();
-                renderRecentProperties();
-                renderPropertyList();
-                renderCustomerList();
-                showToast('登录成功');
+                try {
+                    // 从Supabase加载数据
+                    await loadData();
+                    
+                    updateStats();
+                    renderRecentProperties();
+                    renderPropertyList();
+                    renderCustomerList();
+                    showToast('登录成功');
+                } catch (error) {
+                    console.error('登录过程出错:', error);
+                    showToast('登录成功，但数据加载失败');
+                    // 即使数据加载失败，也允许用户登录
+                    updateStats();
+                    renderRecentProperties();
+                    renderPropertyList();
+                    renderCustomerList();
+                }
             } else {
                 showToast('用户名或密码错误');
             }
@@ -1005,28 +1018,35 @@
 
         // 从Supabase加载数据
         async function loadData() {
-            // 加载房源数据
-            const { data: propertiesData, error: propertiesError } = await supabase
-                .from('properties')
-                .select('*');
-            
-            if (propertiesError) {
-                console.error('加载房源数据失败:', propertiesError);
+            try {
+                // 加载房源数据
+                const { data: propertiesData, error: propertiesError } = await supabase
+                    .from('properties')
+                    .select('*');
+                
+                if (propertiesError) {
+                    console.error('加载房源数据失败:', propertiesError);
+                    properties = [];
+                } else {
+                    properties = propertiesData || [];
+                }
+                
+                // 加载客户数据
+                const { data: customersData, error: customersError } = await supabase
+                    .from('customers')
+                    .select('*');
+                
+                if (customersError) {
+                    console.error('加载客户数据失败:', customersError);
+                    customers = [];
+                } else {
+                    customers = customersData || [];
+                }
+            } catch (error) {
+                console.error('Supabase连接错误:', error);
+                // 连接错误时使用空数据
                 properties = [];
-            } else {
-                properties = propertiesData || [];
-            }
-            
-            // 加载客户数据
-            const { data: customersData, error: customersError } = await supabase
-                .from('customers')
-                .select('*');
-            
-            if (customersError) {
-                console.error('加载客户数据失败:', customersError);
                 customers = [];
-            } else {
-                customers = customersData || [];
             }
             
             // 更新筛选后的数据
