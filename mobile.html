@@ -686,19 +686,19 @@
             </div>
             
             <div class="stats-section">
-                <div class="stat-card">
+                <div class="stat-card" onclick="switchPage('properties')">
                     <div class="stat-value" id="statTotal">0</div>
                     <div class="stat-label">总房源</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" onclick="switchPage('properties')">
                     <div class="stat-value" style="color: #52c41a;" id="statAvailable">0</div>
                     <div class="stat-label">可租</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" onclick="switchPage('properties')">
                     <div class="stat-value" style="color: #fa8c16;" id="statRented">0</div>
                     <div class="stat-label">已租</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" onclick="switchPage('customers')">
                     <div class="stat-value" style="color: #722ed1;" id="statCustomers">0</div>
                     <div class="stat-label">客户</div>
                 </div>
@@ -725,8 +725,50 @@
             </div>
             <div class="content-section">
                 <div class="action-buttons">
-                    <div class="action-button" onclick="openPropertyModal('sell')">新增卖房</div>
-                    <div class="action-button" onclick="openPropertyModal('rent')">新增租房</div>
+                    <div class="action-button" onclick="openPropertyModal('sell')" style="font-weight: bold; font-size: 15px;">新增卖房</div>
+                    <div class="action-button" onclick="openPropertyModal('rent')" style="font-weight: bold; font-size: 15px;">新增租房</div>
+                </div>
+                <!-- 筛选功能 -->
+                <div class="search-bar" style="margin-top: 12px;">
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        <select class="form-select" id="filterCommunity" style="flex: 1; min-width: 120px;" onchange="filterProperties()">
+                            <option value="">全部小区</option>
+                        </select>
+                        <select class="form-select" id="filterType" style="flex: 1; min-width: 100px;" onchange="filterProperties()">
+                            <option value="">全部户型</option>
+                            <option value="1室">1室</option>
+                            <option value="2室">2室</option>
+                            <option value="3室">3室</option>
+                            <option value="4室">4室</option>
+                            <option value="5室及以上">5室及以上</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+                        <select class="form-select" id="filterArea" style="flex: 1; min-width: 100px;" onchange="filterProperties()">
+                            <option value="">全部面积</option>
+                            <option value="0-50">50㎡以下</option>
+                            <option value="50-80">50-80㎡</option>
+                            <option value="80-120">80-120㎡</option>
+                            <option value="120-160">120-160㎡</option>
+                            <option value="160+">160㎡以上</option>
+                        </select>
+                        <select class="form-select" id="filterPrice" style="flex: 1; min-width: 100px;" onchange="filterProperties()">
+                            <option value="">全部价格</option>
+                            <option value="0-3000">3000元以下</option>
+                            <option value="3000-5000">3000-5000元</option>
+                            <option value="5000-8000">5000-8000元</option>
+                            <option value="8000-12000">8000-12000元</option>
+                            <option value="12000+">12000元以上</option>
+                        </select>
+                        <select class="form-select" id="filterStatus" style="flex: 1; min-width: 100px;" onchange="filterProperties()">
+                            <option value="">全部状态</option>
+                            <option value="可租">可租</option>
+                            <option value="已租">已租</option>
+                            <option value="维护中">维护中</option>
+                            <option value="在售">在售</option>
+                            <option value="已售">已售</option>
+                        </select>
+                    </div>
                 </div>
                 <div id="propertyList"></div>
             </div>
@@ -831,6 +873,14 @@
                     <div class="ai-buttons">
                         <div class="ai-button" onclick="aiGenerateCommunity()">AI推荐小区</div>
                         <div class="ai-button" onclick="voiceInput('propCommunity')">语音输入</div>
+                        <div class="ai-button" onclick="aiExtractInfo()">AI提取信息</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">装修</label>
+                    <input type="text" class="form-input" id="propDecoration" placeholder="请输入装修情况（如：精装修、简装等）">
+                    <div class="ai-buttons">
+                        <div class="ai-button" onclick="voiceInput('propDecoration')">语音输入</div>
                     </div>
                 </div>
                 <div class="form-group">
@@ -838,24 +888,39 @@
                     <input type="number" class="form-input" id="propPrice" placeholder="请输入价格">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">类型</label>
-                    <input type="text" class="form-input" id="propType" placeholder="请输入房源类型（如：公寓、别墅等）">
+                    <label class="form-label">户型</label>
+                    <input type="text" class="form-input" id="propLayout" placeholder="请输入户型（如：2室1厅1卫）">
+                    <div class="ai-buttons">
+                        <div class="ai-button" onclick="voiceInput('propLayout')">语音输入</div>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">面积（㎡）</label>
                     <input type="number" class="form-input" id="propArea" placeholder="请输入面积">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">卧室数量</label>
-                    <input type="number" class="form-input" id="propBedrooms" placeholder="请输入卧室数量">
+                    <label class="form-label">房东姓名</label>
+                    <input type="text" class="form-input" id="propLandlordName" placeholder="请输入房东姓名">
+                    <div class="ai-buttons">
+                        <div class="ai-button" onclick="voiceInput('propLandlordName')">语音输入</div>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">卫生间数量</label>
-                    <input type="number" class="form-input" id="propBathrooms" placeholder="请输入卫生间数量">
+                    <label class="form-label">房东电话</label>
+                    <input type="text" class="form-input" id="propLandlordPhone" placeholder="请输入房东电话">
+                    <div class="ai-buttons">
+                        <div class="ai-button" onclick="voiceInput('propLandlordPhone')">语音输入</div>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">状态</label>
-                    <input type="text" class="form-input" id="propStatus" placeholder="请输入状态（如：可租、已租、维护中等）">
+                    <select class="form-select" id="propStatus">
+                        <option value="可租">可租</option>
+                        <option value="已租">已租</option>
+                        <option value="维护中">维护中</option>
+                        <option value="在售">在售</option>
+                        <option value="已售">已售</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label class="form-label">描述</label>
@@ -863,6 +928,13 @@
                     <div class="ai-buttons">
                         <div class="ai-button" onclick="aiGenerateDescription()">AI生成描述</div>
                         <div class="ai-button" onclick="voiceInput('propDesc')">语音输入</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">备注</label>
+                    <textarea class="form-textarea" id="propRemark" placeholder="请输入备注信息"></textarea>
+                    <div class="ai-buttons">
+                        <div class="ai-button" onclick="voiceInput('propRemark')">语音输入</div>
                     </div>
                 </div>
             </div>
@@ -1142,13 +1214,38 @@
             const modal = document.getElementById('propertyModal');
             const title = document.getElementById('propertyModalTitle');
             const priceLabel = document.getElementById('priceLabel');
+            const statusSelect = document.getElementById('propStatus');
             
             if (type === 'sell') {
                 title.textContent = '新增卖房';
                 priceLabel.textContent = '价格（元）';
+                // 清空状态选项
+                while (statusSelect.options.length > 0) {
+                    statusSelect.remove(0);
+                }
+                // 添加卖房状态选项
+                const options = ['在售', '已售', '已下架'];
+                options.forEach(option => {
+                    const opt = document.createElement('option');
+                    opt.value = option;
+                    opt.textContent = option;
+                    statusSelect.appendChild(opt);
+                });
             } else {
                 title.textContent = '新增租房';
                 priceLabel.textContent = '价格（元/月）';
+                // 清空状态选项
+                while (statusSelect.options.length > 0) {
+                    statusSelect.remove(0);
+                }
+                // 添加租房状态选项
+                const options = ['可租', '已租', '维护中', '已下架'];
+                options.forEach(option => {
+                    const opt = document.createElement('option');
+                    opt.value = option;
+                    opt.textContent = option;
+                    statusSelect.appendChild(opt);
+                });
             }
             
             modal.classList.add('active');
@@ -1238,6 +1335,153 @@
             }
         }
 
+        // AI提取信息
+        function aiExtractInfo() {
+            // 模拟从剪贴板获取文本
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.readText()
+                    .then(text => {
+                        if (text) {
+                            // 简单的信息提取逻辑
+                            // 实际项目中可以使用更复杂的NLP库
+                            const info = extractInfoFromText(text);
+                            fillFormWithInfo(info);
+                            showToast('AI提取信息成功');
+                        } else {
+                            showToast('剪贴板为空');
+                        }
+                    })
+                    .catch(err => {
+                        showToast('无法读取剪贴板');
+                        console.error('无法读取剪贴板:', err);
+                    });
+            } else {
+                showToast('您的浏览器不支持剪贴板API');
+            }
+        }
+
+        // 从文本中提取信息
+        function extractInfoFromText(text) {
+            const info = {};
+            
+            // 提取小区
+            const communityMatch = text.match(/小区[:：]\s*([^，,。.]+)/);
+            if (communityMatch) info.community = communityMatch[1];
+            
+            // 提取装修
+            const decorationMatch = text.match(/装修[:：]\s*([^，,。.]+)/);
+            if (decorationMatch) info.decoration = decorationMatch[1];
+            
+            // 提取户型
+            const layoutMatch = text.match(/户型[:：]\s*([^，,。.]+)/);
+            if (layoutMatch) info.layout = layoutMatch[1];
+            
+            // 提取价格
+            const priceMatch = text.match(/价格[:：]\s*([\d,]+)\s*元/);
+            if (priceMatch) info.price = priceMatch[1].replace(/,/g, '');
+            
+            // 提取房东姓名
+            const landlordNameMatch = text.match(/房东[:：]\s*([^，,。.]+)/);
+            if (landlordNameMatch) info.landlordName = landlordNameMatch[1];
+            
+            // 提取房东电话
+            const phoneMatch = text.match(/电话[:：]\s*(1[3-9]\d{9})/);
+            if (phoneMatch) info.landlordPhone = phoneMatch[1];
+            
+            // 提取描述
+            const descMatch = text.match(/描述[:：]\s*([^，,。.]+)/);
+            if (descMatch) info.description = descMatch[1];
+            
+            return info;
+        }
+
+        // 填充表单
+        function fillFormWithInfo(info) {
+            if (info.community) document.getElementById('propCommunity').value = info.community;
+            if (info.decoration) document.getElementById('propDecoration').value = info.decoration;
+            if (info.layout) document.getElementById('propLayout').value = info.layout;
+            if (info.price) document.getElementById('propPrice').value = info.price;
+            if (info.landlordName) document.getElementById('propLandlordName').value = info.landlordName;
+            if (info.landlordPhone) document.getElementById('propLandlordPhone').value = info.landlordPhone;
+            if (info.description) document.getElementById('propDesc').value = info.description;
+        }
+
+        // 筛选房源
+        function filterProperties() {
+            const community = document.getElementById('filterCommunity').value;
+            const type = document.getElementById('filterType').value;
+            const area = document.getElementById('filterArea').value;
+            const price = document.getElementById('filterPrice').value;
+            const status = document.getElementById('filterStatus').value;
+            
+            filteredProperties = properties.filter(property => {
+                // 小区筛选
+                if (community && property.community !== community) return false;
+                
+                // 户型筛选
+                if (type) {
+                    const bedrooms = parseInt(property.bedrooms) || 0;
+                    switch(type) {
+                        case '1室': if (bedrooms !== 1) return false; break;
+                        case '2室': if (bedrooms !== 2) return false; break;
+                        case '3室': if (bedrooms !== 3) return false; break;
+                        case '4室': if (bedrooms !== 4) return false; break;
+                        case '5室及以上': if (bedrooms < 5) return false; break;
+                    }
+                }
+                
+                // 面积筛选
+                if (area) {
+                    const propertyArea = property.area || 0;
+                    switch(area) {
+                        case '0-50': if (propertyArea >= 50) return false; break;
+                        case '50-80': if (propertyArea < 50 || propertyArea >= 80) return false; break;
+                        case '80-120': if (propertyArea < 80 || propertyArea >= 120) return false; break;
+                        case '120-160': if (propertyArea < 120 || propertyArea >= 160) return false; break;
+                        case '160+': if (propertyArea < 160) return false; break;
+                    }
+                }
+                
+                // 价格筛选
+                if (price) {
+                    const propertyPrice = property.price || 0;
+                    switch(price) {
+                        case '0-3000': if (propertyPrice >= 3000) return false; break;
+                        case '3000-5000': if (propertyPrice < 3000 || propertyPrice >= 5000) return false; break;
+                        case '5000-8000': if (propertyPrice < 5000 || propertyPrice >= 8000) return false; break;
+                        case '8000-12000': if (propertyPrice < 8000 || propertyPrice >= 12000) return false; break;
+                        case '12000+': if (propertyPrice < 12000) return false; break;
+                    }
+                }
+                
+                // 状态筛选
+                if (status && property.status !== status) return false;
+                
+                return true;
+            });
+            
+            renderPropertyList();
+        }
+
+        // 填充小区选项
+        function populateCommunityOptions() {
+            const select = document.getElementById('filterCommunity');
+            const communities = [...new Set(properties.map(p => p.community).filter(Boolean))];
+            
+            // 清空现有选项（保留第一个）
+            while (select.options.length > 1) {
+                select.remove(1);
+            }
+            
+            // 添加小区选项
+            communities.forEach(community => {
+                const option = document.createElement('option');
+                option.value = community;
+                option.textContent = community;
+                select.appendChild(option);
+            });
+        }
+
         // 打开客户模态框
         function openCustomerModal() {
             document.getElementById('customerModal').classList.add('active');
@@ -1254,13 +1498,15 @@
             document.getElementById('propTitle').value = '';
             document.getElementById('propAddress').value = '';
             document.getElementById('propCommunity').value = '';
+            document.getElementById('propDecoration').value = '';
             document.getElementById('propPrice').value = '';
-            document.getElementById('propType').value = '';
+            document.getElementById('propLayout').value = '';
             document.getElementById('propArea').value = '';
-            document.getElementById('propBedrooms').value = '';
-            document.getElementById('propBathrooms').value = '';
-            document.getElementById('propStatus').value = '';
+            document.getElementById('propLandlordName').value = '';
+            document.getElementById('propLandlordPhone').value = '';
+            document.getElementById('propStatus').value = propertyType === 'rent' ? '可租' : '在售';
             document.getElementById('propDesc').value = '';
+            document.getElementById('propRemark').value = '';
         }
 
         // 清空客户表单
@@ -1279,13 +1525,15 @@
                 title: document.getElementById('propTitle').value,
                 address: document.getElementById('propAddress').value,
                 community: document.getElementById('propCommunity').value,
+                decoration: document.getElementById('propDecoration').value,
                 price: parseInt(document.getElementById('propPrice').value) || 0,
-                type: document.getElementById('propType').value || '普通住宅',
+                layout: document.getElementById('propLayout').value,
                 area: parseInt(document.getElementById('propArea').value) || 0,
-                bedrooms: parseInt(document.getElementById('propBedrooms').value) || 0,
-                bathrooms: parseInt(document.getElementById('propBathrooms').value) || 0,
-                status: document.getElementById('propStatus').value || '可租',
+                landlordName: document.getElementById('propLandlordName').value,
+                landlordPhone: document.getElementById('propLandlordPhone').value,
+                status: document.getElementById('propStatus').value || (propertyType === 'rent' ? '可租' : '在售'),
                 description: document.getElementById('propDesc').value,
+                remark: document.getElementById('propRemark').value,
                 propertyType: propertyType
             };
 
