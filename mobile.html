@@ -851,37 +851,30 @@
                 <button class="modal-close" onclick="closePropertyModal()">×</button>
             </div>
             <div class="modal-body">
+                <!-- AI识别输入框 -->
+                <div class="form-group">
+                    <label class="form-label">AI识别输入</label>
+                    <textarea class="form-textarea" id="aiInput" placeholder="请输入或语音输入房源信息，例如：阳光小区，精装修，3室2厅2卫，120㎡，价格8000元/月，房东张三，电话13800138000，位于北京市朝阳区..."></textarea>
+                    <div class="ai-buttons">
+                        <div class="ai-button" onclick="voiceInput('aiInput')">语音输入</div>
+                        <div class="ai-button" onclick="aiExtractFromInput()">AI识别并填充</div>
+                    </div>
+                </div>
                 <div class="form-group">
                     <label class="form-label">标题</label>
                     <input type="text" class="form-input" id="propTitle" placeholder="请输入房源标题">
-                    <div class="ai-buttons">
-                        <div class="ai-button" onclick="aiGenerateTitle()">AI生成标题</div>
-                        <div class="ai-button" onclick="voiceInput('propTitle')">语音输入</div>
-                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">地址</label>
                     <input type="text" class="form-input" id="propAddress" placeholder="请输入房源地址">
-                    <div class="ai-buttons">
-                        <div class="ai-button" onclick="aiGenerateAddress()">AI识别地址</div>
-                        <div class="ai-button" onclick="voiceInput('propAddress')">语音输入</div>
-                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">小区</label>
                     <input type="text" class="form-input" id="propCommunity" placeholder="请输入小区名称（可自由添加）">
-                    <div class="ai-buttons">
-                        <div class="ai-button" onclick="aiGenerateCommunity()">AI推荐小区</div>
-                        <div class="ai-button" onclick="voiceInput('propCommunity')">语音输入</div>
-                        <div class="ai-button" onclick="aiExtractInfo()">AI提取信息</div>
-                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">装修</label>
                     <input type="text" class="form-input" id="propDecoration" placeholder="请输入装修情况（如：精装修、简装等）">
-                    <div class="ai-buttons">
-                        <div class="ai-button" onclick="voiceInput('propDecoration')">语音输入</div>
-                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label" id="priceLabel">价格（元/月）</label>
@@ -890,9 +883,6 @@
                 <div class="form-group">
                     <label class="form-label">户型</label>
                     <input type="text" class="form-input" id="propLayout" placeholder="请输入户型（如：2室1厅1卫）">
-                    <div class="ai-buttons">
-                        <div class="ai-button" onclick="voiceInput('propLayout')">语音输入</div>
-                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">面积（㎡）</label>
@@ -901,16 +891,10 @@
                 <div class="form-group">
                     <label class="form-label">房东姓名</label>
                     <input type="text" class="form-input" id="propLandlordName" placeholder="请输入房东姓名">
-                    <div class="ai-buttons">
-                        <div class="ai-button" onclick="voiceInput('propLandlordName')">语音输入</div>
-                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">房东电话</label>
                     <input type="text" class="form-input" id="propLandlordPhone" placeholder="请输入房东电话">
-                    <div class="ai-buttons">
-                        <div class="ai-button" onclick="voiceInput('propLandlordPhone')">语音输入</div>
-                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">状态</label>
@@ -925,17 +909,10 @@
                 <div class="form-group">
                     <label class="form-label">描述</label>
                     <textarea class="form-textarea" id="propDesc" placeholder="请输入房源描述"></textarea>
-                    <div class="ai-buttons">
-                        <div class="ai-button" onclick="aiGenerateDescription()">AI生成描述</div>
-                        <div class="ai-button" onclick="voiceInput('propDesc')">语音输入</div>
-                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">备注</label>
                     <textarea class="form-textarea" id="propRemark" placeholder="请输入备注信息"></textarea>
-                    <div class="ai-buttons">
-                        <div class="ai-button" onclick="voiceInput('propRemark')">语音输入</div>
-                    </div>
                 </div>
             </div>
             <div class="form-actions">
@@ -1482,6 +1459,19 @@
             });
         }
 
+        // 从AI输入框提取信息
+        function aiExtractFromInput() {
+            const input = document.getElementById('aiInput').value;
+            if (!input) {
+                showToast('请输入房源信息');
+                return;
+            }
+            
+            const info = extractInfoFromText(input);
+            fillFormWithInfo(info);
+            showToast('AI识别成功，已填充信息');
+        }
+
         // 打开客户模态框
         function openCustomerModal() {
             document.getElementById('customerModal').classList.add('active');
@@ -1495,6 +1485,7 @@
 
         // 清空房源表单
         function clearPropertyForm() {
+            document.getElementById('aiInput').value = '';
             document.getElementById('propTitle').value = '';
             document.getElementById('propAddress').value = '';
             document.getElementById('propCommunity').value = '';
