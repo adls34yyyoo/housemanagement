@@ -70,14 +70,72 @@ function App() {
       
       if (error) {
         console.error('获取房源数据失败:', error);
-        message.error('获取房源数据失败');
+        message.error('获取房源数据失败，使用本地数据');
+        // 使用本地模拟数据
+        const mockData = [
+          {
+            id: 1,
+            title: '阳光公寓',
+            address: '北京市朝阳区',
+            price: 5000,
+            type: '公寓',
+            area: 80,
+            bedrooms: 2,
+            bathrooms: 1,
+            description: '交通便利，配套齐全',
+            status: 'available'
+          },
+          {
+            id: 2,
+            title: '豪华别墅',
+            address: '上海市浦东新区',
+            price: 15000,
+            type: '别墅',
+            area: 200,
+            bedrooms: 4,
+            bathrooms: 3,
+            description: '带花园，私密性好',
+            status: 'rented'
+          }
+        ];
+        setProperties(mockData);
+        setFilteredProperties(mockData);
       } else {
         setProperties(data || []);
         setFilteredProperties(data || []);
       }
     } catch (error) {
       console.error('获取房源数据异常:', error);
-      message.error('获取房源数据异常');
+      message.error('获取房源数据异常，使用本地数据');
+      // 使用本地模拟数据
+      const mockData = [
+        {
+          id: 1,
+          title: '阳光公寓',
+          address: '北京市朝阳区',
+          price: 5000,
+          type: '公寓',
+          area: 80,
+          bedrooms: 2,
+          bathrooms: 1,
+          description: '交通便利，配套齐全',
+          status: 'available'
+        },
+        {
+          id: 2,
+          title: '豪华别墅',
+          address: '上海市浦东新区',
+          price: 15000,
+          type: '别墅',
+          area: 200,
+          bedrooms: 4,
+          bathrooms: 3,
+          description: '带花园，私密性好',
+          status: 'rented'
+        }
+      ];
+      setProperties(mockData);
+      setFilteredProperties(mockData);
     }
   };
 
