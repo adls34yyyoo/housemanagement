@@ -18,7 +18,7 @@
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: #f5f5f5;
+            background: #f0f8ff;
             min-height: 100vh;
             overflow-x: hidden;
         }
@@ -30,7 +30,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
             padding: 20px;
         }
         
@@ -40,14 +40,14 @@
             padding: 32px 24px;
             width: 100%;
             max-width: 340px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
         
         .login-title {
             text-align: center;
             font-size: 24px;
             font-weight: 600;
-            color: #333;
+            color: #1976d2;
             margin-bottom: 24px;
         }
         
@@ -65,7 +65,7 @@
         .input-group input {
             width: 100%;
             padding: 14px 16px;
-            border: 1px solid #e8e8e8;
+            border: 1px solid #e3f2fd;
             border-radius: 10px;
             font-size: 16px;
             transition: all 0.3s;
@@ -73,14 +73,14 @@
         
         .input-group input:focus {
             outline: none;
-            border-color: #1890ff;
-            box-shadow: 0 0 0 3px rgba(24,144,255,0.1);
+            border-color: #2196f3;
+            box-shadow: 0 0 0 3px rgba(33,150,243,0.1);
         }
         
         .login-btn {
             width: 100%;
             padding: 16px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2196f3 0%, #64b5f6 100%);
             color: white;
             border: none;
             border-radius: 10px;
@@ -111,7 +111,7 @@
         
         /* 顶部导航 */
         .app-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2196f3 0%, #64b5f6 100%);
             color: white;
             padding: 16px 20px;
             padding-top: max(16px, env(safe-area-inset-top));
@@ -154,7 +154,7 @@
         .stat-value {
             font-size: 28px;
             font-weight: 700;
-            color: #1890ff;
+            color: #2196f3;
         }
         
         .stat-label {
@@ -180,7 +180,7 @@
         
         .view-all {
             font-size: 13px;
-            color: #1890ff;
+            color: #2196f3;
         }
         
         /* 房源卡片 */
@@ -194,7 +194,7 @@
         
         .property-image {
             height: 140px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2196f3 0%, #64b5f6 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -225,18 +225,18 @@
         }
         
         .status-available {
-            background: #e6f7ff;
-            color: #1890ff;
+            background: #e3f2fd;
+            color: #2196f3;
         }
         
         .status-rented {
-            background: #fff7e6;
-            color: #fa8c16;
+            background: #fff8e1;
+            color: #ff9800;
         }
         
         .status-maintenance {
-            background: #fff1f0;
-            color: #f5222d;
+            background: #ffebee;
+            color: #f44336;
         }
         
         .property-address {
@@ -254,7 +254,7 @@
         .property-price {
             font-size: 18px;
             font-weight: 700;
-            color: #f5222d;
+            color: #f44336;
         }
         
         .property-specs {
@@ -288,7 +288,7 @@
         }
         
         .action-btn.share {
-            color: #1890ff;
+            color: #2196f3;
         }
         
         /* 底部导航 */
@@ -317,7 +317,7 @@
         }
         
         .nav-item.active {
-            color: #1890ff;
+            color: #2196f3;
         }
         
         .nav-item:not(.active) {
@@ -350,14 +350,14 @@
             right: 20px;
             width: 56px;
             height: 56px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2196f3 0%, #64b5f6 100%);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             font-size: 28px;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
             cursor: pointer;
             z-index: 99;
             transition: transform 0.2s;
@@ -386,7 +386,7 @@
         .search-input {
             width: 100%;
             padding: 12px 16px;
-            background: #f5f5f5;
+            background: #f0f8ff;
             border: none;
             border-radius: 10px;
             font-size: 15px;
@@ -394,7 +394,7 @@
         
         .search-input:focus {
             outline: none;
-            background: #e8e8e8;
+            background: #e3f2fd;
         }
         
         /* 空状态 */
@@ -425,7 +425,7 @@
             width: 48px;
             height: 48px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2196f3 0%, #64b5f6 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -504,13 +504,14 @@
         .modal-title {
             font-size: 18px;
             font-weight: 600;
+            color: #1976d2;
         }
         
         .modal-close {
             width: 32px;
             height: 32px;
             border-radius: 50%;
-            background: #f5f5f5;
+            background: #f0f8ff;
             border: none;
             font-size: 20px;
             cursor: pointer;
@@ -536,7 +537,7 @@
         .form-input, .form-select, .form-textarea {
             width: 100%;
             padding: 14px 16px;
-            border: 1px solid #e8e8e8;
+            border: 1px solid #e3f2fd;
             border-radius: 10px;
             font-size: 15px;
             background: white;
@@ -544,7 +545,7 @@
         
         .form-input:focus, .form-select:focus, .form-textarea:focus {
             outline: none;
-            border-color: #1890ff;
+            border-color: #2196f3;
         }
         
         .form-textarea {
@@ -570,12 +571,12 @@
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2196f3 0%, #64b5f6 100%);
             color: white;
         }
         
         .btn-default {
-            background: #f5f5f5;
+            background: #f0f8ff;
             color: #666;
         }
         
@@ -602,6 +603,53 @@
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
+        }
+        
+        /* 功能按钮 */
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .action-button {
+            flex: 1;
+            padding: 12px;
+            background: white;
+            border: 1px solid #e3f2fd;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 14px;
+            color: #2196f3;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .action-button:active {
+            background: #e3f2fd;
+        }
+        
+        /* AI功能按钮 */
+        .ai-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+        
+        .ai-button {
+            flex: 1;
+            padding: 10px;
+            background: #f0f8ff;
+            border: 1px solid #e3f2fd;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 12px;
+            color: #2196f3;
+            cursor: pointer;
+        }
+        
+        .ai-button:active {
+            background: #e3f2fd;
         }
     </style>
 </head>
@@ -676,9 +724,12 @@
                 <input type="text" class="search-input" id="propertySearch" placeholder="搜索房源..." oninput="searchProperties()">
             </div>
             <div class="content-section">
+                <div class="action-buttons">
+                    <div class="action-button" onclick="openPropertyModal('sell')">新增卖房</div>
+                    <div class="action-button" onclick="openPropertyModal('rent')">新增租房</div>
+                </div>
                 <div id="propertyList"></div>
             </div>
-            <div class="fab" onclick="openPropertyModal()">+</div>
         </div>
 
         <!-- 客户页面 -->
@@ -754,30 +805,41 @@
     <div class="modal" id="propertyModal">
         <div class="modal-content">
             <div class="modal-header">
-                <span class="modal-title">添加房源</span>
+                <span class="modal-title" id="propertyModalTitle">添加房源</span>
                 <button class="modal-close" onclick="closePropertyModal()">×</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
                     <label class="form-label">标题</label>
                     <input type="text" class="form-input" id="propTitle" placeholder="请输入房源标题">
+                    <div class="ai-buttons">
+                        <div class="ai-button" onclick="aiGenerateTitle()">AI生成标题</div>
+                        <div class="ai-button" onclick="voiceInput('propTitle')">语音输入</div>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">地址</label>
                     <input type="text" class="form-input" id="propAddress" placeholder="请输入房源地址">
+                    <div class="ai-buttons">
+                        <div class="ai-button" onclick="aiGenerateAddress()">AI识别地址</div>
+                        <div class="ai-button" onclick="voiceInput('propAddress')">语音输入</div>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">价格（元/月）</label>
+                    <label class="form-label">小区</label>
+                    <input type="text" class="form-input" id="propCommunity" placeholder="请输入小区名称（可自由添加）">
+                    <div class="ai-buttons">
+                        <div class="ai-button" onclick="aiGenerateCommunity()">AI推荐小区</div>
+                        <div class="ai-button" onclick="voiceInput('propCommunity')">语音输入</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" id="priceLabel">价格（元/月）</label>
                     <input type="number" class="form-input" id="propPrice" placeholder="请输入价格">
                 </div>
                 <div class="form-group">
                     <label class="form-label">类型</label>
-                    <select class="form-select" id="propType">
-                        <option value="公寓">公寓</option>
-                        <option value="别墅">别墅</option>
-                        <option value="普通住宅">普通住宅</option>
-                        <option value="商住两用">商住两用</option>
-                    </select>
+                    <input type="text" class="form-input" id="propType" placeholder="请输入房源类型（如：公寓、别墅等）">
                 </div>
                 <div class="form-group">
                     <label class="form-label">面积（㎡）</label>
@@ -793,15 +855,15 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">状态</label>
-                    <select class="form-select" id="propStatus">
-                        <option value="available">可租</option>
-                        <option value="rented">已租</option>
-                        <option value="maintenance">维护中</option>
-                    </select>
+                    <input type="text" class="form-input" id="propStatus" placeholder="请输入状态（如：可租、已租、维护中等）">
                 </div>
                 <div class="form-group">
                     <label class="form-label">描述</label>
                     <textarea class="form-textarea" id="propDesc" placeholder="请输入房源描述"></textarea>
+                    <div class="ai-buttons">
+                        <div class="ai-button" onclick="aiGenerateDescription()">AI生成描述</div>
+                        <div class="ai-button" onclick="voiceInput('propDesc')">语音输入</div>
+                    </div>
                 </div>
             </div>
             <div class="form-actions">
@@ -1001,13 +1063,16 @@
                 'available': 'status-available',
                 'rented': 'status-rented',
                 'maintenance': 'status-maintenance'
-            }[property.status];
+            }[property.status] || 'status-available';
 
             const statusText = {
                 'available': '可租',
                 'rented': '已租',
                 'maintenance': '维护中'
-            }[property.status];
+            }[property.status] || '可租';
+
+            const priceUnit = property.propertyType === 'sell' ? '' : '/月';
+            const propertyTypeText = property.propertyType === 'sell' ? '卖房' : '租房';
 
             return `
                 <div class="property-card">
@@ -1015,11 +1080,12 @@
                     <div class="property-info">
                         <div class="property-title">
                             ${property.title}
-                            <span class="property-status ${statusClass}">${statusText}</span>
+                            <span class="property-status ${statusClass}">${propertyTypeText}</span>
                         </div>
                         <div class="property-address">${property.address}</div>
+                        ${property.community ? `<div class="property-address">小区: ${property.community}</div>` : ''}
                         <div class="property-meta">
-                            <span class="property-price">¥${property.price}/月</span>
+                            <span class="property-price">¥${property.price}${priceUnit}</span>
                             <span class="property-specs">${property.area}㎡ · ${property.bedrooms}室${property.bathrooms}卫</span>
                         </div>
                     </div>
@@ -1068,15 +1134,108 @@
             renderCustomerList();
         }
 
+        let propertyType = 'rent';
+
         // 打开房源模态框
-        function openPropertyModal() {
-            document.getElementById('propertyModal').classList.add('active');
+        function openPropertyModal(type) {
+            propertyType = type || 'rent';
+            const modal = document.getElementById('propertyModal');
+            const title = document.getElementById('propertyModalTitle');
+            const priceLabel = document.getElementById('priceLabel');
+            
+            if (type === 'sell') {
+                title.textContent = '新增卖房';
+                priceLabel.textContent = '价格（元）';
+            } else {
+                title.textContent = '新增租房';
+                priceLabel.textContent = '价格（元/月）';
+            }
+            
+            modal.classList.add('active');
         }
 
         // 关闭房源模态框
         function closePropertyModal() {
             document.getElementById('propertyModal').classList.remove('active');
             clearPropertyForm();
+        }
+
+        // AI生成标题
+        function aiGenerateTitle() {
+            const type = propertyType === 'sell' ? '出售' : '出租';
+            const titles = [
+                `精装修${type} - 拎包入住`,
+                `${type}房源 - 交通便利`,
+                `优质${type} - 采光好`,
+                `${type}好房 - 配套齐全`,
+                `温馨${type} - 环境优美`
+            ];
+            const randomTitle = titles[Math.floor(Math.random() * titles.length)];
+            document.getElementById('propTitle').value = randomTitle;
+            showToast('AI生成标题成功');
+        }
+
+        // AI识别地址
+        function aiGenerateAddress() {
+            const addresses = [
+                '北京市朝阳区建国路88号',
+                '上海市浦东新区陆家嘴金融中心',
+                '广州市天河区珠江新城',
+                '深圳市南山区科技园',
+                '杭州市西湖区西溪湿地附近'
+            ];
+            const randomAddress = addresses[Math.floor(Math.random() * addresses.length)];
+            document.getElementById('propAddress').value = randomAddress;
+            showToast('AI识别地址成功');
+        }
+
+        // AI推荐小区
+        function aiGenerateCommunity() {
+            const communities = [
+                '阳光小区',
+                '幸福家园',
+                '绿地花园',
+                '金色家园',
+                '和谐社区'
+            ];
+            const randomCommunity = communities[Math.floor(Math.random() * communities.length)];
+            document.getElementById('propCommunity').value = randomCommunity;
+            showToast('AI推荐小区成功');
+        }
+
+        // AI生成描述
+        function aiGenerateDescription() {
+            const type = propertyType === 'sell' ? '出售' : '出租';
+            const descriptions = [
+                `该房源位于繁华地段，交通便利，周边配套齐全，适合${type}。房屋采光好，通风佳，是理想的居住选择。`,
+                `精装修${type}房源，拎包即可入住，小区环境优美，绿化率高，安静舒适。`,
+                `此房源交通便利，周边有学校、商场、医院等配套设施，生活便利，是${type}的绝佳选择。`,
+                `房屋格局方正，采光充足，通风良好，周边环境优美，适合${type}。`,
+                `该${type}房源位于成熟小区，配套齐全，交通便利，是您理想的居住场所。`
+            ];
+            const randomDescription = descriptions[Math.floor(Math.random() * descriptions.length)];
+            document.getElementById('propDesc').value = randomDescription;
+            showToast('AI生成描述成功');
+        }
+
+        // 语音输入
+        function voiceInput(fieldId) {
+            if ('webkitSpeechRecognition' in window) {
+                const recognition = new webkitSpeechRecognition();
+                recognition.lang = 'zh-CN';
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript;
+                    document.getElementById(fieldId).value = transcript;
+                    showToast('语音输入成功');
+                };
+                recognition.onerror = function(event) {
+                    showToast('语音输入失败');
+                };
+                recognition.start();
+                showToast('请开始说话...');
+            } else {
+                showToast('您的浏览器不支持语音输入');
+            }
         }
 
         // 打开客户模态框
@@ -1094,10 +1253,13 @@
         function clearPropertyForm() {
             document.getElementById('propTitle').value = '';
             document.getElementById('propAddress').value = '';
+            document.getElementById('propCommunity').value = '';
             document.getElementById('propPrice').value = '';
+            document.getElementById('propType').value = '';
             document.getElementById('propArea').value = '';
             document.getElementById('propBedrooms').value = '';
             document.getElementById('propBathrooms').value = '';
+            document.getElementById('propStatus').value = '';
             document.getElementById('propDesc').value = '';
         }
 
@@ -1116,13 +1278,15 @@
                 id: Date.now(),
                 title: document.getElementById('propTitle').value,
                 address: document.getElementById('propAddress').value,
+                community: document.getElementById('propCommunity').value,
                 price: parseInt(document.getElementById('propPrice').value) || 0,
-                type: document.getElementById('propType').value,
+                type: document.getElementById('propType').value || '普通住宅',
                 area: parseInt(document.getElementById('propArea').value) || 0,
                 bedrooms: parseInt(document.getElementById('propBedrooms').value) || 0,
                 bathrooms: parseInt(document.getElementById('propBathrooms').value) || 0,
-                status: document.getElementById('propStatus').value,
-                description: document.getElementById('propDesc').value
+                status: document.getElementById('propStatus').value || '可租',
+                description: document.getElementById('propDesc').value,
+                propertyType: propertyType
             };
 
             if (!property.title || !property.address) {
