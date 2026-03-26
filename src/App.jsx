@@ -17,13 +17,108 @@ import {
   DeleteRowOutlined,
   CustomerServiceOutlined
 } from '@ant-design/icons';
-import { createClient } from '@supabase/supabase-js';
 
-// 初始化 Supabase 客户端
-const supabase = createClient(
-  'https://lbnvuzsxvjwwqqzxkzgo.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxibnZ1enN4dmp3d3FxeHpremdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTY3ODQ1NDQsImV4cCI6MjA3MjM2MDU0NH0.uU1U7I2zQq9B6aRjW8GkP0k2vX1x2X4Z1aZ1bZ1cZ1d'
-);
+// 本地存储工具函数
+const storage = {
+  get: (key, defaultValue = []) => {
+    try {
+      const data = localStorage.getItem(key);
+      return data ? JSON.parse(data) : defaultValue;
+    } catch {
+      return defaultValue;
+    }
+  },
+  set: (key, value) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (e) {
+      console.error('Storage error:', e);
+    }
+  }
+};
+
+// 初始化默认数据
+const defaultProperties = [
+  {
+    id: 1,
+    title: '阳光公寓',
+    address: '北京市朝阳区',
+    price: 5000,
+    type: '公寓',
+    area: 80,
+    bedrooms: 2,
+    bathrooms: 1,
+    description: '交通便利，配套齐全',
+    status: 'available',
+    community_id: 1
+  },
+  {
+    id: 2,
+    title: '豪华别墅',
+    address: '上海市浦东新区',
+    price: 15000,
+    type: '别墅',
+    area: 200,
+    bedrooms: 4,
+    bathrooms: 3,
+    description: '带花园，私密性好',
+    status: 'rented',
+    community_id: 2
+  }
+];
+
+const defaultCommunities = [
+  {
+    id: 1,
+    name: '阳光小区',
+    address: '北京市朝阳区',
+    description: '环境优美，配套齐全',
+    property_count: 50
+  },
+  {
+    id: 2,
+    name: '豪华别墅区',
+    address: '上海市浦东新区',
+    description: '高端社区，私密性好',
+    property_count: 20
+  }
+];
+
+const defaultCustomers = [
+  {
+    id: 1,
+    name: '张三',
+    phone: '13800138000',
+    email: 'zhangsan@example.com',
+    address: '北京市朝阳区',
+    需求: '两居室，交通便利',
+    status: 'active'
+  },
+  {
+    id: 2,
+    name: '李四',
+    phone: '13900139000',
+    email: 'lisi@example.com',
+    address: '上海市浦东新区',
+    需求: '三居室，带车位',
+    status: 'inactive'
+  }
+];
+
+const defaultRecycled = [
+  {
+    id: 1,
+    title: '旧公寓',
+    address: '北京市海淀区',
+    price: 4000,
+    type: '公寓',
+    area: 60,
+    bedrooms: 1,
+    bathrooms: 1,
+    description: '老旧小区，需要装修',
+    deleted_at: '2026-03-20'
+  }
+];
 
 const { Header, Sider, Content } = Layout;
 const { Option } = Select;
@@ -112,272 +207,65 @@ function App() {
     }
   }, [customerSearchText, customers]);
 
-  const fetchProperties = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('properties')
-        .select('*');
-      
-      if (error) {
-        console.error('获取房源数据失败:', error);
-        message.error('获取房源数据失败，使用本地数据');
-        // 使用本地模拟数据
-        const mockData = [
-          {
-            id: 1,
-            title: '阳光公寓',
-            address: '北京市朝阳区',
-            price: 5000,
-            type: '公寓',
-            area: 80,
-            bedrooms: 2,
-            bathrooms: 1,
-            description: '交通便利，配套齐全',
-            status: 'available',
-            community_id: 1
-          },
-          {
-            id: 2,
-            title: '豪华别墅',
-            address: '上海市浦东新区',
-            price: 15000,
-            type: '别墅',
-            area: 200,
-            bedrooms: 4,
-            bathrooms: 3,
-            description: '带花园，私密性好',
-            status: 'rented',
-            community_id: 2
-          }
-        ];
-        setProperties(mockData);
-        setFilteredProperties(mockData);
-      } else {
-        setProperties(data || []);
-        setFilteredProperties(data || []);
-      }
-    } catch (error) {
-      console.error('获取房源数据异常:', error);
-      message.error('获取房源数据异常，使用本地数据');
-      // 使用本地模拟数据
-      const mockData = [
-        {
-          id: 1,
-          title: '阳光公寓',
-          address: '北京市朝阳区',
-          price: 5000,
-          type: '公寓',
-          area: 80,
-          bedrooms: 2,
-          bathrooms: 1,
-          description: '交通便利，配套齐全',
-          status: 'available',
-          community_id: 1
-        },
-        {
-          id: 2,
-          title: '豪华别墅',
-          address: '上海市浦东新区',
-          price: 15000,
-          type: '别墅',
-          area: 200,
-          bedrooms: 4,
-          bathrooms: 3,
-          description: '带花园，私密性好',
-          status: 'rented',
-          community_id: 2
-        }
-      ];
-      setProperties(mockData);
-      setFilteredProperties(mockData);
-    }
+  const fetchProperties = () => {
+    const data = storage.get('properties', defaultProperties);
+    setProperties(data);
+    setFilteredProperties(data);
   };
 
   // 获取小区数据
-  const fetchCommunities = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('communities')
-        .select('*');
-      
-      if (error) {
-        console.error('获取小区数据失败:', error);
-        message.error('获取小区数据失败，使用本地数据');
-        // 使用本地模拟数据
-        const mockData = [
-          {
-            id: 1,
-            name: '阳光小区',
-            address: '北京市朝阳区',
-            description: '环境优美，配套齐全',
-            property_count: 50
-          },
-          {
-            id: 2,
-            name: '豪华别墅区',
-            address: '上海市浦东新区',
-            description: '高端社区，私密性好',
-            property_count: 20
-          }
-        ];
-        setCommunities(mockData);
-        setFilteredCommunities(mockData);
-      } else {
-        setCommunities(data || []);
-        setFilteredCommunities(data || []);
-      }
-    } catch (error) {
-      console.error('获取小区数据异常:', error);
-      message.error('获取小区数据异常，使用本地数据');
-      // 使用本地模拟数据
-      const mockData = [
-        {
-          id: 1,
-          name: '阳光小区',
-          address: '北京市朝阳区',
-          description: '环境优美，配套齐全',
-          property_count: 50
-        },
-        {
-          id: 2,
-          name: '豪华别墅区',
-          address: '上海市浦东新区',
-          description: '高端社区，私密性好',
-          property_count: 20
-        }
-      ];
-      setCommunities(mockData);
-      setFilteredCommunities(mockData);
-    }
+  const fetchCommunities = () => {
+    const data = storage.get('communities', defaultCommunities);
+    setCommunities(data);
+    setFilteredCommunities(data);
   };
 
   // 获取回收站数据
-  const fetchRecycledProperties = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('recycled_properties')
-        .select('*');
-      
-      if (error) {
-        console.error('获取回收站数据失败:', error);
-        message.error('获取回收站数据失败，使用本地数据');
-        // 使用本地模拟数据
-        const mockData = [
-          {
-            id: 1,
-            title: '旧公寓',
-            address: '北京市海淀区',
-            price: 4000,
-            type: '公寓',
-            area: 60,
-            bedrooms: 1,
-            bathrooms: 1,
-            description: '老旧小区，需要装修',
-            deleted_at: '2026-03-20'
-          }
-        ];
-        setRecycledProperties(mockData);
-      } else {
-        setRecycledProperties(data || []);
-      }
-    } catch (error) {
-      console.error('获取回收站数据异常:', error);
-      message.error('获取回收站数据异常，使用本地数据');
-      // 使用本地模拟数据
-      const mockData = [
-        {
-          id: 1,
-          title: '旧公寓',
-          address: '北京市海淀区',
-          price: 4000,
-          type: '公寓',
-          area: 60,
-          bedrooms: 1,
-          bathrooms: 1,
-          description: '老旧小区，需要装修',
-          deleted_at: '2026-03-20'
-        }
-      ];
-      setRecycledProperties(mockData);
-    }
+  const fetchRecycledProperties = () => {
+    const data = storage.get('recycledProperties', defaultRecycled);
+    setRecycledProperties(data);
   };
 
   // 添加小区
-  const handleAddCommunity = async (values) => {
-    try {
-      const { data, error } = await supabase
-        .from('communities')
-        .insert({
-          name: values.name,
-          address: values.address,
-          description: values.description,
-          property_count: values.property_count || 0
-        })
-        .select();
-      
-      if (error) {
-        console.error('添加小区失败:', error);
-        message.error('添加小区失败');
-      } else {
-        message.success('添加小区成功');
-        setCommunityDrawerVisible(false);
-        communityForm.resetFields();
-        fetchCommunities();
-      }
-    } catch (error) {
-      console.error('添加小区异常:', error);
-      message.error('添加小区异常');
-    }
+  const handleAddCommunity = (values) => {
+    const newCommunity = {
+      id: Date.now(),
+      name: values.name,
+      address: values.address,
+      description: values.description,
+      property_count: values.property_count || 0
+    };
+    const updated = [...communities, newCommunity];
+    storage.set('communities', updated);
+    setCommunities(updated);
+    setFilteredCommunities(updated);
+    message.success('添加小区成功');
+    setCommunityDrawerVisible(false);
+    communityForm.resetFields();
   };
 
   // 更新小区
-  const handleUpdateCommunity = async (values) => {
-    try {
-      const { data, error } = await supabase
-        .from('communities')
-        .update({
-          name: values.name,
-          address: values.address,
-          description: values.description,
-          property_count: values.property_count
-        })
-        .eq('id', selectedCommunity.id)
-        .select();
-      
-      if (error) {
-        console.error('更新小区失败:', error);
-        message.error('更新小区失败');
-      } else {
-        message.success('更新小区成功');
-        setCommunityModalVisible(false);
-        communityForm.resetFields();
-        fetchCommunities();
-      }
-    } catch (error) {
-      console.error('更新小区异常:', error);
-      message.error('更新小区异常');
-    }
+  const handleUpdateCommunity = (values) => {
+    const updated = communities.map(c => 
+      c.id === selectedCommunity.id 
+        ? { ...c, ...values }
+        : c
+    );
+    storage.set('communities', updated);
+    setCommunities(updated);
+    setFilteredCommunities(updated);
+    message.success('更新小区成功');
+    setCommunityModalVisible(false);
+    communityForm.resetFields();
   };
 
   // 删除小区
-  const handleDeleteCommunity = async (id) => {
-    try {
-      const { error } = await supabase
-        .from('communities')
-        .delete()
-        .eq('id', id);
-      
-      if (error) {
-        console.error('删除小区失败:', error);
-        message.error('删除小区失败');
-      } else {
-        message.success('删除小区成功');
-        fetchCommunities();
-      }
-    } catch (error) {
-      console.error('删除小区异常:', error);
-      message.error('删除小区异常');
-    }
+  const handleDeleteCommunity = (id) => {
+    const updated = communities.filter(c => c.id !== id);
+    storage.set('communities', updated);
+    setCommunities(updated);
+    setFilteredCommunities(updated);
+    message.success('删除小区成功');
   };
 
   // 打开编辑小区模态框
@@ -414,171 +302,68 @@ function App() {
   };
 
   // 恢复回收站中的房源
-  const handleRestoreProperty = async (id) => {
-    try {
-      // 从回收站中删除
-      const { error: deleteError } = await supabase
-        .from('recycled_properties')
-        .delete()
-        .eq('id', id);
+  const handleRestoreProperty = (id) => {
+    const item = recycledProperties.find(r => r.id === id);
+    if (item) {
+      const updatedRecycled = recycledProperties.filter(r => r.id !== id);
+      const restoredProperty = { ...item };
+      delete restoredProperty.deleted_at;
+      const updatedProperties = [...properties, restoredProperty];
       
-      if (deleteError) {
-        console.error('恢复房源失败:', deleteError);
-        message.error('恢复房源失败');
-        return;
-      }
+      storage.set('recycledProperties', updatedRecycled);
+      storage.set('properties', updatedProperties);
+      
+      setRecycledProperties(updatedRecycled);
+      setProperties(updatedProperties);
+      setFilteredProperties(updatedProperties);
       
       message.success('恢复房源成功');
-      fetchRecycledProperties();
-      fetchProperties();
-    } catch (error) {
-      console.error('恢复房源异常:', error);
-      message.error('恢复房源异常');
     }
   };
 
   // 永久删除回收站中的房源
-  const handlePermanentDeleteProperty = async (id) => {
-    try {
-      const { error } = await supabase
-        .from('recycled_properties')
-        .delete()
-        .eq('id', id);
-      
-      if (error) {
-        console.error('永久删除房源失败:', error);
-        message.error('永久删除房源失败');
-      } else {
-        message.success('永久删除房源成功');
-        fetchRecycledProperties();
-      }
-    } catch (error) {
-      console.error('永久删除房源异常:', error);
-      message.error('永久删除房源异常');
-    }
+  const handlePermanentDeleteProperty = (id) => {
+    const updated = recycledProperties.filter(r => r.id !== id);
+    storage.set('recycledProperties', updated);
+    setRecycledProperties(updated);
+    message.success('永久删除房源成功');
   };
 
   // 获取客户数据
-  const fetchCustomers = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('customers')
-        .select('*');
-      
-      if (error) {
-        console.error('获取客户数据失败:', error);
-        message.error('获取客户数据失败，使用本地数据');
-        // 使用本地模拟数据
-        const mockData = [
-          {
-            id: 1,
-            name: '张三',
-            phone: '13800138000',
-            email: 'zhangsan@example.com',
-            address: '北京市朝阳区',
-           需求: '两居室，交通便利',
-            status: 'active'
-          },
-          {
-            id: 2,
-            name: '李四',
-            phone: '13900139000',
-            email: 'lisi@example.com',
-            address: '上海市浦东新区',
-           需求: '三居室，带车位',
-            status: 'inactive'
-          }
-        ];
-        setCustomers(mockData);
-        setFilteredCustomers(mockData);
-      } else {
-        setCustomers(data || []);
-        setFilteredCustomers(data || []);
-      }
-    } catch (error) {
-      console.error('获取客户数据异常:', error);
-      message.error('获取客户数据异常，使用本地数据');
-      // 使用本地模拟数据
-      const mockData = [
-        {
-          id: 1,
-          name: '张三',
-          phone: '13800138000',
-          email: 'zhangsan@example.com',
-          address: '北京市朝阳区',
-          需求: '两居室，交通便利',
-          status: 'active'
-        },
-        {
-          id: 2,
-          name: '李四',
-          phone: '13900139000',
-          email: 'lisi@example.com',
-          address: '上海市浦东新区',
-          需求: '三居室，带车位',
-          status: 'inactive'
-        }
-      ];
-      setCustomers(mockData);
-      setFilteredCustomers(mockData);
-    }
+  const fetchCustomers = () => {
+    const data = storage.get('customers', defaultCustomers);
+    setCustomers(data);
+    setFilteredCustomers(data);
   };
 
   // 添加客户
-  const handleAddCustomer = async (values) => {
-    try {
-      const { data, error } = await supabase
-        .from('customers')
-        .insert({
-          name: values.name,
-          phone: values.phone,
-          email: values.email,
-          address: values.address,
-          需求: values.需求,
-          status: values.status
-        })
-        .select();
-      
-      if (error) {
-        console.error('添加客户失败:', error);
-        message.error('添加客户失败');
-      } else {
-        message.success('添加客户成功');
-        setCustomerDrawerVisible(false);
-        customerForm.resetFields();
-        fetchCustomers();
-      }
-    } catch (error) {
-      console.error('添加客户异常:', error);
-      message.error('添加客户异常');
-    }
+  const handleAddCustomer = (values) => {
+    const newCustomer = {
+      id: Date.now(),
+      ...values
+    };
+    const updated = [...customers, newCustomer];
+    storage.set('customers', updated);
+    setCustomers(updated);
+    setFilteredCustomers(updated);
+    message.success('添加客户成功');
+    setCustomerDrawerVisible(false);
+    customerForm.resetFields();
   };
 
   // 更新客户
-  const handleUpdateCustomer = async (values) => {
-    try {
-      const { data, error } = await supabase
-        .from('customers')
-        .update({
-          name: values.name,
-          phone: values.phone,
-          email: values.email,
-          address: values.address,
-          需求: values.需求,
-          status: values.status
-        })
-        .eq('id', selectedCustomer.id)
-        .select();
-      
-      if (error) {
-        console.error('更新客户失败:', error);
-        message.error('更新客户失败');
-      } else {
-        message.success('更新客户成功');
-        setCustomerModalVisible(false);
-        customerForm.resetFields();
-        fetchCustomers();
-      }
+  const handleUpdateCustomer = (values) => {
+    const updated = customers.map(c => 
+      c.id === selectedCustomer.id 
+        ? { ...c, ...values }
+        : c
+    );
+    storage.set('customers', updated);
+    setCustomers(updated);
+    setFilteredCustomers(updated);
+    message.success('更新客户成功');
+    setCustomerModalVisible(false);
+    customerForm.resetFields();
     } catch (error) {
       console.error('更新客户异常:', error);
       message.error('更新客户异常');
@@ -586,24 +371,12 @@ function App() {
   };
 
   // 删除客户
-  const handleDeleteCustomer = async (id) => {
-    try {
-      const { error } = await supabase
-        .from('customers')
-        .delete()
-        .eq('id', id);
-      
-      if (error) {
-        console.error('删除客户失败:', error);
-        message.error('删除客户失败');
-      } else {
-        message.success('删除客户成功');
-        fetchCustomers();
-      }
-    } catch (error) {
-      console.error('删除客户异常:', error);
-      message.error('删除客户异常');
-    }
+  const handleDeleteCustomer = (id) => {
+    const updated = customers.filter(c => c.id !== id);
+    storage.set('customers', updated);
+    setCustomers(updated);
+    setFilteredCustomers(updated);
+    message.success('删除客户成功');
   };
 
   // 打开编辑客户模态框
@@ -627,90 +400,55 @@ function App() {
   }, [searchText, properties]);
 
   // 添加房源
-  const handleAddProperty = async (values) => {
-    try {
-      const { data, error } = await supabase
-        .from('properties')
-        .insert({
-          title: values.title,
-          address: values.address,
-          price: values.price,
-          type: values.type,
-          area: values.area,
-          bedrooms: values.bedrooms,
-          bathrooms: values.bathrooms,
-          description: values.description,
-          status: values.status
-        })
-        .select();
-      
-      if (error) {
-        console.error('添加房源失败:', error);
-        message.error('添加房源失败');
-      } else {
-        message.success('添加房源成功');
-        setDrawerVisible(false);
-        form.resetFields();
-        fetchProperties();
-      }
-    } catch (error) {
-      console.error('添加房源异常:', error);
-      message.error('添加房源异常');
-    }
+  const handleAddProperty = (values) => {
+    const newProperty = {
+      id: Date.now(),
+      ...values
+    };
+    const updated = [...properties, newProperty];
+    storage.set('properties', updated);
+    setProperties(updated);
+    setFilteredProperties(updated);
+    message.success('添加房源成功');
+    setDrawerVisible(false);
+    form.resetFields();
   };
 
   // 更新房源
-  const handleUpdateProperty = async (values) => {
-    try {
-      const { data, error } = await supabase
-        .from('properties')
-        .update({
-          title: values.title,
-          address: values.address,
-          price: values.price,
-          type: values.type,
-          area: values.area,
-          bedrooms: values.bedrooms,
-          bathrooms: values.bathrooms,
-          description: values.description,
-          status: values.status
-        })
-        .eq('id', selectedProperty.id)
-        .select();
-      
-      if (error) {
-        console.error('更新房源失败:', error);
-        message.error('更新房源失败');
-      } else {
-        message.success('更新房源成功');
-        setIsModalVisible(false);
-        form.resetFields();
-        fetchProperties();
-      }
-    } catch (error) {
-      console.error('更新房源异常:', error);
-      message.error('更新房源异常');
-    }
+  const handleUpdateProperty = (values) => {
+    const updated = properties.map(p => 
+      p.id === selectedProperty.id 
+        ? { ...p, ...values }
+        : p
+    );
+    storage.set('properties', updated);
+    setProperties(updated);
+    setFilteredProperties(updated);
+    message.success('更新房源成功');
+    setIsModalVisible(false);
+    form.resetFields();
   };
 
-  // 删除房源
-  const handleDeleteProperty = async (id) => {
-    try {
-      const { error } = await supabase
-        .from('properties')
-        .delete()
-        .eq('id', id);
+  // 删除房源（移至回收站）
+  const handleDeleteProperty = (id) => {
+    const property = properties.find(p => p.id === id);
+    if (property) {
+      // 添加到回收站
+      const recycledItem = {
+        ...property,
+        deleted_at: new Date().toISOString().split('T')[0]
+      };
+      const updatedRecycled = [...recycledProperties, recycledItem];
+      storage.set('recycledProperties', updatedRecycled);
+      setRecycledProperties(updatedRecycled);
       
-      if (error) {
-        console.error('删除房源失败:', error);
-        message.error('删除房源失败');
-      } else {
-        message.success('删除房源成功');
-        fetchProperties();
-      }
-    } catch (error) {
-      console.error('删除房源异常:', error);
-      message.error('删除房源异常');
+      // 从房源列表移除
+      const updated = properties.filter(p => p.id !== id);
+      storage.set('properties', updated);
+      setProperties(updated);
+      setFilteredProperties(updated);
+      
+      message.success('删除成功，已移至回收站');
     }
   };
 
