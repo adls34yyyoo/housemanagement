@@ -970,7 +970,7 @@
 
     <script>
         // 数据存储
-        let properties = [
+        let properties = JSON.parse(localStorage.getItem('properties')) || [
             {
                 id: 1,
                 title: '阳光公寓',
@@ -997,7 +997,7 @@
             }
         ];
 
-        let customers = [
+        let customers = JSON.parse(localStorage.getItem('customers')) || [
             {
                 id: 1,
                 name: '张三',
@@ -1010,11 +1010,11 @@
             {
                 id: 2,
                 name: '李四',
-                phone: '13900139000',
+                phone: '13800138001',
                 email: 'lisi@example.com',
-                address: '上海市浦东新区',
+                address: '北京市海淀区',
                 needs: '三居室，带车位',
-                status: 'active'
+                status: 'inactive'
             }
         ];
 
@@ -1534,6 +1534,7 @@
             }
 
             properties.unshift(property);
+            localStorage.setItem('properties', JSON.stringify(properties));
             filteredProperties = [...properties];
             renderPropertyList();
             renderRecentProperties();
@@ -1560,6 +1561,7 @@
             }
 
             customers.unshift(customer);
+            localStorage.setItem('customers', JSON.stringify(customers));
             filteredCustomers = [...customers];
             renderCustomerList();
             updateStats();
@@ -1571,6 +1573,7 @@
         function deleteProperty(id) {
             if (confirm('确定要删除这个房源吗？')) {
                 properties = properties.filter(p => p.id !== id);
+                localStorage.setItem('properties', JSON.stringify(properties));
                 filteredProperties = [...properties];
                 renderPropertyList();
                 renderRecentProperties();
