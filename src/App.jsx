@@ -124,6 +124,52 @@ const { Header, Sider, Content } = Layout;
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 
+// AI功能相关函数
+const aiFunctions = {
+  generateTitle: (type) => {
+    const typeText = type === 'sell' ? '出售' : '出租';
+    const titles = [
+      `精装修${typeText} - 拎包入住`,
+      `${typeText}房源 - 交通便利`,
+      `优质${typeText} - 采光好`,
+      `${typeText}好房 - 配套齐全`,
+      `温馨${typeText} - 环境优美`
+    ];
+    return titles[Math.floor(Math.random() * titles.length)];
+  },
+  generateAddress: () => {
+    const addresses = [
+      '北京市朝阳区建国路88号',
+      '上海市浦东新区陆家嘴金融中心',
+      '广州市天河区珠江新城',
+      '深圳市南山区科技园',
+      '杭州市西湖区西溪湿地附近'
+    ];
+    return addresses[Math.floor(Math.random() * addresses.length)];
+  },
+  generateCommunity: () => {
+    const communities = [
+      '阳光小区',
+      '幸福家园',
+      '绿地花园',
+      '金色家园',
+      '和谐社区'
+    ];
+    return communities[Math.floor(Math.random() * communities.length)];
+  },
+  generateDescription: (type) => {
+    const typeText = type === 'sell' ? '出售' : '出租';
+    const descriptions = [
+      `该房源位于繁华地段，交通便利，周边配套齐全，适合${typeText}。房屋采光好，通风佳，是理想的居住选择。`,
+      `精装修${typeText}房源，拎包即可入住，小区环境优美，绿化率高，安静舒适。`,
+      `此房源交通便利，周边有学校、商场、医院等配套设施，生活便利，是${typeText}的绝佳选择。`,
+      `房屋格局方正，采光充足，通风良好，周边环境优美，适合${typeText}。`,
+      `该${typeText}房源位于成熟小区，配套齐全，交通便利，是您理想的居住场所。`
+    ];
+    return descriptions[Math.floor(Math.random() * descriptions.length)];
+  }
+};
+
 function App() {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -152,6 +198,8 @@ function App() {
   const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [communitySearchText, setCommunitySearchText] = useState('');
   const [customerSearchText, setCustomerSearchText] = useState('');
+  const [propertyType, setPropertyType] = useState('rent');
+  const [isListening, setIsListening] = useState(false);
 
   // 登录处理
   const handleLogin = async () => {
@@ -400,7 +448,9 @@ function App() {
   const handleAddProperty = (values) => {
     const newProperty = {
       id: Date.now(),
-      ...values
+      ...values,
+      propertyType: propertyType,
+      status: values.status || (propertyType === 'rent' ? '可租' : '在售')
     };
     const updated = [...properties, newProperty];
     storage.set('properties', updated);
@@ -464,7 +514,7 @@ function App() {
           justifyContent: 'center',
           alignItems: 'center',
           minHeight: '100vh',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+          background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)'
         }}>
           <Card
             title="房源管理系统登录"
@@ -502,7 +552,13 @@ function App() {
                 <Button 
                   type="primary" 
                   htmlType="submit" 
-                  style={{ width: '100%', height: 40, fontSize: 16 }}
+                  style={{ 
+                    width: '100%', 
+                    height: 40, 
+                    fontSize: 16,
+                    background: 'linear-gradient(135deg, #2196f3 0%, #64b5f6 100%)',
+                    border: 'none'
+                  }}
                 >
                   登录
                 </Button>
@@ -523,6 +579,9 @@ function App() {
               if (broken) {
                 setMobileMenuVisible(false);
               }
+            }}
+            style={{
+              background: 'linear-gradient(135deg, #2196f3 0%, #64b5f6 100%)'
             }}
           >
             <div className="logo" style={{ 
@@ -603,8 +662,9 @@ function App() {
               justifyContent: 'space-between', 
               alignItems: 'center',
               padding: '0 24px',
-              background: '#fff',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+              background: 'linear-gradient(135deg, #2196f3 0%, #64b5f6 100%)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              color: '#fff'
             }}>
               <Button
                 type="text"
@@ -628,7 +688,7 @@ function App() {
             <Content style={{ 
               margin: '24px 16px', 
               padding: 24, 
-              background: '#fff', 
+              background: '#f0f8ff', 
               minHeight: 280,
               borderRadius: 8
             }}>
@@ -752,13 +812,28 @@ function App() {
                       marginBottom: 24
                     }}>
                       <h2>房源管理</h2>
-                      <Button 
-                        type="primary" 
-                        icon={<PlusOutlined />}
-                        onClick={() => setDrawerVisible(true)}
-                      >
-                        添加房源
-                      </Button>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <Button 
+                          type="primary" 
+                          icon={<PlusOutlined />}
+                          onClick={() => {
+                            setPropertyType('rent');
+                            setDrawerVisible(true);
+                          }}
+                        >
+                          新增租房
+                        </Button>
+                        <Button 
+                          type="primary" 
+                          icon={<PlusOutlined />}
+                          onClick={() => {
+                            setPropertyType('sell');
+                            setDrawerVisible(true);
+                          }}
+                        >
+                          新增卖房
+                        </Button>
+                      </div>
                     </div>
                     <div style={{ marginBottom: 16, display: 'flex', gap: 16 }}>
                       <Input
@@ -787,7 +862,7 @@ function App() {
                             cover={
                               <div style={{ 
                                 height: 150, 
-                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                background: 'linear-gradient(135deg, #2196f3 0%, #64b5f6 100%)',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -831,14 +906,8 @@ function App() {
                                 <div>
                                   <span>{item.title}</span>
                                   <Badge 
-                                    status={
-                                      item.status === 'available' ? 'success' :
-                                      item.status === 'rented' ? 'processing' : 'warning'
-                                    } 
-                                    text={
-                                      item.status === 'available' ? '可租' :
-                                      item.status === 'rented' ? '已租' : '维护中'
-                                    } 
+                                    status={item.propertyType === 'sell' ? 'success' : 'processing'} 
+                                    text={item.propertyType === 'sell' ? '卖房' : '租房'} 
                                     style={{ marginLeft: 8 }}
                                   />
                                 </div>
@@ -846,9 +915,11 @@ function App() {
                               description={
                                 <div>
                                   <p>{item.address}</p>
-                                  <p>¥{item.price}/月</p>
+                                  {item.community && <p>小区: {item.community}</p>}
+                                  <p>¥{item.price}{item.propertyType === 'sell' ? '' : '/月'}</p>
                                   <p>{item.area}㎡ | {item.bedrooms}室{item.bathrooms}卫</p>
-                                  <p>{item.type}</p>
+                                  <p>{item.type || '普通住宅'}</p>
+                                  <p>状态: {item.status || '可租'}</p>
                                 </div>
                               }
                             />
@@ -1245,7 +1316,7 @@ function App() {
 
           {/* 添加房源抽屉 */}
           <Drawer
-            title="添加房源"
+            title={propertyType === 'sell' ? '新增卖房' : '新增租房'}
             placement="right"
             onClose={() => setDrawerVisible(false)}
             open={drawerVisible}
@@ -1261,36 +1332,156 @@ function App() {
                 name="title"
                 rules={[{ required: true, message: '请输入房源标题' }]}
               >
-                <Input placeholder="请输入房源标题" />
+                <div style={{ position: 'relative' }}>
+                  <Input placeholder="请输入房源标题" />
+                  <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                    <Button 
+                      size="small" 
+                      onClick={() => {
+                        const title = aiFunctions.generateTitle(propertyType);
+                        form.setFieldsValue({ title });
+                        message.success('AI生成标题成功');
+                      }}
+                    >
+                      AI生成
+                    </Button>
+                    <Button 
+                      size="small" 
+                      onClick={() => {
+                        if ('webkitSpeechRecognition' in window) {
+                          const recognition = new webkitSpeechRecognition();
+                          recognition.lang = 'zh-CN';
+                          setIsListening(true);
+                          recognition.onresult = function(event) {
+                            const transcript = event.results[0][0].transcript;
+                            form.setFieldsValue({ title: transcript });
+                            setIsListening(false);
+                            message.success('语音输入成功');
+                          };
+                          recognition.onerror = function() {
+                            setIsListening(false);
+                            message.error('语音输入失败');
+                          };
+                          recognition.start();
+                          message.info('请开始说话...');
+                        } else {
+                          message.error('您的浏览器不支持语音输入');
+                        }
+                      }}
+                    >
+                      {isListening ? '正在聆听...' : '语音输入'}
+                    </Button>
+                  </div>
+                </div>
               </Form.Item>
               <Form.Item
                 label="地址"
                 name="address"
                 rules={[{ required: true, message: '请输入房源地址' }]}
               >
-                <Input placeholder="请输入房源地址" />
+                <div style={{ position: 'relative' }}>
+                  <Input placeholder="请输入房源地址" />
+                  <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                    <Button 
+                      size="small" 
+                      onClick={() => {
+                        const address = aiFunctions.generateAddress();
+                        form.setFieldsValue({ address });
+                        message.success('AI识别地址成功');
+                      }}
+                    >
+                      AI识别
+                    </Button>
+                    <Button 
+                      size="small" 
+                      onClick={() => {
+                        if ('webkitSpeechRecognition' in window) {
+                          const recognition = new webkitSpeechRecognition();
+                          recognition.lang = 'zh-CN';
+                          setIsListening(true);
+                          recognition.onresult = function(event) {
+                            const transcript = event.results[0][0].transcript;
+                            form.setFieldsValue({ address: transcript });
+                            setIsListening(false);
+                            message.success('语音输入成功');
+                          };
+                          recognition.onerror = function() {
+                            setIsListening(false);
+                            message.error('语音输入失败');
+                          };
+                          recognition.start();
+                          message.info('请开始说话...');
+                        } else {
+                          message.error('您的浏览器不支持语音输入');
+                        }
+                      }}
+                    >
+                      {isListening ? '正在聆听...' : '语音输入'}
+                    </Button>
+                  </div>
+                </div>
               </Form.Item>
               <Form.Item
-                label="价格"
+                label="小区"
+                name="community"
+              >
+                <div style={{ position: 'relative' }}>
+                  <Input placeholder="请输入小区名称（可自由添加）" />
+                  <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                    <Button 
+                      size="small" 
+                      onClick={() => {
+                        const community = aiFunctions.generateCommunity();
+                        form.setFieldsValue({ community });
+                        message.success('AI推荐小区成功');
+                      }}
+                    >
+                      AI推荐
+                    </Button>
+                    <Button 
+                      size="small" 
+                      onClick={() => {
+                        if ('webkitSpeechRecognition' in window) {
+                          const recognition = new webkitSpeechRecognition();
+                          recognition.lang = 'zh-CN';
+                          setIsListening(true);
+                          recognition.onresult = function(event) {
+                            const transcript = event.results[0][0].transcript;
+                            form.setFieldsValue({ community: transcript });
+                            setIsListening(false);
+                            message.success('语音输入成功');
+                          };
+                          recognition.onerror = function() {
+                            setIsListening(false);
+                            message.error('语音输入失败');
+                          };
+                          recognition.start();
+                          message.info('请开始说话...');
+                        } else {
+                          message.error('您的浏览器不支持语音输入');
+                        }
+                      }}
+                    >
+                      {isListening ? '正在聆听...' : '语音输入'}
+                    </Button>
+                  </div>
+                </div>
+              </Form.Item>
+              <Form.Item
+                label={propertyType === 'sell' ? "价格（元）" : "价格（元/月）"}
                 name="price"
                 rules={[{ required: true, message: '请输入价格' }]}
               >
                 <Input type="number" placeholder="请输入价格" />
               </Form.Item>
               <Form.Item
-                label="房源类型"
+                label="类型"
                 name="type"
-                rules={[{ required: true, message: '请选择房源类型' }]}
               >
-                <Select placeholder="请选择房源类型">
-                  <Option value="公寓">公寓</Option>
-                  <Option value="别墅">别墅</Option>
-                  <Option value="普通住宅">普通住宅</Option>
-                  <Option value="商住两用">商住两用</Option>
-                </Select>
+                <Input placeholder="请输入房源类型（如：公寓、别墅等）" />
               </Form.Item>
               <Form.Item
-                label="面积"
+                label="面积（㎡）"
                 name="area"
                 rules={[{ required: true, message: '请输入面积' }]}
               >
@@ -1313,19 +1504,54 @@ function App() {
               <Form.Item
                 label="状态"
                 name="status"
-                rules={[{ required: true, message: '请选择状态' }]}
               >
-                <Select placeholder="请选择状态">
-                  <Option value="available">可租</Option>
-                  <Option value="rented">已租</Option>
-                  <Option value="maintenance">维护中</Option>
-                </Select>
+                <Input placeholder="请输入状态（如：可租、已租、维护中等）" />
               </Form.Item>
               <Form.Item
                 label="描述"
                 name="description"
               >
-                <Input.TextArea placeholder="请输入房源描述" />
+                <div style={{ position: 'relative' }}>
+                  <Input.TextArea placeholder="请输入房源描述" />
+                  <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                    <Button 
+                      size="small" 
+                      onClick={() => {
+                        const description = aiFunctions.generateDescription(propertyType);
+                        form.setFieldsValue({ description });
+                        message.success('AI生成描述成功');
+                      }}
+                    >
+                      AI生成
+                    </Button>
+                    <Button 
+                      size="small" 
+                      onClick={() => {
+                        if ('webkitSpeechRecognition' in window) {
+                          const recognition = new webkitSpeechRecognition();
+                          recognition.lang = 'zh-CN';
+                          setIsListening(true);
+                          recognition.onresult = function(event) {
+                            const transcript = event.results[0][0].transcript;
+                            form.setFieldsValue({ description: transcript });
+                            setIsListening(false);
+                            message.success('语音输入成功');
+                          };
+                          recognition.onerror = function() {
+                            setIsListening(false);
+                            message.error('语音输入失败');
+                          };
+                          recognition.start();
+                          message.info('请开始说话...');
+                        } else {
+                          message.error('您的浏览器不支持语音输入');
+                        }
+                      }}
+                    >
+                      {isListening ? '正在聆听...' : '语音输入'}
+                    </Button>
+                  </div>
+                </div>
               </Form.Item>
               <Form.Item>
                 <Button type="primary" htmlType="submit" style={{ marginRight: 8 }}>
