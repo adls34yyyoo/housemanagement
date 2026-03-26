@@ -10,7 +10,11 @@ import {
   EditOutlined, 
   DeleteOutlined, 
   SearchOutlined,
-  MenuOutlined
+  MenuOutlined,
+  TeamOutlined,
+  ShareAltOutlined,
+  BarChartOutlined,
+  DeleteRowOutlined
 } from '@ant-design/icons';
 import { createClient } from '@supabase/supabase-js';
 
@@ -29,13 +33,21 @@ function App() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [properties, setProperties] = useState([]);
+  const [communities, setCommunities] = useState([]);
+  const [recycledProperties, setRecycledProperties] = useState([]);
   const [drawerVisible, setDrawerVisible] = useState(false);
+  const [communityDrawerVisible, setCommunityDrawerVisible] = useState(false);
   const [mobileMenuVisible, setMobileMenuVisible] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState(null);
+  const [selectedCommunity, setSelectedCommunity] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [communityModalVisible, setCommunityModalVisible] = useState(false);
   const [form] = Form.useForm();
+  const [communityForm] = Form.useForm();
   const [searchText, setSearchText] = useState('');
   const [filteredProperties, setFilteredProperties] = useState([]);
+  const [filteredCommunities, setFilteredCommunities] = useState([]);
+  const [communitySearchText, setCommunitySearchText] = useState('');
 
   // 登录处理
   const handleLogin = async () => {
@@ -59,8 +71,23 @@ function App() {
   useEffect(() => {
     if (isLoggedIn) {
       fetchProperties();
+      fetchCommunities();
+      fetchRecycledProperties();
     }
   }, [isLoggedIn]);
+
+  // 搜索小区
+  useEffect(() => {
+    if (communitySearchText) {
+      const filtered = communities.filter(community => 
+        community.name.toLowerCase().includes(communitySearchText.toLowerCase()) ||
+        community.address.toLowerCase().includes(communitySearchText.toLowerCase())
+      );
+      setFilteredCommunities(filtered);
+    } else {
+      setFilteredCommunities(communities);
+    }
+  }, [communitySearchText, communities]);
 
   const fetchProperties = async () => {
     try {
@@ -83,7 +110,8 @@ function App() {
             bedrooms: 2,
             bathrooms: 1,
             description: '交通便利，配套齐全',
-            status: 'available'
+            status: 'available',
+            community_id: 1
           },
           {
             id: 2,
@@ -95,7 +123,8 @@ function App() {
             bedrooms: 4,
             bathrooms: 3,
             description: '带花园，私密性好',
-            status: 'rented'
+            status: 'rented',
+            community_id: 2
           }
         ];
         setProperties(mockData);
@@ -119,7 +148,8 @@ function App() {
           bedrooms: 2,
           bathrooms: 1,
           description: '交通便利，配套齐全',
-          status: 'available'
+          status: 'available',
+          community_id: 1
         },
         {
           id: 2,
@@ -131,11 +161,277 @@ function App() {
           bedrooms: 4,
           bathrooms: 3,
           description: '带花园，私密性好',
-          status: 'rented'
+          status: 'rented',
+          community_id: 2
         }
       ];
       setProperties(mockData);
       setFilteredProperties(mockData);
+    }
+  };
+
+  // 获取小区数据
+  const fetchCommunities = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('communities')
+        .select('*');
+      
+      if (error) {
+        console.error('获取小区数据失败:', error);
+        message.error('获取小区数据失败，使用本地数据');
+        // 使用本地模拟数据
+        const mockData = [
+          {
+            id: 1,
+            name: '阳光小区',
+            address: '北京市朝阳区',
+            description: '环境优美，配套齐全',
+            property_count: 50
+          },
+          {
+            id: 2,
+            name: '豪华别墅区',
+            address: '上海市浦东新区',
+            description: '高端社区，私密性好',
+            property_count: 20
+          }
+        ];
+        setCommunities(mockData);
+        setFilteredCommunities(mockData);
+      } else {
+        setCommunities(data || []);
+        setFilteredCommunities(data || []);
+      }
+    } catch (error) {
+      console.error('获取小区数据异常:', error);
+      message.error('获取小区数据异常，使用本地数据');
+      // 使用本地模拟数据
+      const mockData = [
+        {
+          id: 1,
+          name: '阳光小区',
+          address: '北京市朝阳区',
+          description: '环境优美，配套齐全',
+          property_count: 50
+        },
+        {
+          id: 2,
+          name: '豪华别墅区',
+          address: '上海市浦东新区',
+          description: '高端社区，私密性好',
+          property_count: 20
+        }
+      ];
+      setCommunities(mockData);
+      setFilteredCommunities(mockData);
+    }
+  };
+
+  // 获取回收站数据
+  const fetchRecycledProperties = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('recycled_properties')
+        .select('*');
+      
+      if (error) {
+        console.error('获取回收站数据失败:', error);
+        message.error('获取回收站数据失败，使用本地数据');
+        // 使用本地模拟数据
+        const mockData = [
+          {
+            id: 1,
+            title: '旧公寓',
+            address: '北京市海淀区',
+            price: 4000,
+            type: '公寓',
+            area: 60,
+            bedrooms: 1,
+            bathrooms: 1,
+            description: '老旧小区，需要装修',
+            deleted_at: '2026-03-20'
+          }
+        ];
+        setRecycledProperties(mockData);
+      } else {
+        setRecycledProperties(data || []);
+      }
+    } catch (error) {
+      console.error('获取回收站数据异常:', error);
+      message.error('获取回收站数据异常，使用本地数据');
+      // 使用本地模拟数据
+      const mockData = [
+        {
+          id: 1,
+          title: '旧公寓',
+          address: '北京市海淀区',
+          price: 4000,
+          type: '公寓',
+          area: 60,
+          bedrooms: 1,
+          bathrooms: 1,
+          description: '老旧小区，需要装修',
+          deleted_at: '2026-03-20'
+        }
+      ];
+      setRecycledProperties(mockData);
+    }
+  };
+
+  // 添加小区
+  const handleAddCommunity = async (values) => {
+    try {
+      const { data, error } = await supabase
+        .from('communities')
+        .insert({
+          name: values.name,
+          address: values.address,
+          description: values.description,
+          property_count: values.property_count || 0
+        })
+        .select();
+      
+      if (error) {
+        console.error('添加小区失败:', error);
+        message.error('添加小区失败');
+      } else {
+        message.success('添加小区成功');
+        setCommunityDrawerVisible(false);
+        communityForm.resetFields();
+        fetchCommunities();
+      }
+    } catch (error) {
+      console.error('添加小区异常:', error);
+      message.error('添加小区异常');
+    }
+  };
+
+  // 更新小区
+  const handleUpdateCommunity = async (values) => {
+    try {
+      const { data, error } = await supabase
+        .from('communities')
+        .update({
+          name: values.name,
+          address: values.address,
+          description: values.description,
+          property_count: values.property_count
+        })
+        .eq('id', selectedCommunity.id)
+        .select();
+      
+      if (error) {
+        console.error('更新小区失败:', error);
+        message.error('更新小区失败');
+      } else {
+        message.success('更新小区成功');
+        setCommunityModalVisible(false);
+        communityForm.resetFields();
+        fetchCommunities();
+      }
+    } catch (error) {
+      console.error('更新小区异常:', error);
+      message.error('更新小区异常');
+    }
+  };
+
+  // 删除小区
+  const handleDeleteCommunity = async (id) => {
+    try {
+      const { error } = await supabase
+        .from('communities')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        console.error('删除小区失败:', error);
+        message.error('删除小区失败');
+      } else {
+        message.success('删除小区成功');
+        fetchCommunities();
+      }
+    } catch (error) {
+      console.error('删除小区异常:', error);
+      message.error('删除小区异常');
+    }
+  };
+
+  // 打开编辑小区模态框
+  const openEditCommunityModal = (community) => {
+    setSelectedCommunity(community);
+    communityForm.setFieldsValue(community);
+    setCommunityModalVisible(true);
+  };
+
+  // 一键发布朋友圈
+  const handleShareToMoments = (property) => {
+    const shareText = `【${property.title}】\n地址: ${property.address}\n价格: ¥${property.price}/月\n面积: ${property.area}㎡\n户型: ${property.bedrooms}室${property.bathrooms}卫\n状态: ${property.status === 'available' ? '可租' : property.status === 'rented' ? '已租' : '维护中'}\n描述: ${property.description}`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: property.title,
+        text: shareText,
+        url: window.location.href
+      }).then(() => {
+        message.success('分享成功');
+      }).catch((error) => {
+        console.error('分享失败:', error);
+        message.error('分享失败');
+      });
+    } else {
+      // 复制到剪贴板
+      navigator.clipboard.writeText(shareText).then(() => {
+        message.success('分享内容已复制到剪贴板');
+      }).catch((error) => {
+        console.error('复制失败:', error);
+        message.error('复制失败');
+      });
+    }
+  };
+
+  // 恢复回收站中的房源
+  const handleRestoreProperty = async (id) => {
+    try {
+      // 从回收站中删除
+      const { error: deleteError } = await supabase
+        .from('recycled_properties')
+        .delete()
+        .eq('id', id);
+      
+      if (deleteError) {
+        console.error('恢复房源失败:', deleteError);
+        message.error('恢复房源失败');
+        return;
+      }
+      
+      message.success('恢复房源成功');
+      fetchRecycledProperties();
+      fetchProperties();
+    } catch (error) {
+      console.error('恢复房源异常:', error);
+      message.error('恢复房源异常');
+    }
+  };
+
+  // 永久删除回收站中的房源
+  const handlePermanentDeleteProperty = async (id) => {
+    try {
+      const { error } = await supabase
+        .from('recycled_properties')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        console.error('永久删除房源失败:', error);
+        message.error('永久删除房源失败');
+      } else {
+        message.success('永久删除房源成功');
+        fetchRecycledProperties();
+      }
+    } catch (error) {
+      console.error('永久删除房源异常:', error);
+      message.error('永久删除房源异常');
     }
   };
 
@@ -346,12 +642,30 @@ function App() {
                 },
                 {
                   key: '3',
+                  icon: <TeamOutlined />,
+                  label: '小区管理',
+                  path: '/communities'
+                },
+                {
+                  key: '4',
+                  icon: <BarChartOutlined />,
+                  label: '数据统计',
+                  path: '/statistics'
+                },
+                {
+                  key: '5',
+                  icon: <DeleteRowOutlined />,
+                  label: '回收站',
+                  path: '/recycle'
+                },
+                {
+                  key: '6',
                   icon: <UserOutlined />,
                   label: '个人中心',
                   path: '/profile'
                 },
                 {
-                  key: '4',
+                  key: '7',
                   icon: <LogoutOutlined />,
                   label: '退出登录',
                   onClick: handleLogout
@@ -433,6 +747,18 @@ function App() {
                         </div>
                         <div style={{ color: '#666' }}>维护中房源</div>
                       </Card>
+                      <Card>
+                        <div style={{ fontSize: 24, fontWeight: 'bold', color: '#722ed1' }}>
+                          {communities.length}
+                        </div>
+                        <div style={{ color: '#666' }}>小区数量</div>
+                      </Card>
+                      <Card>
+                        <div style={{ fontSize: 24, fontWeight: 'bold', color: '#13c2c2' }}>
+                          {recycledProperties.length}
+                        </div>
+                        <div style={{ color: '#666' }}>回收站房源</div>
+                      </Card>
                     </div>
                     <h3 style={{ marginBottom: 16 }}>最近房源</h3>
                     <List
@@ -448,6 +774,14 @@ function App() {
                               onClick={() => openEditModal(item)}
                             >
                               编辑
+                            </Button>,
+                            <Button 
+                              key="share" 
+                              type="text" 
+                              icon={<ShareAltOutlined />}
+                              onClick={() => handleShareToMoments(item)}
+                            >
+                              分享
                             </Button>,
                             <Button 
                               key="delete" 
@@ -555,6 +889,14 @@ function App() {
                                 编辑
                               </Button>,
                               <Button 
+                                key="share" 
+                                type="text" 
+                                icon={<ShareAltOutlined />}
+                                onClick={() => handleShareToMoments(item)}
+                              >
+                                分享
+                              </Button>,
+                              <Button 
                                 key="delete" 
                                 type="text" 
                                 danger 
@@ -592,6 +934,212 @@ function App() {
                               }
                             />
                           </Card>
+                        </List.Item>
+                      )}
+                    />
+                  </div>
+                } />
+                <Route path="/communities" element={
+                  <div>
+                    <div style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center', 
+                      marginBottom: 24
+                    }}>
+                      <h2>小区管理</h2>
+                      <Button 
+                        type="primary" 
+                        icon={<PlusOutlined />}
+                        onClick={() => setCommunityDrawerVisible(true)}
+                      >
+                        添加小区
+                      </Button>
+                    </div>
+                    <div style={{ marginBottom: 16, display: 'flex', gap: 16 }}>
+                      <Input
+                        placeholder="搜索小区..."
+                        prefix={<SearchOutlined />}
+                        value={communitySearchText}
+                        onChange={(e) => setCommunitySearchText(e.target.value)}
+                        style={{ width: 300 }}
+                      />
+                    </div>
+                    <List
+                      grid={{ 
+                        gutter: 16, 
+                        xs: 1, 
+                        sm: 2, 
+                        md: 3, 
+                        lg: 4,
+                      }}
+                      dataSource={filteredCommunities}
+                      renderItem={community => (
+                        <List.Item>
+                          <Card
+                            hoverable
+                            actions={[
+                              <Button 
+                                key="edit" 
+                                type="text" 
+                                icon={<EditOutlined />}
+                                onClick={() => openEditCommunityModal(community)}
+                              >
+                                编辑
+                              </Button>,
+                              <Button 
+                                key="delete" 
+                                type="text" 
+                                danger 
+                                icon={<DeleteOutlined />}
+                                onClick={() => handleDeleteCommunity(community.id)}
+                              >
+                                删除
+                              </Button>
+                            ]}
+                          >
+                            <Card.Meta
+                              title={community.name}
+                              description={
+                                <div>
+                                  <p>{community.address}</p>
+                                  <p>房源数量: {community.property_count}</p>
+                                  <p>{community.description}</p>
+                                </div>
+                              }
+                            />
+                          </Card>
+                        </List.Item>
+                      )}
+                    />
+                  </div>
+                } />
+                <Route path="/statistics" element={
+                  <div>
+                    <h2>数据统计</h2>
+                    <div style={{ 
+                      display: 'grid', 
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+                      gap: 24,
+                      marginBottom: 32
+                    }}>
+                      <Card>
+                        <h3 style={{ marginBottom: 16 }}>房源状态分布</h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>可租房源</span>
+                            <span style={{ fontWeight: 'bold', color: '#52c41a' }}>
+                              {properties.filter(p => p.status === 'available').length} ({Math.round((properties.filter(p => p.status === 'available').length / properties.length) * 100)}%)
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>已租房源</span>
+                            <span style={{ fontWeight: 'bold', color: '#fa8c16' }}>
+                              {properties.filter(p => p.status === 'rented').length} ({Math.round((properties.filter(p => p.status === 'rented').length / properties.length) * 100)}%)
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>维护中房源</span>
+                            <span style={{ fontWeight: 'bold', color: '#f5222d' }}>
+                              {properties.filter(p => p.status === 'maintenance').length} ({Math.round((properties.filter(p => p.status === 'maintenance').length / properties.length) * 100)}%)
+                            </span>
+                          </div>
+                        </div>
+                      </Card>
+                      <Card>
+                        <h3 style={{ marginBottom: 16 }}>房源类型分布</h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                          {['公寓', '别墅', '普通住宅', '商住两用'].map(type => (
+                            <div key={type} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span>{type}</span>
+                              <span style={{ fontWeight: 'bold' }}>
+                                {properties.filter(p => p.type === type).length}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </Card>
+                      <Card>
+                        <h3 style={{ marginBottom: 16 }}>小区房源数量</h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                          {communities.map(community => (
+                            <div key={community.id} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span>{community.name}</span>
+                              <span style={{ fontWeight: 'bold' }}>
+                                {community.property_count}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </Card>
+                      <Card>
+                        <h3 style={{ marginBottom: 16 }}>价格区间分布</h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>5000元以下</span>
+                            <span style={{ fontWeight: 'bold' }}>
+                              {properties.filter(p => p.price < 5000).length}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>5000-10000元</span>
+                            <span style={{ fontWeight: 'bold' }}>
+                              {properties.filter(p => p.price >= 5000 && p.price < 10000).length}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>10000元以上</span>
+                            <span style={{ fontWeight: 'bold' }}>
+                              {properties.filter(p => p.price >= 10000).length}
+                            </span>
+                          </div>
+                        </div>
+                      </Card>
+                    </div>
+                  </div>
+                } />
+                <Route path="/recycle" element={
+                  <div>
+                    <h2>回收站</h2>
+                    <div style={{ marginBottom: 24 }}>
+                      <p>回收站中共有 {recycledProperties.length} 个房源</p>
+                    </div>
+                    <List
+                      itemLayout="horizontal"
+                      dataSource={recycledProperties}
+                      renderItem={item => (
+                        <List.Item
+                          actions={[
+                            <Button 
+                              key="restore" 
+                              type="text" 
+                              icon={<EditOutlined />}
+                              onClick={() => handleRestoreProperty(item.id)}
+                            >
+                              恢复
+                            </Button>,
+                            <Button 
+                              key="delete" 
+                              type="text" 
+                              danger 
+                              icon={<DeleteOutlined />}
+                              onClick={() => handlePermanentDeleteProperty(item.id)}
+                            >
+                              永久删除
+                            </Button>
+                          ]}
+                        >
+                          <List.Item.Meta
+                            avatar={<Avatar style={{ backgroundColor: '#f5222d' }}>{item.title.charAt(0)}</Avatar>}
+                            title={item.title}
+                            description={
+                              <div>
+                                <p>{item.address}</p>
+                                <p>¥{item.price}/月 | {item.area}㎡ | {item.bedrooms}室{item.bathrooms}卫</p>
+                                <p>删除时间: {item.deleted_at}</p>
+                              </div>
+                            }
+                          />
                         </List.Item>
                       )}
                     />
@@ -643,6 +1191,33 @@ function App() {
                 },
                 {
                   key: '3',
+                  icon: <TeamOutlined />,
+                  label: '小区管理',
+                  onClick: () => {
+                    window.location.href = '/communities';
+                    setMobileMenuVisible(false);
+                  }
+                },
+                {
+                  key: '4',
+                  icon: <BarChartOutlined />,
+                  label: '数据统计',
+                  onClick: () => {
+                    window.location.href = '/statistics';
+                    setMobileMenuVisible(false);
+                  }
+                },
+                {
+                  key: '5',
+                  icon: <DeleteRowOutlined />,
+                  label: '回收站',
+                  onClick: () => {
+                    window.location.href = '/recycle';
+                    setMobileMenuVisible(false);
+                  }
+                },
+                {
+                  key: '6',
                   icon: <UserOutlined />,
                   label: '个人中心',
                   onClick: () => {
@@ -651,7 +1226,7 @@ function App() {
                   }
                 },
                 {
-                  key: '4',
+                  key: '7',
                   icon: <LogoutOutlined />,
                   label: '退出登录',
                   onClick: () => {
@@ -846,6 +1421,107 @@ function App() {
                   提交
                 </Button>
                 <Button onClick={() => setIsModalVisible(false)}>
+                  取消
+                </Button>
+              </Form.Item>
+            </Form>
+          </Modal>
+
+          {/* 添加小区抽屉 */}
+          <Drawer
+            title="添加小区"
+            placement="right"
+            onClose={() => setCommunityDrawerVisible(false)}
+            open={communityDrawerVisible}
+            width={500}
+          >
+            <Form
+              form={communityForm}
+              layout="vertical"
+              onFinish={handleAddCommunity}
+            >
+              <Form.Item
+                label="小区名称"
+                name="name"
+                rules={[{ required: true, message: '请输入小区名称' }]}
+              >
+                <Input placeholder="请输入小区名称" />
+              </Form.Item>
+              <Form.Item
+                label="地址"
+                name="address"
+                rules={[{ required: true, message: '请输入小区地址' }]}
+              >
+                <Input placeholder="请输入小区地址" />
+              </Form.Item>
+              <Form.Item
+                label="房源数量"
+                name="property_count"
+                rules={[{ required: true, message: '请输入房源数量' }]}
+              >
+                <Input type="number" placeholder="请输入房源数量" />
+              </Form.Item>
+              <Form.Item
+                label="描述"
+                name="description"
+              >
+                <Input.TextArea placeholder="请输入小区描述" />
+              </Form.Item>
+              <Form.Item>
+                <Button type="primary" htmlType="submit" style={{ marginRight: 8 }}>
+                  提交
+                </Button>
+                <Button onClick={() => setCommunityDrawerVisible(false)}>
+                  取消
+                </Button>
+              </Form.Item>
+            </Form>
+          </Drawer>
+
+          {/* 编辑小区模态框 */}
+          <Modal
+            title="编辑小区"
+            open={communityModalVisible}
+            onCancel={() => setCommunityModalVisible(false)}
+            footer={null}
+          >
+            <Form
+              form={communityForm}
+              layout="vertical"
+              onFinish={handleUpdateCommunity}
+            >
+              <Form.Item
+                label="小区名称"
+                name="name"
+                rules={[{ required: true, message: '请输入小区名称' }]}
+              >
+                <Input placeholder="请输入小区名称" />
+              </Form.Item>
+              <Form.Item
+                label="地址"
+                name="address"
+                rules={[{ required: true, message: '请输入小区地址' }]}
+              >
+                <Input placeholder="请输入小区地址" />
+              </Form.Item>
+              <Form.Item
+                label="房源数量"
+                name="property_count"
+                rules={[{ required: true, message: '请输入房源数量' }]}
+              >
+                <Input type="number" placeholder="请输入房源数量" />
+              </Form.Item>
+              <Form.Item
+                label="描述"
+                name="description"
+              >
+                <Input.TextArea placeholder="请输入小区描述" />
+              </Form.Item>
+              <Form.Item>
+                <Button type="primary" htmlType="submit" style={{ marginRight: 8 }}>
+                  提交
+                </Button>
+                <Button onClick={() => setCommunityModalVisible(false)}>
                   取消
                 </Button>
               </Form.Item>
