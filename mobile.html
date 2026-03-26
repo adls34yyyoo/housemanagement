@@ -968,8 +968,19 @@
         // Supabase配置
         const supabaseUrl = 'https://txqgghyptqptbvwxqfbb.supabase.co';
         const supabaseKey = '*************************************************************************************************************************************************************************************************************************';
-        const { createClient } = supabase;
-        const supabase = createClient(supabaseUrl, supabaseKey);
+        
+        let supabase = null;
+        try {
+            if (window.supabase) {
+                const { createClient } = window.supabase;
+                supabase = createClient(supabaseUrl, supabaseKey);
+                console.log('Supabase初始化成功');
+            } else {
+                console.error('Supabase库未加载');
+            }
+        } catch (e) {
+            console.error('Supabase初始化失败:', e);
+        }
 
         // 数据存储
         let properties = [];
@@ -979,9 +990,14 @@
         let filteredCustomers = [];
 
         // 登录处理
-        async function handleLogin() {
+        function handleLogin() {
+            console.log('登录按钮被点击');
+            
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
+
+            console.log('用户名:', username);
+            console.log('密码:', password);
 
             if (username === 'admin' && password === 'admin123') {
                 // 显示加载状态
@@ -993,24 +1009,18 @@
                 document.getElementById('headerUser').textContent = username;
                 document.getElementById('profileUsername').textContent = username;
                 
-                try {
-                    // 从Supabase加载数据
-                    await loadData();
-                    
+                // 先显示登录成功，不等待数据加载
+                showToast('登录成功');
+                
+                // 尝试加载数据（但不阻塞）
+                loadData().then(() => {
                     updateStats();
                     renderRecentProperties();
                     renderPropertyList();
                     renderCustomerList();
-                    showToast('登录成功');
-                } catch (error) {
-                    console.error('登录过程出错:', error);
-                    showToast('登录成功，但数据加载失败');
-                    // 即使数据加载失败，也允许用户登录
-                    updateStats();
-                    renderRecentProperties();
-                    renderPropertyList();
-                    renderCustomerList();
-                }
+                }).catch(error => {
+                    console.error('数据加载失败:', error);
+                });
             } else {
                 showToast('用户名或密码错误');
             }
@@ -1019,6 +1029,16 @@
         // 从Supabase加载数据
         async function loadData() {
             try {
+                // 如果Supabase未初始化，返回空数据
+                if (!supabase) {
+                    console.log('Supabase未初始化，使用空数据');
+                    properties = [];
+                    customers = [];
+                    filteredProperties = [...properties];
+                    filteredCustomers = [...customers];
+                    return;
+                }
+                
                 // 加载房源数据
                 const { data: propertiesData, error: propertiesError } = await supabase
                     .from('properties')
