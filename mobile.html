@@ -553,6 +553,61 @@
             resize: vertical;
         }
         
+        .ai-input-container {
+            position: relative;
+            width: 100%;
+        }
+        
+        .ai-input-buttons {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            display: flex;
+            gap: 8px;
+        }
+        
+        .ai-voice-button {
+            width: 40px;
+            height: 40px;
+            border: 1px solid #2196f3;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .ai-voice-button:hover {
+            background: #e3f2fd;
+        }
+        
+        .ai-voice-button svg {
+            width: 20px;
+            height: 20px;
+            fill: #2196f3;
+        }
+        
+        .ai-button {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #2196f3 0%, #64b5f6 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 12px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .ai-button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        
         .form-actions {
             padding: 16px 20px;
             border-top: 1px solid #f0f0f0;
@@ -857,11 +912,15 @@
                 <!-- AI识别输入框 -->
                 <div class="form-group">
                     <label class="form-label">AI识别输入</label>
-                    <textarea class="form-textarea" id="aiInput" placeholder="请输入或语音输入房源信息，例如：阳光小区，精装修，3室2厅2卫，120㎡，价格8000元/月，房东张三，电话13800138000，位于北京市朝阳区..."></textarea>
-                    <div class="ai-buttons">
-                        <div class="ai-button" onclick="voiceInput('aiInput')">语音输入</div>
-                        <div class="ai-button" onclick="aiExtractFromInput()">AI识别并填充</div>
+                    <div class="ai-input-container">
+                        <textarea class="form-textarea" id="aiInput" placeholder="请输入或语音输入房源信息，例如：阳光小区，精装修，3室2厅2卫，120㎡，价格8000元/月，房东张三，电话13800138000，位于北京市朝阳区..."></textarea>
+                        <div class="ai-input-buttons">
+                            <div class="ai-voice-button" onclick="voiceInput('aiInput')">
+                                <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>
+                            </div>
+                        </div>
                     </div>
+                    <div class="ai-button" onclick="aiExtractFromInput()">AI识别并填充</div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">小区</label>
@@ -1354,16 +1413,58 @@
             if ('webkitSpeechRecognition' in window) {
                 const recognition = new webkitSpeechRecognition();
                 recognition.lang = 'zh-CN';
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.maxAlternatives = 1;
+                
+                // 开始录音
+                recognition.onstart = function() {
+                    showToast('请开始说话，说完后会自动停止...');
+                    // 视觉反馈
+                    const button = document.querySelector('.ai-voice-button');
+                    if (button) {
+                        button.style.background = '#e3f2fd';
+                        button.style.borderColor = '#2196f3';
+                    }
+                };
+                
+                // 识别结果
                 recognition.onresult = function(event) {
                     const transcript = event.results[0][0].transcript;
+                    console.log('语音识别结果:', transcript);
                     document.getElementById(fieldId).value = transcript;
                     showToast('语音输入成功');
+                    // 恢复按钮状态
+                    const button = document.querySelector('.ai-voice-button');
+                    if (button) {
+                        button.style.background = 'white';
+                        button.style.borderColor = '#2196f3';
+                    }
                 };
+                
+                // 识别结束
+                recognition.onend = function() {
+                    // 恢复按钮状态
+                    const button = document.querySelector('.ai-voice-button');
+                    if (button) {
+                        button.style.background = 'white';
+                        button.style.borderColor = '#2196f3';
+                    }
+                };
+                
+                // 识别错误
                 recognition.onerror = function(event) {
-                    showToast('语音输入失败');
+                    console.error('语音识别错误:', event.error);
+                    showToast('语音输入失败，请重试');
+                    // 恢复按钮状态
+                    const button = document.querySelector('.ai-voice-button');
+                    if (button) {
+                        button.style.background = 'white';
+                        button.style.borderColor = '#2196f3';
+                    }
                 };
+                
                 recognition.start();
-                showToast('请开始说话...');
             } else {
                 showToast('您的浏览器不支持语音输入');
             }
@@ -1439,6 +1540,27 @@
             if (descMatch) info.description = descMatch[2];
             
             return info;
+        }
+
+        // 从AI输入框提取信息
+        function aiExtractFromInput() {
+            const text = document.getElementById('aiInput').value.trim();
+            
+            if (!text) {
+                showToast('请先输入房源信息');
+                return;
+            }
+            
+            console.log('AI识别输入内容:', text);
+            
+            // 提取信息
+            const info = extractInfoFromText(text);
+            console.log('提取的信息:', info);
+            
+            // 填充表单
+            fillFormWithInfo(info);
+            
+            showToast('AI识别并填充成功');
         }
 
         // 填充表单
