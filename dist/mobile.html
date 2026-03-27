@@ -1995,19 +1995,6 @@
             });
         }
 
-        // 从AI输入框提取信息
-        function aiExtractFromInput() {
-            const input = document.getElementById('aiInput').value;
-            if (!input) {
-                showToast('请输入房源信息');
-                return;
-            }
-            
-            const info = extractInfoFromText(input);
-            fillFormWithInfo(info);
-            showToast('AI识别成功，已填充信息');
-        }
-
         // 打开客户模态框
         function openCustomerModal() {
             document.getElementById('customerModal').classList.add('active');
