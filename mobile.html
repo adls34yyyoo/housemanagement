@@ -609,6 +609,19 @@
             transform: translateY(-1px);
         }
         
+        .ai-provider-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #E6F7FF;
+            color: #1890FF;
+            border: 1px solid #91D5FF;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        
         .form-actions {
             padding: 16px 20px;
             border-top: 1px solid #f0f0f0;
@@ -912,7 +925,10 @@
             <div class="modal-body">
                 <!-- AI识别输入框 -->
                 <div class="form-group">
-                    <label class="form-label">AI识别输入</label>
+                    <label class="form-label">
+                        AI识别输入
+                        <span class="ai-provider-badge">百度AI</span>
+                    </label>
                     <div class="ai-input-container">
                         <textarea class="form-textarea" id="aiInput" placeholder="请输入或语音输入房源信息，例如：阳光小区，精装修，3室2厅2卫，120㎡，价格8000元/月，房东张三，电话13800138000，位于北京市朝阳区..."></textarea>
                         <div class="ai-input-buttons">
