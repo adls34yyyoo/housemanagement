@@ -7,7 +7,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1890ff">
     <title>房源管理</title>
-    <link rel="manifest" href="/housemanagement/manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
@@ -970,17 +969,33 @@
         const supabaseKey = '*************************************************************************************************************************************************************************************************************************';
         
         let supabase = null;
-        try {
-            if (window.supabase) {
-                const { createClient } = window.supabase;
-                supabase = createClient(supabaseUrl, supabaseKey);
-                console.log('Supabase初始化成功');
-            } else {
-                console.error('Supabase库未加载');
+        
+        // 初始化Supabase
+        function initSupabase() {
+            try {
+                console.log('正在初始化Supabase...');
+                
+                // 确保Supabase库已加载
+                if (typeof window.supabase !== 'undefined') {
+                    const { createClient } = window.supabase;
+                    supabase = createClient(supabaseUrl, supabaseKey);
+                    console.log('✅ Supabase初始化成功');
+                    return true;
+                } else {
+                    console.error('❌ Supabase库未加载');
+                    return false;
+                }
+            } catch (e) {
+                console.error('❌ Supabase初始化失败:', e);
+                return false;
             }
-        } catch (e) {
-            console.error('Supabase初始化失败:', e);
         }
+        
+        // 页面加载时初始化Supabase
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('页面加载完成，开始初始化...');
+            initSupabase();
+        });
 
         // 数据存储
         let properties = [];
