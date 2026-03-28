@@ -542,7 +542,7 @@
             justify-content: center;
             color: white;
             font-size: 32px;
-            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.5);
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
             cursor: pointer;
             z-index: 99;
             transition: var(--transition);
@@ -551,7 +551,7 @@
 
         .fab:hover {
             transform: scale(1.1) rotate(90deg);
-            box-shadow: 0 12px 32px rgba(99, 102, 241, 0.6);
+            box-shadow: 0 12px 32px rgba(59, 130, 246, 0.5);
         }
 
         .fab:active {
@@ -1504,19 +1504,19 @@
             </div>
             
             <div class="stats-section">
-                <div class="stat-card">
+                <div class="stat-card" onclick="switchPage('properties')" style="cursor: pointer;">
                     <div class="stat-value" id="statTotal">0</div>
                     <div class="stat-label">总房源</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" onclick="switchPage('properties'); setTimeout(() => filterPropertiesByStatus('available'), 100)" style="cursor: pointer;">
                     <div class="stat-value" id="statAvailable">0</div>
                     <div class="stat-label">可租/售</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" onclick="switchPage('properties'); setTimeout(() => filterPropertiesByStatus('rented'), 100)" style="cursor: pointer;">
                     <div class="stat-value" id="statRented">0</div>
                     <div class="stat-label">已租/售</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" onclick="switchPage('customers')" style="cursor: pointer;">
                     <div class="stat-value" id="statCustomers">0</div>
                     <div class="stat-label">客户数</div>
                 </div>
@@ -1551,8 +1551,8 @@
             </div>
             
             <div class="action-buttons">
-                <div class="action-button" onclick="openPropertyModal('rent')">+ 新增租房</div>
                 <div class="action-button" onclick="openPropertyModal('sale')">+ 新增卖房</div>
+                <div class="action-button" onclick="openPropertyModal('rent')">+ 新增租房</div>
                 <div class="action-button" onclick="filterProperties('rent')">出租</div>
                 <div class="action-button" onclick="filterProperties('sale')">出售</div>
             </div>
@@ -1618,6 +1618,12 @@
                         <div class="property-address">切换四季颜色主题</div>
                     </div>
                 </div>
+                <div class="property-card" onclick="clearLocalData()" style="cursor: pointer;">
+                    <div class="property-info">
+                        <div class="property-title" style="color: #f59e0b; text-align: center;">清除本地数据</div>
+                        <div class="property-address" style="text-align: center; color: var(--text-secondary);">清除所有本地存储的房源和客户数据</div>
+                    </div>
+                </div>
                 <div class="property-card" onclick="handleLogout()" style="cursor: pointer;">
                     <div class="property-info">
                         <div class="property-title" style="color: #ef4444; text-align: center;">退出登录</div>
@@ -1655,17 +1661,50 @@
                 </div>
                 <div class="nav-label">房源</div>
             </div>
-            <div class="nav-item" onclick="switchPage('customers')">
+            <div class="nav-item" onclick="openMomentsSelector()">
                 <div class="nav-icon">
-                    <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
                 </div>
-                <div class="nav-label">客户</div>
+                <div class="nav-label">朋友圈</div>
             </div>
             <div class="nav-item" onclick="switchPage('profile')">
                 <div class="nav-icon">
                     <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
                 </div>
                 <div class="nav-label">我的</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 朋友圈模态框 -->
+    <div class="modal" id="momentsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">生成朋友圈文案</span>
+                <button class="modal-close" onclick="closeMomentsModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">朋友圈文案</label>
+                    <textarea class="form-textarea" id="momentsContent" readonly rows="8"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-default" onclick="closeMomentsModal()">取消</button>
+                    <button class="btn btn-primary" onclick="copyMomentsContent()">一键复制</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 房源详情模态框 -->
+    <div class="modal" id="propertyDetailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title" id="propertyDetailTitle">房源详情</span>
+                <button class="modal-close" onclick="closePropertyDetailModal()">×</button>
+            </div>
+            <div class="modal-body" id="propertyDetailContent">
+                <!-- 详情内容将通过JavaScript动态填充 -->
             </div>
         </div>
     </div>
@@ -1960,8 +1999,8 @@
 
     <script>
         // Supabase配置
-        const supabaseUrl = 'https://txqgghyptqptbvwxqfbb.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4cWdnaHlwdHFwdGJ2d3hxZmJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE5MzMzOTUsImV4cCI6MjA1NzUwOTM5NX0.K0d0lD9jM18Tjs6x4hXw3E6y8d2f4g5h6j7k8l9m0n1';
+        const supabaseUrl = 'https://qzfcawnxxjpelawibqfk.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6ZmNhd254eGpwZWxhd2lia3ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE5MzMzOTUsImV4cCI6MjA1NzUwOTM5NX0.K0d0lD9jM18Tjs6x4hXw3E6y8d2f4g5h6j7k8l9m0n1';
         
         let supabaseClient = null;
         let realtimeChannel = null;
@@ -2132,15 +2171,29 @@
         let properties = [];
         let customers = [];
         let filteredProperties = [];
+        let filteredCustomers = [];
         let currentUser = '';
         let editingPropertyId = null;
         let editingCustomerId = null;
 
-        // 从localStorage加载数据
+        // 从本地存储加载数据
         function loadFromLocalStorage() {
             try {
-                const savedProperties = localStorage.getItem('properties');
-                const savedCustomers = localStorage.getItem('customers');
+                // 尝试从localStorage加载
+                let savedProperties = localStorage.getItem('properties');
+                let savedCustomers = localStorage.getItem('customers');
+                let savedOptions = localStorage.getItem('optionsData');
+                
+                // 如果localStorage加载失败，尝试从sessionStorage加载
+                if (!savedProperties) {
+                    savedProperties = sessionStorage.getItem('properties');
+                }
+                if (!savedCustomers) {
+                    savedCustomers = sessionStorage.getItem('customers');
+                }
+                if (!savedOptions) {
+                    savedOptions = sessionStorage.getItem('optionsData');
+                }
                 
                 if (savedProperties) {
                     properties = JSON.parse(savedProperties);
@@ -2151,19 +2204,83 @@
                     customers = JSON.parse(savedCustomers);
                     console.log('从本地存储加载了', customers.length, '条客户数据');
                 }
+                
+                if (savedOptions) {
+                    optionsData = JSON.parse(savedOptions);
+                    console.log('从本地存储加载了选项数据');
+                }
             } catch (e) {
                 console.error('加载本地存储失败:', e);
             }
         }
 
-        // 保存数据到localStorage
+        // 保存数据到本地存储
         function saveToLocalStorage() {
             try {
+                // 保存到localStorage
                 localStorage.setItem('properties', JSON.stringify(properties));
                 localStorage.setItem('customers', JSON.stringify(customers));
+                localStorage.setItem('optionsData', JSON.stringify(optionsData));
+                
+                // 同时保存到sessionStorage作为备份
+                sessionStorage.setItem('properties', JSON.stringify(properties));
+                sessionStorage.setItem('customers', JSON.stringify(customers));
+                sessionStorage.setItem('optionsData', JSON.stringify(optionsData));
+                
                 console.log('数据已保存到本地存储');
             } catch (e) {
                 console.error('保存到本地存储失败:', e);
+                // 如果localStorage失败，尝试只保存到sessionStorage
+                try {
+                    sessionStorage.setItem('properties', JSON.stringify(properties));
+                    sessionStorage.setItem('customers', JSON.stringify(customers));
+                    sessionStorage.setItem('optionsData', JSON.stringify(optionsData));
+                    console.log('数据已保存到会话存储');
+                } catch (e2) {
+                    console.error('保存到会话存储也失败:', e2);
+                }
+            }
+        }
+
+        // 清除本地数据
+        function clearLocalData() {
+            if (confirm('确定要清除所有本地数据吗？此操作不可恢复。')) {
+                try {
+                    // 清除localStorage
+                    localStorage.removeItem('properties');
+                    localStorage.removeItem('customers');
+                    localStorage.removeItem('optionsData');
+                    
+                    // 同时清除sessionStorage
+                    sessionStorage.removeItem('properties');
+                    sessionStorage.removeItem('customers');
+                    sessionStorage.removeItem('optionsData');
+                    
+                    // 重置内存中的数据
+                    properties = [];
+                    customers = [];
+                    optionsData = {
+                        community: ['金地城', '阳光小区', '幸福花园', '绿地家园', '一方新城'],
+                        decoration: ['精装修', '简装', '豪装', '毛坯', '中装'],
+                        layout: ['3-2-2', '2-1-1', '3-1-1', '2-2-1', '1-1-1'],
+                        region: ['惠南镇', '周浦镇', '康桥镇', '祝桥镇', '新场镇', '大团镇', '老港镇', '书院镇', '临港滴水湖', '泥城镇', '芦潮港镇'],
+                        propertyCertificate: ['满5唯一', '满5年', '满两年', '不满两年']
+                    };
+                    
+                    console.log('本地数据已清除');
+                    showToast('✅ 本地数据已清除');
+                    
+                    // 刷新UI
+                    updateStats();
+                    renderPropertyList();
+                    renderRecentProperties();
+                    renderCustomerList();
+                    loadOptions();
+                    initSelectOptions();
+                } catch (e) {
+                    console.error('清除本地数据失败:', e);
+                    showToast('❌ 清除本地数据失败');
+                }
             }
         }
 
@@ -2729,11 +2846,8 @@
             const priceUnit = property.type === 'sale' ? '万元' : '元/月';
 
             return `
-                <div class="property-card">
-                    <div class="property-image">
-                        ${property.community ? property.community.substring(0, 2) : '房源'}
-                    </div>
-                    <div class="property-info">
+                <div class="property-card" style="padding: 16px; cursor: pointer; transition: var(--transition);" onclick="openPropertyDetailModal('${property.id}')">
+                    <div class="property-info" style="padding: 0;">
                         <div class="property-title">
                             <span>${property.community || '未知小区'}</span>
                             <span class="property-status ${statusClass}">${statusText}</span>
@@ -2747,9 +2861,9 @@
                         </div>
                     </div>
                     <div class="property-actions">
-                        <button class="action-btn" onclick="editProperty('${property.id}')">编辑</button>
-                        <button class="action-btn share" onclick="shareProperty('${property.id}')">分享</button>
-                        <button class="action-btn" onclick="deleteProperty('${property.id}')" style="color: var(--danger);">删除</button>
+                        <button class="action-btn" onclick="event.stopPropagation(); editProperty('${property.id}')">编辑</button>
+                        <button class="action-btn share" onclick="event.stopPropagation(); generateMomentsContent('${property.id}')">发朋友圈</button>
+                        <button class="action-btn" onclick="event.stopPropagation(); deleteProperty('${property.id}')" style="color: var(--danger);">删除</button>
                     </div>
                 </div>
             `;
@@ -2847,6 +2961,12 @@
             } else {
                 filteredProperties = properties.filter(p => p.type === type);
             }
+            renderPropertyList();
+        }
+
+        // 根据状态筛选房源
+        function filterPropertiesByStatus(status) {
+            filteredProperties = properties.filter(p => p.status === status);
             renderPropertyList();
         }
 
@@ -3274,6 +3394,7 @@
             document.getElementById('newOptionValue').value = '';
             loadOptions();
             initSelectOptions();
+            saveToLocalStorage();
             showToast('添加成功');
         }
 
@@ -3297,6 +3418,7 @@
                 optionsData[type].splice(index, 1);
                 loadOptions();
                 initSelectOptions();
+                saveToLocalStorage();
                 showToast('删除成功');
             }
         }
@@ -3309,6 +3431,173 @@
         // 关闭AI训练模态框
         function closeTrainModal() {
             document.getElementById('trainModal').classList.remove('active');
+        }
+
+        // 生成朋友圈文案
+        function generateMomentsContent(propertyId) {
+            const property = properties.find(p => p.id === propertyId);
+            if (!property) return;
+
+            const priceUnit = property.type === 'sale' ? '万元' : '元/月';
+            const typeText = property.type === 'sale' ? '出售' : '出租';
+
+            const content = `🏠 好房推荐！\n\n${property.community || '优质小区'} ${typeText}\n📍 ${property.region || '黄金地段'}\n🏡 ${property.layout || '舒适户型'} ${property.area ? property.area + '平' : ''}\n✨ ${property.decoration || '精美装修'}\n💰 ${property.price || '面议'}${priceUnit}\n\n有意者请联系，随时看房！`;
+
+            document.getElementById('momentsContent').value = content;
+            document.getElementById('momentsModal').classList.add('active');
+        }
+
+        // 关闭朋友圈模态框
+        function closeMomentsModal() {
+            document.getElementById('momentsModal').classList.remove('active');
+        }
+
+        // 复制朋友圈文案
+        function copyMomentsContent() {
+            const content = document.getElementById('momentsContent');
+            content.select();
+            document.execCommand('copy');
+            showToast('✅ 文案已复制，可直接粘贴到朋友圈');
+            closeMomentsModal();
+        }
+
+        // 打开朋友圈选择器
+        function openMomentsSelector() {
+            if (properties.length === 0) {
+                showToast('暂无房源信息');
+                return;
+            }
+
+            let selectorHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <span class="modal-title">选择房源</span>
+                        <button class="modal-close" onclick="document.getElementById('momentsSelectorModal').classList.remove('active')">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div style="max-height: 60vh; overflow-y: auto;">
+            `;
+
+            properties.forEach(property => {
+                const priceUnit = property.type === 'sale' ? '万元' : '元/月';
+                const typeText = property.type === 'sale' ? '出售' : '出租';
+                selectorHTML += `
+                    <div style="padding: 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: var(--transition);" onclick="generateMomentsContent('${property.id}'); document.getElementById('momentsSelectorModal').classList.remove('active')">
+                        <div style="font-weight: 600; margin-bottom: 8px;">${property.community || '未知小区'} ${typeText}</div>
+                        <div style="color: var(--text-secondary); font-size: 14px;">
+                            ${property.region || ''} ${property.layout || ''} ${property.area ? property.area + '平' : ''}
+                        </div>
+                        <div style="color: var(--danger); font-weight: 600; margin-top: 8px;">
+                            ${property.price || '面议'}${priceUnit}
+                        </div>
+                    </div>
+                `;
+            });
+
+            selectorHTML += `
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 创建选择器模态框
+            const selectorModal = document.createElement('div');
+            selectorModal.id = 'momentsSelectorModal';
+            selectorModal.className = 'modal active';
+            selectorModal.innerHTML = selectorHTML;
+            document.body.appendChild(selectorModal);
+        }
+
+        // 打开房源详情
+        function openPropertyDetailModal(propertyId) {
+            const property = properties.find(p => p.id === propertyId);
+            if (!property) return;
+
+            const priceUnit = property.type === 'sale' ? '万元' : '元/月';
+            const typeText = property.type === 'sale' ? '出售' : '出租';
+            const statusText = {
+                'available': '可租/售',
+                'rented': '已租/售',
+                'maintenance': '维护中'
+            }[property.status] || '可租/售';
+
+            const detailHTML = `
+                <div style="padding: 16px;">
+                    <div style="text-align: center; margin-bottom: 24px;">
+                        <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 8px;">${property.community || '未知小区'}</h3>
+                        <div style="padding: 6px 16px; background: rgba(59, 130, 246, 0.1); color: var(--primary); border-radius: 20px; display: inline-block; font-weight: 600;">
+                            ${typeText}
+                        </div>
+                    </div>
+                    
+                    <div style="background: var(--background); border-radius: var(--radius); padding: 20px; margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                            <span style="color: var(--text-secondary);">状态</span>
+                            <span style="font-weight: 600;">${statusText}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                            <span style="color: var(--text-secondary);">区域</span>
+                            <span>${property.region || '未知区域'}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                            <span style="color: var(--text-secondary);">户型</span>
+                            <span>${property.layout || '未知户型'}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                            <span style="color: var(--text-secondary);">面积</span>
+                            <span>${property.area ? property.area + '平' : '未知面积'}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                            <span style="color: var(--text-secondary);">装修</span>
+                            <span>${property.decoration || '未知装修'}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                            <span style="color: var(--text-secondary);">楼层</span>
+                            <span>${property.floor || '未知楼层'}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                            <span style="color: var(--text-secondary);">产证情况</span>
+                            <span>${property.propertyCertificate || '未知'}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; color: var(--danger);">
+                            <span>价格</span>
+                            <span>${property.price || '面议'}${priceUnit}</span>
+                        </div>
+                    </div>
+                    
+                    ${property.description ? `
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">房源描述</h4>
+                            <div style="background: var(--background); border-radius: var(--radius); padding: 16px; line-height: 1.6;">
+                                ${property.description}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    ${property.landlordName ? `
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">房东信息</h4>
+                            <div style="background: var(--background); border-radius: var(--radius); padding: 16px;">
+                                <div style="margin-bottom: 8px;"><strong>姓名：</strong>${property.landlordName}</div>
+                                ${property.landlordPhone ? `<div><strong>电话：</strong>${property.landlordPhone}</div>` : ''}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    <div style="display: flex; gap: 12px;">
+                        <button class="btn btn-primary" onclick="generateMomentsContent('${property.id}'); closePropertyDetailModal()">发朋友圈</button>
+                        <button class="btn btn-default" onclick="editProperty('${property.id}'); closePropertyDetailModal()">编辑</button>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('propertyDetailContent').innerHTML = detailHTML;
+            document.getElementById('propertyDetailModal').classList.add('active');
+        }
+
+        // 关闭房源详情模态框
+        function closePropertyDetailModal() {
+            document.getElementById('propertyDetailModal').classList.remove('active');
         }
 
         // 训练模型（模拟）
@@ -3360,6 +3649,15 @@
             }
 
             try {
+                // 检查本地是否有数据
+                const hasLocalData = properties.length > 0 || customers.length > 0;
+                
+                if (hasLocalData) {
+                    console.log('本地已有数据，跳过服务器加载');
+                    showToast('使用本地数据');
+                    return;
+                }
+
                 // 加载房源数据
                 const { data: propertiesData, error: propertiesError } = await supabaseClient
                     .from('properties')
@@ -3380,6 +3678,8 @@
                 if (propertiesData) {
                     properties = propertiesData;
                     console.log(`成功加载 ${properties.length} 条房源数据`);
+                    // 保存到本地存储，确保数据一致性
+                    saveToLocalStorage();
                 }
 
                 // 加载客户数据
@@ -3400,6 +3700,8 @@
                 if (customersData) {
                     customers = customersData;
                     console.log(`成功加载 ${customers.length} 条客户数据`);
+                    // 保存到本地存储，确保数据一致性
+                    saveToLocalStorage();
                 }
 
                 updateStats();
@@ -3407,6 +3709,9 @@
                 renderRecentProperties();
                 renderCustomerList();
                 showToast('✅ 数据加载成功');
+                
+                // 确保本地存储与服务器数据同步
+                saveToLocalStorage();
 
             } catch (error) {
                 console.error('加载数据出错:', error);
@@ -3569,8 +3874,17 @@
 
         // 切换房源选择菜单
         function togglePropertyMenu() {
-            const menu = document.getElementById('propertyMenu');
-            menu.classList.toggle('active');
+            // 检查当前活动页面
+            const activePage = document.querySelector('.page.active');
+            
+            if (activePage && activePage.id === 'pageCustomers') {
+                // 在客户管理页面，直接打开增加客户模态框
+                openCustomerModal();
+            } else {
+                // 在其他页面，显示房源选择菜单
+                const menu = document.getElementById('propertyMenu');
+                menu.classList.toggle('active');
+            }
         }
 
         // 点击其他地方关闭菜单
