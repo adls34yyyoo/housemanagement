@@ -579,6 +579,145 @@
             animation: slideInUp 0.3s ease;
         }
 
+        /* 筛选菜单样式 */
+        .filter-menu {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--surface);
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            box-shadow: var(--shadow-lg);
+            z-index: 99;
+            display: none;
+            max-height: 70vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        .filter-menu.active {
+            display: block;
+        }
+
+        .filter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            background: var(--surface);
+        }
+
+        .filter-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .filter-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .filter-body {
+            padding: 20px;
+        }
+
+        .filter-section {
+            margin-bottom: 24px;
+        }
+
+        .filter-label {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 12px;
+        }
+
+        .filter-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .filter-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--background);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: var(--transition);
+            user-select: none;
+        }
+
+        .filter-option:hover {
+            background: var(--surface-hover);
+        }
+
+        .filter-option input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .filter-btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .filter-btn-clear {
+            background: var(--background);
+            color: var(--text);
+        }
+
+        .filter-btn-clear:hover {
+            background: var(--surface-hover);
+        }
+
+        .filter-btn-confirm {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+
+        .filter-btn-confirm:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+
         .menu-item {
             display: flex;
             align-items: center;
@@ -1522,6 +1661,12 @@
                 </div>
             </div>
             
+            <div style="padding: 0 16px; margin-bottom: 16px;">
+                <div class="action-button" onclick="openMomentsSelector()" style="width: 100%; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; border: none; display: flex; justify-content: center; gap: 8px;">
+                    📢 一键转发朋友圈
+                </div>
+            </div>
+            
             <div class="content-section">
                 <div class="section-title">
                     <span>最新租房</span>
@@ -1551,14 +1696,65 @@
             </div>
             
             <div class="action-buttons">
-                <div class="action-button" onclick="openPropertyModal('sale')">💰 卖房</div>
-                <div class="action-button" onclick="openPropertyModal('rent')">🏠 租房</div>
-                <div class="action-button" onclick="filterProperties('rent')">出租</div>
-                <div class="action-button" onclick="filterProperties('sale')">出售</div>
-                <div class="action-button" onclick="openMomentsSelector()" style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; border: none;">📢 发朋友圈</div>
+                <div class="action-button" onclick="openPropertyModal('sale')">💰 新增卖房</div>
+                <div class="action-button" onclick="openPropertyModal('rent')">🏠 新增租房</div>
+                <div class="action-button" onclick="toggleFilterMenu()">🔍 筛选</div>
             </div>
             
             <div class="content-section" id="propertyList"></div>
+            
+            <!-- 筛选菜单 -->
+            <div class="filter-menu" id="filterMenu">
+                <div class="filter-header">
+                    <span class="filter-title">筛选条件</span>
+                    <button class="filter-close" onclick="toggleFilterMenu()">×</button>
+                </div>
+                <div class="filter-body">
+                    <div class="filter-section">
+                        <div class="filter-label">类型</div>
+                        <div class="filter-options">
+                            <label class="filter-option">
+                                <input type="checkbox" id="filterTypeAll" checked onchange="applyFilters()">
+                                <span>全部</span>
+                            </label>
+                            <label class="filter-option">
+                                <input type="checkbox" id="filterTypeRent" onchange="applyFilters()">
+                                <span>租房</span>
+                            </label>
+                            <label class="filter-option">
+                                <input type="checkbox" id="filterTypeSale" onchange="applyFilters()">
+                                <span>卖房</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="filter-section">
+                        <div class="filter-label">状态</div>
+                        <div class="filter-options">
+                            <label class="filter-option">
+                                <input type="checkbox" id="filterStatusAll" checked onchange="applyFilters()">
+                                <span>全部</span>
+                            </label>
+                            <label class="filter-option">
+                                <input type="checkbox" id="filterStatusAvailable" onchange="applyFilters()">
+                                <span>可租/售</span>
+                            </label>
+                            <label class="filter-option">
+                                <input type="checkbox" id="filterStatusRented" onchange="applyFilters()">
+                                <span>已租/售</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="filter-section">
+                        <div class="filter-label">区域</div>
+                        <div class="filter-options" id="filterRegionOptions">
+                        </div>
+                    </div>
+                    <div class="filter-actions">
+                        <button class="filter-btn filter-btn-clear" onclick="clearFilters()">清除筛选</button>
+                        <button class="filter-btn filter-btn-confirm" onclick="toggleFilterMenu()">确定</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- 客户页面 -->
@@ -1617,12 +1813,6 @@
                     <div class="property-info">
                         <div class="property-title">主题颜色</div>
                         <div class="property-address">切换四季颜色主题</div>
-                    </div>
-                </div>
-                <div class="property-card" onclick="clearLocalData()" style="cursor: pointer;">
-                    <div class="property-info">
-                        <div class="property-title" style="color: #f59e0b; text-align: center;">清除本地数据</div>
-                        <div class="property-address" style="text-align: center; color: var(--text-secondary);">清除所有本地存储的房源和客户数据</div>
                     </div>
                 </div>
                 <div class="property-card" onclick="handleLogout()" style="cursor: pointer;">
@@ -2173,6 +2363,7 @@
         let customers = [];
         let filteredProperties = [];
         let filteredCustomers = [];
+        let selectedProperties = [];
         let currentUser = '';
         let editingPropertyId = null;
         let editingCustomerId = null;
@@ -2845,10 +3036,14 @@
             }[property.status] || '可租/售';
 
             const priceUnit = property.type === 'sale' ? '万元' : '元/月';
+            const isSelected = selectedProperties.includes(property.id);
 
             return `
-                <div class="property-card" style="padding: 16px; cursor: pointer; transition: var(--transition);" onclick="openPropertyDetailModal('${property.id}')">
-                    <div class="property-info" style="padding: 0;">
+                <div class="property-card" style="padding: 16px; cursor: pointer; transition: var(--transition); position: relative;" onclick="openPropertyDetailModal('${property.id}')">
+                    <div style="position: absolute; top: 12px; left: 12px; z-index: 10;" onclick="event.stopPropagation(); togglePropertySelection('${property.id}')">
+                        <input type="checkbox" style="width: 22px; height: 22px; cursor: pointer;" ${isSelected ? 'checked' : ''} onchange="event.stopPropagation(); togglePropertySelection('${property.id}')">
+                    </div>
+                    <div class="property-info" style="padding: 0; padding-left: 40px;">
                         <div class="property-title">
                             <span>${property.community || '未知小区'}</span>
                             <span class="property-status ${statusClass}">${statusText}</span>
@@ -2870,6 +3065,87 @@
             `;
         }
 
+        // 切换房源选择
+        function togglePropertySelection(propertyId) {
+            const index = selectedProperties.indexOf(propertyId);
+            if (index > -1) {
+                selectedProperties.splice(index, 1);
+            } else {
+                selectedProperties.push(propertyId);
+            }
+            renderPropertyList();
+            updateShareButton();
+        }
+
+        // 更新分享按钮显示
+        function updateShareButton() {
+            const shareBtn = document.getElementById('batchShareBtn');
+            if (shareBtn) {
+                if (selectedProperties.length > 0) {
+                    shareBtn.style.display = 'flex';
+                    shareBtn.innerHTML = `📢 一键转发 (${selectedProperties.length})`;
+                } else {
+                    shareBtn.style.display = 'none';
+                }
+            }
+        }
+
+        // 批量生成朋友圈文案
+        function batchGenerateMoments() {
+            if (selectedProperties.length === 0) {
+                showToast('请先选择要分享的房源');
+                return;
+            }
+
+            const selectedProps = properties.filter(p => selectedProperties.includes(p.id));
+            let content = '';
+
+            selectedProps.forEach((property, index) => {
+                const priceUnit = property.type === 'sale' ? '万元' : '元/月';
+                const statusText = {
+                    'available': '可租/售',
+                    'rented': '已租/售',
+                    'maintenance': '维护中'
+                }[property.status] || '可租/售';
+
+                content += `🏠 好房推荐${index > 0 ? index + 1 : ''}！\n\n`;
+                content += `${property.community || '未知小区'} ${property.type === 'rent' ? '出租' : '出售'}\n`;
+                content += `📍 ${property.region || ''}\n`;
+                content += `🏡 ${property.layout || ''} ${property.area ? property.area + '平' : ''}\n`;
+                content += `✨ ${property.decoration || ''}\n`;
+                content += `💰 ${property.price || '面议'}${priceUnit}\n`;
+                if (index < selectedProps.length - 1) {
+                    content += '\n━━━━━━━━━━━━━━━━━━\n\n';
+                }
+            });
+
+            content += '\n有意者请联系，随时看房！';
+
+            // 显示批量分享模态框
+            const modal = document.getElementById('momentsModal');
+            const title = document.querySelector('#momentsModal .modal-title');
+            const contentDiv = document.getElementById('momentsContent');
+            const copyBtn = document.getElementById('copyMomentsBtn');
+
+            title.textContent = `批量生成朋友圈文案 (${selectedProps.length}套)`;
+            contentDiv.value = content;
+
+            // 复制按钮事件
+            copyBtn.onclick = function() {
+                navigator.clipboard.writeText(content).then(() => {
+                    showToast('✅ 文案已复制到剪贴板');
+                    closeMomentsModal();
+                }).catch(() => {
+                    contentDiv.select();
+                    document.execCommand('copy');
+                    showToast('✅ 文案已复制到剪贴板');
+                    closeMomentsModal();
+                });
+            };
+
+            modal.classList.add('active');
+        }
+
         // 渲染房源列表
         function renderPropertyList() {
             const container = document.getElementById('propertyList');
@@ -2887,7 +3163,17 @@
                 return;
             }
 
-            container.innerHTML = propsToRender.map(p => createPropertyCard(p)).join('');
+            let html = propsToRender.map(p => createPropertyCard(p)).join('');
+            
+            // 添加批量分享按钮
+            html += `
+                <div id="batchShareBtn" style="display: none; position: fixed; bottom: 100px; right: 20px; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; padding: 14px 20px; border-radius: 50px; box-shadow: var(--shadow-lg); cursor: pointer; z-index: 97; font-weight: 600; animation: pulse 2s infinite;" onclick="batchGenerateMoments()">
+                    📢 一键转发 (${selectedProperties.length})
+                </div>
+            `;
+
+            container.innerHTML = html;
+            updateShareButton();
         }
 
         // 渲染客户列表
@@ -2968,6 +3254,104 @@
         // 根据状态筛选房源
         function filterPropertiesByStatus(status) {
             filteredProperties = properties.filter(p => p.status === status);
+            renderPropertyList();
+        }
+
+        // 切换筛选菜单
+        function toggleFilterMenu() {
+            const menu = document.getElementById('filterMenu');
+            menu.classList.toggle('active');
+        }
+
+        // 初始化区域筛选选项
+        function initFilterRegions() {
+            const container = document.getElementById('filterRegionOptions');
+            container.innerHTML = '';
+            
+            // 添加全部选项
+            const allOption = document.createElement('label');
+            allOption.className = 'filter-option';
+            allOption.innerHTML = `
+                <input type="checkbox" id="filterRegionAll" checked onchange="applyFilters()">
+                <span>全部</span>
+            `;
+            container.appendChild(allOption);
+            
+            // 添加各个区域选项
+            optionsData.region.forEach(region => {
+                const option = document.createElement('label');
+                option.className = 'filter-option';
+                option.innerHTML = `
+                    <input type="checkbox" id="filterRegion_${region}" onchange="applyFilters()">
+                    <span>${region}</span>
+                `;
+                container.appendChild(option);
+            });
+        }
+
+        // 应用筛选条件
+        function applyFilters() {
+            const typeAll = document.getElementById('filterTypeAll').checked;
+            const typeRent = document.getElementById('filterTypeRent').checked;
+            const typeSale = document.getElementById('filterTypeSale').checked;
+            
+            const statusAll = document.getElementById('filterStatusAll').checked;
+            const statusAvailable = document.getElementById('filterStatusAvailable').checked;
+            const statusRented = document.getElementById('filterStatusRented').checked;
+            
+            const regionAll = document.getElementById('filterRegionAll').checked;
+            
+            filteredProperties = properties.filter(property => {
+                let matchType = true;
+                let matchStatus = true;
+                let matchRegion = true;
+                
+                // 类型筛选
+                if (!typeAll) {
+                    matchType = (typeRent && property.type === 'rent') || (typeSale && property.type === 'sale');
+                }
+                
+                // 状态筛选
+                if (!statusAll) {
+                    matchStatus = (statusAvailable && property.status === 'available') || (statusRented && property.status === 'rented');
+                }
+                
+                // 区域筛选
+                if (!regionAll) {
+                    const selectedRegions = optionsData.region.filter(region => {
+                        const checkbox = document.getElementById(`filterRegion_${region}`);
+                        return checkbox && checkbox.checked;
+                    });
+                    if (selectedRegions.length > 0) {
+                        matchRegion = selectedRegions.includes(property.region);
+                    }
+                }
+                
+                return matchType && matchStatus && matchRegion;
+            });
+            
+            renderPropertyList();
+        }
+
+        // 清除筛选条件
+        function clearFilters() {
+            document.getElementById('filterTypeAll').checked = true;
+            document.getElementById('filterTypeRent').checked = false;
+            document.getElementById('filterTypeSale').checked = false;
+            
+            document.getElementById('filterStatusAll').checked = true;
+            document.getElementById('filterStatusAvailable').checked = false;
+            document.getElementById('filterStatusRented').checked = false;
+            
+            document.getElementById('filterRegionAll').checked = true;
+            optionsData.region.forEach(region => {
+                const checkbox = document.getElementById(`filterRegion_${region}`);
+                if (checkbox) {
+                    checkbox.checked = false;
+                }
+            });
+            
+            filteredProperties = [];
             renderPropertyList();
         }
 
@@ -3637,91 +4021,104 @@
         async function loadData() {
             console.log('开始加载数据...');
             
-            // 检查网络状态
-            if (!navigator.onLine) {
-                console.warn('网络离线，使用本地数据');
-                updateConnectionStatus(false);
-                return;
-            }
-            
-            if (!supabaseClient) {
-                console.warn('未连接到Supabase，使用本地数据');
-                return;
-            }
-
             try {
-                // 检查本地是否有数据
-                const hasLocalData = properties.length > 0 || customers.length > 0;
+                // 确保本地数据已加载
+                if (properties.length === 0 && customers.length === 0) {
+                    loadFromLocalStorage();
+                }
                 
-                if (hasLocalData) {
-                    console.log('本地已有数据，跳过服务器加载');
-                    showToast('使用本地数据');
+                // 检查网络状态和Supabase连接
+                if (!navigator.onLine) {
+                    console.warn('网络离线，使用本地数据');
+                    updateConnectionStatus(false);
+                    showToast('⚠️ 网络离线，使用本地数据');
+                    return;
+                }
+                
+                if (!supabaseClient) {
+                    console.warn('未连接到Supabase，使用本地数据');
+                    showToast('⚠️ 数据库未连接，使用本地数据');
                     return;
                 }
 
-                // 加载房源数据
-                const { data: propertiesData, error: propertiesError } = await supabaseClient
-                    .from('properties')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-
-                if (propertiesError) {
-                    console.error('加载房源数据失败:', propertiesError);
-                    // 如果是网络错误，不抛出异常
-                    if (propertiesError.message && propertiesError.message.includes('fetch')) {
-                        console.warn('网络请求失败，使用本地数据');
-                        updateConnectionStatus(false);
-                        return;
-                    }
-                    throw propertiesError;
-                }
-
-                if (propertiesData) {
-                    properties = propertiesData;
-                    console.log(`成功加载 ${properties.length} 条房源数据`);
-                    // 保存到本地存储，确保数据一致性
-                    saveToLocalStorage();
-                }
-
-                // 加载客户数据
-                const { data: customersData, error: customersError } = await supabaseClient
-                    .from('customers')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-
-                if (customersError) {
-                    console.error('加载客户数据失败:', customersError);
-                    // 如果是网络错误，不抛出异常
-                    if (customersError.message && customersError.message.includes('fetch')) {
-                        console.warn('网络请求失败，使用本地数据');
-                    }
-                    // 不抛出错误，继续执行
-                }
-
-                if (customersData) {
-                    customers = customersData;
-                    console.log(`成功加载 ${customers.length} 条客户数据`);
-                    // 保存到本地存储，确保数据一致性
-                    saveToLocalStorage();
-                }
-
-                updateStats();
-                renderPropertyList();
-                renderRecentProperties();
-                renderCustomerList();
-                showToast('✅ 数据加载成功');
+                // 检查本地是否有数据，如果有就优先使用本地数据
+                const hasLocalData = properties.length > 0 || customers.length > 0;
                 
-                // 确保本地存储与服务器数据同步
-                saveToLocalStorage();
+                if (hasLocalData) {
+                    console.log('本地已有数据，优先使用本地数据');
+                    // 不显示toast，避免频繁提示
+                    return;
+                }
+
+                console.log('开始从服务器加载数据...');
+                updateConnectionStatus(true);
+
+                // 设置超时控制，避免长时间等待
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error('请求超时')), 10000);
+                });
+
+                try {
+                    // 加载房源数据（带超时）
+                    const propertiesPromise = supabaseClient
+                        .from('properties')
+                        .select('*')
+                        .order('created_at', { ascending: false });
+
+                    const { data: propertiesData, error: propertiesError } = await Promise.race([
+                        propertiesPromise,
+                        timeoutPromise
+                    ]);
+
+                    if (!propertiesError && propertiesData) {
+                        properties = propertiesData;
+                        console.log(`成功加载 ${properties.length} 条房源数据`);
+                    } else if (propertiesError) {
+                        console.warn('加载房源数据失败:', propertiesError);
+                    }
+
+                    // 加载客户数据（带超时）
+                    const customersPromise = supabaseClient
+                        .from('customers')
+                        .select('*')
+                        .order('created_at', { ascending: false });
+
+                    const { data: customersData, error: customersError } = await Promise.race([
+                        customersPromise,
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('请求超时')), 10000))
+                    ]);
+
+                    if (!customersError && customersData) {
+                        customers = customersData;
+                        console.log(`成功加载 ${customers.length} 条客户数据`);
+                    } else if (customersError) {
+                        console.warn('加载客户数据失败:', customersError);
+                    }
+
+                    // 保存到本地存储
+                    if (properties.length > 0 || customers.length > 0) {
+                        saveToLocalStorage();
+                        updateStats();
+                        renderPropertyList();
+                        renderRecentProperties();
+                        renderCustomerList();
+                        showToast('✅ 数据加载成功');
+                    }
+
+                } catch (fetchError) {
+                    console.warn('服务器请求失败:', fetchError);
+                    updateConnectionStatus(false);
+                    // 如果本地已有数据，就不显示错误提示
+                    if (properties.length === 0 && customers.length === 0) {
+                        showToast('⚠️ 网络不稳定，使用本地数据');
+                    }
+                }
 
             } catch (error) {
                 console.error('加载数据出错:', error);
-                // 检查是否是网络错误
-                if (error.message && (error.message.includes('fetch') || error.message.includes('network'))) {
-                    console.warn('网络连接问题，使用本地数据');
-                    updateConnectionStatus(false);
-                } else {
-                    showToast('⚠️ 数据加载失败，使用本地数据');
+                // 确保使用本地数据
+                if (properties.length === 0 && customers.length === 0) {
+                    loadFromLocalStorage();
                 }
             }
         }
@@ -3935,6 +4332,7 @@
             renderRecentProperties();
             renderPropertyList();
             renderCustomerList();
+            initFilterRegions();
             
             // 初始化实时连接
             if (supabaseInitialized) {
