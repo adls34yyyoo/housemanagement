@@ -2814,35 +2814,62 @@
             };
 
             try {
-                if (supabaseClient) {
-                    if (editingPropertyId) {
-                        const { error } = await supabaseClient
-                            .from('properties')
-                            .update(property)
-                            .eq('id', editingPropertyId);
-                        
-                        if (error) {
-                            console.error('更新房源失败:', error);
-                            throw error;
-                        }
+                // 检查网络状态
+                const isOnline = navigator.onLine && supabaseClient;
+                
+                if (isOnline) {
+                    try {
+                        if (editingPropertyId) {
+                            const { error } = await supabaseClient
+                                .from('properties')
+                                .update(property)
+                                .eq('id', editingPropertyId);
+                            
+                            if (error) {
+                                console.error('更新房源失败:', error);
+                                // 如果是网络错误，保存到本地
+                                if (error.message && error.message.includes('fetch')) {
+                                    throw new Error('network');
+                                }
+                                throw error;
+                            }
 
-                        const index = properties.findIndex(p => p.id === editingPropertyId);
-                        if (index !== -1) {
-                            properties[index] = property;
-                        }
-                    } else {
-                        const { error } = await supabaseClient
-                            .from('properties')
-                            .insert([property]);
-                        
-                        if (error) {
-                            console.error('保存房源失败:', error);
-                            throw error;
-                        }
+                            const index = properties.findIndex(p => p.id === editingPropertyId);
+                            if (index !== -1) {
+                                properties[index] = property;
+                            }
+                        } else {
+                            const { error } = await supabaseClient
+                                .from('properties')
+                                .insert([property]);
+                            
+                            if (error) {
+                                console.error('保存房源失败:', error);
+                                // 如果是网络错误，保存到本地
+                                if (error.message && error.message.includes('fetch')) {
+                                    throw new Error('network');
+                                }
+                                throw error;
+                            }
 
-                        properties.push(property);
+                            properties.push(property);
+                        }
+                        showToast('✅ 房源保存成功');
+                    } catch (dbError) {
+                        // 数据库操作失败，保存到本地
+                        console.warn('数据库操作失败，保存到本地:', dbError);
+                        if (editingPropertyId) {
+                            const index = properties.findIndex(p => p.id === editingPropertyId);
+                            if (index !== -1) {
+                                properties[index] = property;
+                            }
+                        } else {
+                            properties.push(property);
+                        }
+                        showToast('⚠️ 网络不稳定，已保存到本地');
                     }
                 } else {
+                    // 离线模式，保存到本地
                     if (editingPropertyId) {
                         const index = properties.findIndex(p => p.id === editingPropertyId);
                         if (index !== -1) {
@@ -2851,14 +2878,13 @@
                     } else {
                         properties.push(property);
                     }
-                    showToast('⚠️ 未连接数据库，仅保存到本地');
+                    showToast('⚠️ 离线模式，已保存到本地');
                 }
 
                 closePropertyModal();
                 updateStats();
                 renderPropertyList();
                 renderRecentProperties();
-                showToast('✅ 房源保存成功');
             } catch (error) {
                 console.error('保存房源出错:', error);
                 showToast('❌ 保存失败: ' + (error.message || '未知错误'));
@@ -2982,35 +3008,62 @@
             };
 
             try {
-                if (supabaseClient) {
-                    if (editingCustomerId) {
-                        const { error } = await supabaseClient
-                            .from('customers')
-                            .update(customer)
-                            .eq('id', editingCustomerId);
-                        
-                        if (error) {
-                            console.error('更新客户失败:', error);
-                            throw error;
-                        }
+                // 检查网络状态
+                const isOnline = navigator.onLine && supabaseClient;
+                
+                if (isOnline) {
+                    try {
+                        if (editingCustomerId) {
+                            const { error } = await supabaseClient
+                                .from('customers')
+                                .update(customer)
+                                .eq('id', editingCustomerId);
+                            
+                            if (error) {
+                                console.error('更新客户失败:', error);
+                                // 如果是网络错误，保存到本地
+                                if (error.message && error.message.includes('fetch')) {
+                                    throw new Error('network');
+                                }
+                                throw error;
+                            }
 
-                        const index = customers.findIndex(c => c.id === editingCustomerId);
-                        if (index !== -1) {
-                            customers[index] = customer;
-                        }
-                    } else {
-                        const { error } = await supabaseClient
-                            .from('customers')
-                            .insert([customer]);
-                        
-                        if (error) {
-                            console.error('保存客户失败:', error);
-                            throw error;
-                        }
+                            const index = customers.findIndex(c => c.id === editingCustomerId);
+                            if (index !== -1) {
+                                customers[index] = customer;
+                            }
+                        } else {
+                            const { error } = await supabaseClient
+                                .from('customers')
+                                .insert([customer]);
+                            
+                            if (error) {
+                                console.error('保存客户失败:', error);
+                                // 如果是网络错误，保存到本地
+                                if (error.message && error.message.includes('fetch')) {
+                                    throw new Error('network');
+                                }
+                                throw error;
+                            }
 
-                        customers.push(customer);
+                            customers.push(customer);
+                        }
+                        showToast('✅ 客户保存成功');
+                    } catch (dbError) {
+                        // 数据库操作失败，保存到本地
+                        console.warn('数据库操作失败，保存到本地:', dbError);
+                        if (editingCustomerId) {
+                            const index = customers.findIndex(c => c.id === editingCustomerId);
+                            if (index !== -1) {
+                                customers[index] = customer;
+                            }
+                        } else {
+                            customers.push(customer);
+                        }
+                        showToast('⚠️ 网络不稳定，已保存到本地');
                     }
                 } else {
+                    // 离线模式，保存到本地
                     if (editingCustomerId) {
                         const index = customers.findIndex(c => c.id === editingCustomerId);
                         if (index !== -1) {
@@ -3019,13 +3072,12 @@
                     } else {
                         customers.push(customer);
                     }
-                    showToast('⚠️ 未连接数据库，仅保存到本地');
+                    showToast('⚠️ 离线模式，已保存到本地');
                 }
 
                 closeCustomerModal();
                 updateStats();
                 renderCustomerList();
-                showToast('✅ 客户保存成功');
             } catch (error) {
                 console.error('保存客户出错:', error);
                 showToast('❌ 保存失败: ' + (error.message || '未知错误'));
