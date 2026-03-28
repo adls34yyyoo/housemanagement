@@ -709,6 +709,24 @@
             transform: translateY(-1px);
         }
 
+        .filter-select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--background);
+            color: var(--text);
+            font-size: 16px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
         @keyframes slideUp {
             from {
                 transform: translateY(100%);
@@ -1712,42 +1730,65 @@
                 <div class="filter-body">
                     <div class="filter-section">
                         <div class="filter-label">类型</div>
-                        <div class="filter-options">
-                            <label class="filter-option">
-                                <input type="checkbox" id="filterTypeAll" checked onchange="applyFilters()">
-                                <span>全部</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="checkbox" id="filterTypeRent" onchange="applyFilters()">
-                                <span>租房</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="checkbox" id="filterTypeSale" onchange="applyFilters()">
-                                <span>卖房</span>
-                            </label>
-                        </div>
+                        <select class="filter-select" id="filterType" onchange="applyFilters()">
+                            <option value="">全部</option>
+                            <option value="rent">租房</option>
+                            <option value="sale">卖房</option>
+                        </select>
                     </div>
                     <div class="filter-section">
                         <div class="filter-label">状态</div>
-                        <div class="filter-options">
-                            <label class="filter-option">
-                                <input type="checkbox" id="filterStatusAll" checked onchange="applyFilters()">
-                                <span>全部</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="checkbox" id="filterStatusAvailable" onchange="applyFilters()">
-                                <span>可租/售</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="checkbox" id="filterStatusRented" onchange="applyFilters()">
-                                <span>已租/售</span>
-                            </label>
-                        </div>
+                        <select class="filter-select" id="filterStatus" onchange="applyFilters()">
+                            <option value="">全部</option>
+                            <option value="available">可租/售</option>
+                            <option value="rented">已租/售</option>
+                        </select>
                     </div>
                     <div class="filter-section">
                         <div class="filter-label">区域</div>
-                        <div class="filter-options" id="filterRegionOptions">
-                        </div>
+                        <select class="filter-select" id="filterRegion" onchange="applyFilters()">
+                            <option value="">全部</option>
+                        </select>
+                    </div>
+                    <div class="filter-section">
+                        <div class="filter-label">小区</div>
+                        <select class="filter-select" id="filterCommunity" onchange="applyFilters()">
+                            <option value="">全部</option>
+                        </select>
+                    </div>
+                    <div class="filter-section">
+                        <div class="filter-label">户型</div>
+                        <select class="filter-select" id="filterLayout" onchange="applyFilters()">
+                            <option value="">全部</option>
+                        </select>
+                    </div>
+                    <div class="filter-section">
+                        <div class="filter-label">装修</div>
+                        <select class="filter-select" id="filterDecoration" onchange="applyFilters()">
+                            <option value="">全部</option>
+                        </select>
+                    </div>
+                    <div class="filter-section">
+                        <div class="filter-label">面积</div>
+                        <select class="filter-select" id="filterArea" onchange="applyFilters()">
+                            <option value="">全部</option>
+                            <option value="0-50">50平以下</option>
+                            <option value="50-80">50-80平</option>
+                            <option value="80-100">80-100平</option>
+                            <option value="100-120">100-120平</option>
+                            <option value="120+">120平以上</option>
+                        </select>
+                    </div>
+                    <div class="filter-section">
+                        <div class="filter-label">价格</div>
+                        <select class="filter-select" id="filterPrice" onchange="applyFilters()">
+                            <option value="">全部</option>
+                            <option value="0-100">100万以下</option>
+                            <option value="100-200">100-200万</option>
+                            <option value="200-300">200-300万</option>
+                            <option value="300-500">300-500万</option>
+                            <option value="500+">500万以上</option>
+                        </select>
                     </div>
                     <div class="filter-actions">
                         <button class="filter-btn filter-btn-clear" onclick="clearFilters()">清除筛选</button>
@@ -3144,6 +3185,12 @@
             };
 
             modal.classList.add('active');
+            
+            // 隐藏浮动按钮
+            const fab = document.querySelector('.fab');
+            if (fab) {
+                fab.style.display = 'none';
+            }
         }
 
         // 渲染房源列表
@@ -3263,71 +3310,110 @@
             menu.classList.toggle('active');
         }
 
-        // 初始化区域筛选选项
+        // 初始化筛选选项
         function initFilterRegions() {
-            const container = document.getElementById('filterRegionOptions');
-            container.innerHTML = '';
+            // 初始化区域下拉框
+            const regionSelect = document.getElementById('filterRegion');
+            if (regionSelect) {
+                regionSelect.innerHTML = '<option value="">全部</option>';
+                optionsData.region.forEach(region => {
+                    regionSelect.innerHTML += `<option value="${region}">${region}</option>`;
+                });
+            }
             
-            // 添加全部选项
-            const allOption = document.createElement('label');
-            allOption.className = 'filter-option';
-            allOption.innerHTML = `
-                <input type="checkbox" id="filterRegionAll" checked onchange="applyFilters()">
-                <span>全部</span>
-            `;
-            container.appendChild(allOption);
+            // 初始化小区下拉框
+            const communitySelect = document.getElementById('filterCommunity');
+            if (communitySelect) {
+                communitySelect.innerHTML = '<option value="">全部</option>';
+                optionsData.community.forEach(community => {
+                    communitySelect.innerHTML += `<option value="${community}">${community}</option>`;
+                });
+            }
             
-            // 添加各个区域选项
-            optionsData.region.forEach(region => {
-                const option = document.createElement('label');
-                option.className = 'filter-option';
-                option.innerHTML = `
-                    <input type="checkbox" id="filterRegion_${region}" onchange="applyFilters()">
-                    <span>${region}</span>
-                `;
-                container.appendChild(option);
-            });
+            // 初始化户型下拉框
+            const layoutSelect = document.getElementById('filterLayout');
+            if (layoutSelect) {
+                layoutSelect.innerHTML = '<option value="">全部</option>';
+                optionsData.layout.forEach(layout => {
+                    layoutSelect.innerHTML += `<option value="${layout}">${layout}</option>`;
+                });
+            }
+            
+            // 初始化装修下拉框
+            const decorationSelect = document.getElementById('filterDecoration');
+            if (decorationSelect) {
+                decorationSelect.innerHTML = '<option value="">全部</option>';
+                optionsData.decoration.forEach(decoration => {
+                    decorationSelect.innerHTML += `<option value="${decoration}">${decoration}</option>`;
+                });
+            }
         }
 
         // 应用筛选条件
         function applyFilters() {
-            const typeAll = document.getElementById('filterTypeAll').checked;
-            const typeRent = document.getElementById('filterTypeRent').checked;
-            const typeSale = document.getElementById('filterTypeSale').checked;
-            
-            const statusAll = document.getElementById('filterStatusAll').checked;
-            const statusAvailable = document.getElementById('filterStatusAvailable').checked;
-            const statusRented = document.getElementById('filterStatusRented').checked;
-            
-            const regionAll = document.getElementById('filterRegionAll').checked;
+            const typeValue = document.getElementById('filterType').value;
+            const statusValue = document.getElementById('filterStatus').value;
+            const regionValue = document.getElementById('filterRegion').value;
+            const communityValue = document.getElementById('filterCommunity').value;
+            const layoutValue = document.getElementById('filterLayout').value;
+            const decorationValue = document.getElementById('filterDecoration').value;
+            const areaValue = document.getElementById('filterArea').value;
+            const priceValue = document.getElementById('filterPrice').value;
             
             filteredProperties = properties.filter(property => {
-                let matchType = true;
-                let matchStatus = true;
-                let matchRegion = true;
+                let match = true;
                 
                 // 类型筛选
-                if (!typeAll) {
-                    matchType = (typeRent && property.type === 'rent') || (typeSale && property.type === 'sale');
+                if (typeValue && match) {
+                    match = property.type === typeValue;
                 }
                 
                 // 状态筛选
-                if (!statusAll) {
-                    matchStatus = (statusAvailable && property.status === 'available') || (statusRented && property.status === 'rented');
+                if (statusValue && match) {
+                    match = property.status === statusValue;
                 }
                 
                 // 区域筛选
-                if (!regionAll) {
-                    const selectedRegions = optionsData.region.filter(region => {
-                        const checkbox = document.getElementById(`filterRegion_${region}`);
-                        return checkbox && checkbox.checked;
-                    });
-                    if (selectedRegions.length > 0) {
-                        matchRegion = selectedRegions.includes(property.region);
-                    }
+                if (regionValue && match) {
+                    match = property.region === regionValue;
                 }
                 
-                return matchType && matchStatus && matchRegion;
+                // 小区筛选
+                if (communityValue && match) {
+                    match = property.community === communityValue;
+                }
+                
+                // 户型筛选
+                if (layoutValue && match) {
+                    match = property.layout === layoutValue;
+                }
+                
+                // 装修筛选
+                if (decorationValue && match) {
+                    match = property.decoration === decorationValue;
+                }
+                
+                // 面积筛选
+                if (areaValue && match && property.area) {
+                    const area = parseFloat(property.area);
+                    if (areaValue === '0-50') match = area < 50;
+                    else if (areaValue === '50-80') match = area >= 50 && area < 80;
+                    else if (areaValue === '80-100') match = area >= 80 && area < 100;
+                    else if (areaValue === '100-120') match = area >= 100 && area < 120;
+                    else if (areaValue === '120+') match = area >= 120;
+                }
+                
+                // 价格筛选
+                if (priceValue && match && property.price) {
+                    const price = parseFloat(property.price);
+                    if (priceValue === '0-100') match = price < 100;
+                    else if (priceValue === '100-200') match = price >= 100 && price < 200;
+                    else if (priceValue === '200-300') match = price >= 200 && price < 300;
+                    else if (priceValue === '300-500') match = price >= 300 && price < 500;
+                    else if (priceValue === '500+') match = price >= 500;
+                }
+                
+                return match;
             });
             
             renderPropertyList();
@@ -3335,21 +3421,14 @@
 
         // 清除筛选条件
         function clearFilters() {
-            document.getElementById('filterTypeAll').checked = true;
-            document.getElementById('filterTypeRent').checked = false;
-            document.getElementById('filterTypeSale').checked = false;
-            
-            document.getElementById('filterStatusAll').checked = true;
-            document.getElementById('filterStatusAvailable').checked = false;
-            document.getElementById('filterStatusRented').checked = false;
-            
-            document.getElementById('filterRegionAll').checked = true;
-            optionsData.region.forEach(region => {
-                const checkbox = document.getElementById(`filterRegion_${region}`);
-                if (checkbox) {
-                    checkbox.checked = false;
-                }
-            });
+            document.getElementById('filterType').value = '';
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('filterRegion').value = '';
+            document.getElementById('filterCommunity').value = '';
+            document.getElementById('filterLayout').value = '';
+            document.getElementById('filterDecoration').value = '';
+            document.getElementById('filterArea').value = '';
+            document.getElementById('filterPrice').value = '';
             
             filteredProperties = [];
             renderPropertyList();
@@ -3835,6 +3914,12 @@
         // 关闭朋友圈模态框
         function closeMomentsModal() {
             document.getElementById('momentsModal').classList.remove('active');
+            
+            // 重新显示浮动按钮
+            const fab = document.querySelector('.fab');
+            if (fab) {
+                fab.style.display = 'flex';
+            }
         }
 
         // 复制朋友圈文案
@@ -4301,14 +4386,22 @@
         async function delayedInit() {
             console.log('页面加载完成，开始初始化...');
             
+            // 优先从本地存储加载数据
+            loadFromLocalStorage();
+            console.log('本地数据已加载:', properties.length, '条房源,', customers.length, '条客户');
+            
             // 初始化主题
             initTheme();
             
-            // 从本地存储加载数据
-            loadFromLocalStorage();
-            
             // 初始化UI
             initSelectOptions();
+            
+            // 先渲染本地数据，确保用户立即能看到内容
+            updateStats();
+            renderRecentProperties();
+            renderPropertyList();
+            renderCustomerList();
+            initFilterRegions();
             
             // 延迟初始化Supabase，确保库已加载
             let supabaseInitialized = false;
@@ -4326,13 +4419,8 @@
                 }
             }
             
-            // 加载数据
+            // 尝试从服务器加载数据（不会覆盖已有本地数据）
             await loadData();
-            updateStats();
-            renderRecentProperties();
-            renderPropertyList();
-            renderCustomerList();
-            initFilterRegions();
             
             // 初始化实时连接
             if (supabaseInitialized) {
