@@ -2132,10 +2132,40 @@
         let properties = [];
         let customers = [];
         let filteredProperties = [];
-        let filteredCustomers = [];
         let currentUser = '';
         let editingPropertyId = null;
         let editingCustomerId = null;
+
+        // 从localStorage加载数据
+        function loadFromLocalStorage() {
+            try {
+                const savedProperties = localStorage.getItem('properties');
+                const savedCustomers = localStorage.getItem('customers');
+                
+                if (savedProperties) {
+                    properties = JSON.parse(savedProperties);
+                    console.log('从本地存储加载了', properties.length, '条房源数据');
+                }
+                
+                if (savedCustomers) {
+                    customers = JSON.parse(savedCustomers);
+                    console.log('从本地存储加载了', customers.length, '条客户数据');
+                }
+            } catch (e) {
+                console.error('加载本地存储失败:', e);
+            }
+        }
+
+        // 保存数据到localStorage
+        function saveToLocalStorage() {
+            try {
+                localStorage.setItem('properties', JSON.stringify(properties));
+                localStorage.setItem('customers', JSON.stringify(customers));
+                console.log('数据已保存到本地存储');
+            } catch (e) {
+                console.error('保存到本地存储失败:', e);
+            }
+        }
 
         // 选项数据存储
         let optionsData = {
@@ -2977,6 +3007,9 @@
                 updateStats();
                 renderPropertyList();
                 renderRecentProperties();
+                
+                // 保存到本地存储
+                saveToLocalStorage();
             } catch (error) {
                 console.error('保存房源出错:', error);
                 showToast('❌ 保存失败: ' + (error.message || '未知错误'));
@@ -3051,6 +3084,9 @@
                 renderPropertyList();
                 renderRecentProperties();
                 showToast('✅ 房源删除成功');
+                
+                // 保存到本地存储
+                saveToLocalStorage();
             } catch (error) {
                 console.error('删除房源出错:', error);
                 showToast('❌ 删除失败: ' + (error.message || '未知错误'));
@@ -3170,6 +3206,9 @@
                 closeCustomerModal();
                 updateStats();
                 renderCustomerList();
+                
+                // 保存到本地存储
+                saveToLocalStorage();
             } catch (error) {
                 console.error('保存客户出错:', error);
                 showToast('❌ 保存失败: ' + (error.message || '未知错误'));
@@ -3552,6 +3591,9 @@
             
             // 初始化主题
             initTheme();
+            
+            // 从本地存储加载数据
+            loadFromLocalStorage();
             
             // 初始化UI
             initSelectOptions();
