@@ -609,86 +609,7 @@
             }
         }
 
-        /* 图片列表 */
-        .image-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 16px;
-        }
 
-        .image-item {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            background: var(--surface);
-            border-radius: var(--radius);
-            padding: 16px;
-            box-shadow: var(--shadow-sm);
-            transition: var(--transition);
-        }
-
-        .image-item:hover {
-            box-shadow: var(--shadow);
-            transform: translateY(-2px);
-        }
-
-        .image-thumbnail {
-            width: 80px;
-            height: 80px;
-            border-radius: var(--radius-sm);
-            object-fit: cover;
-            background: var(--background);
-        }
-
-        .image-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .image-name {
-            font-weight: 600;
-            margin-bottom: 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .image-size {
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-
-        .image-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .image-action {
-            padding: 8px 12px;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            transition: var(--transition);
-            font-size: 14px;
-        }
-
-        .image-action.delete {
-            background: #fee2e2;
-            color: #dc2626;
-        }
-
-        .image-action.delete:hover {
-            background: #fecaca;
-        }
-
-        .image-action.view {
-            background: var(--background);
-            color: var(--text-primary);
-        }
-
-        .image-action.view:hover {
-            background: var(--border);
-        }
 
         /* 页面切换 */
         .page {
@@ -1659,30 +1580,7 @@
             <div class="content-section" id="customerList"></div>
         </div>
 
-        <!-- 云管理页面 -->
-        <div class="page" id="pageCloud">
-            <div class="app-header">
-                <div class="header-content">
-                    <span class="header-title">云管理</span>
-                    <span class="header-user" id="headerUser3">admin</span>
-                </div>
-            </div>
-            
-            <div class="content-section" style="padding-top: 20px;">
-                <div class="section-title">
-                    <span>图片管理</span>
-                </div>
-                
-                <div class="image-list" id="imageList">
-                    <!-- 图片列表将通过JavaScript动态生成 -->
-                </div>
-                
-                <div class="action-buttons" style="margin-top: 20px;">
-                    <div class="action-button" onclick="uploadImage()">+ 上传图片</div>
-                    <div class="action-button" onclick="refreshImages()">🔄 刷新列表</div>
-                </div>
-            </div>
-        </div>
+
 
         <!-- 个人中心页面 -->
         <div class="page" id="pageProfile">
@@ -1763,11 +1661,11 @@
                 </div>
                 <div class="nav-label">客户</div>
             </div>
-            <div class="nav-item" onclick="switchPage('cloud')">
+            <div class="nav-item" onclick="switchPage('profile')">
                 <div class="nav-icon">
-                    <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95C8.08 7.14 9.94 6 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11c1.56.1 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3zM8 16l4-4-4-4 1.5-1.5L13 8 9.5 11.5 8 16z"/></svg>
+                    <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
                 </div>
-                <div class="nav-label">云管理</div>
+                <div class="nav-label">我的</div>
             </div>
         </div>
     </div>
@@ -2701,7 +2599,6 @@
                 'home': 'pageHome',
                 'properties': 'pageProperties',
                 'customers': 'pageCustomers',
-                'cloud': 'pageCloud',
                 'profile': 'pageProfile'
             };
 
@@ -2709,8 +2606,7 @@
                 'home': 0,
                 'properties': 1,
                 'customers': 2,
-                'cloud': 3,
-                'profile': 4
+                'profile': 3
             };
 
             const targetPage = document.getElementById(pageMap[page]);
@@ -2733,8 +2629,6 @@
                 renderPropertyList();
             } else if (page === 'customers') {
                 renderCustomerList();
-            } else if (page === 'cloud') {
-                renderImageList();
             }
         }
 
@@ -3625,95 +3519,7 @@
             }
         });
 
-        // 云管理相关函数
-        let images = [];
 
-        // 渲染图片列表
-        function renderImageList() {
-            const imageList = document.getElementById('imageList');
-            
-            if (images.length === 0) {
-                imageList.innerHTML = `
-                    <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
-                        <div style="font-size: 48px; margin-bottom: 16px;">🖼️</div>
-                        <div>暂无图片</div>
-                        <div style="margin-top: 8px; font-size: 14px;">点击"上传图片"按钮添加图片</div>
-                    </div>
-                `;
-                return;
-            }
-
-            imageList.innerHTML = images.map((image, index) => `
-                <div class="image-item">
-                    <img src="${image.url || 'https://via.placeholder.com/80x80'}" class="image-thumbnail" alt="${image.name}">
-                    <div class="image-info">
-                        <div class="image-name">${image.name}</div>
-                        <div class="image-size">${image.size || '未知大小'}</div>
-                    </div>
-                    <div class="image-actions">
-                        <div class="image-action view" onclick="viewImage('${image.url}')">查看</div>
-                        <div class="image-action delete" onclick="deleteImage(${index})">删除</div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // 上传图片
-        function uploadImage() {
-            // 模拟上传功能
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
-            input.onchange = function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    const newImage = {
-                        id: Date.now(),
-                        name: file.name,
-                        url: URL.createObjectURL(file),
-                        size: formatFileSize(file.size),
-                        uploadedAt: new Date().toISOString()
-                    };
-                    images.push(newImage);
-                    renderImageList();
-                    showToast('✅ 图片上传成功');
-                }
-            };
-            input.click();
-        }
-
-        // 删除图片
-        function deleteImage(index) {
-            if (confirm('确定要删除这张图片吗？')) {
-                images.splice(index, 1);
-                renderImageList();
-                showToast('✅ 图片删除成功');
-            }
-        }
-
-        // 查看图片
-        function viewImage(url) {
-            window.open(url, '_blank');
-        }
-
-        // 刷新图片列表
-        function refreshImages() {
-            // 模拟刷新
-            showToast('🔄 刷新中...');
-            setTimeout(() => {
-                renderImageList();
-                showToast('✅ 列表已刷新');
-            }, 500);
-        }
-
-        // 格式化文件大小
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 B';
-            const k = 1024;
-            const sizes = ['B', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
 
         // 延迟初始化函数
         async function delayedInit() {
