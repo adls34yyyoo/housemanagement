@@ -1551,10 +1551,11 @@
             </div>
             
             <div class="action-buttons">
-                <div class="action-button" onclick="openPropertyModal('sale')">+ 新增卖房</div>
-                <div class="action-button" onclick="openPropertyModal('rent')">+ 新增租房</div>
+                <div class="action-button" onclick="openPropertyModal('sale')">💰 卖房</div>
+                <div class="action-button" onclick="openPropertyModal('rent')">🏠 租房</div>
                 <div class="action-button" onclick="filterProperties('rent')">出租</div>
                 <div class="action-button" onclick="filterProperties('sale')">出售</div>
+                <div class="action-button" onclick="openMomentsSelector()" style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; border: none;">📢 发朋友圈</div>
             </div>
             
             <div class="content-section" id="propertyList"></div>
@@ -1637,13 +1638,13 @@
         
         <!-- 房源选择菜单 -->
         <div class="property-menu" id="propertyMenu">
-            <div class="menu-item" onclick="openPropertyModal('rent')">
-                <span class="menu-icon">🏠</span>
-                <span>新增租房</span>
-            </div>
             <div class="menu-item" onclick="openPropertyModal('sale')">
                 <span class="menu-icon">💰</span>
-                <span>新增卖房</span>
+                <span>卖房</span>
+            </div>
+            <div class="menu-item" onclick="openPropertyModal('rent')">
+                <span class="menu-icon">🏠</span>
+                <span>租房</span>
             </div>
         </div>
 
@@ -1661,11 +1662,11 @@
                 </div>
                 <div class="nav-label">房源</div>
             </div>
-            <div class="nav-item" onclick="openMomentsSelector()">
+            <div class="nav-item" onclick="switchPage('customers')">
                 <div class="nav-icon">
-                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                    <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
                 </div>
-                <div class="nav-label">朋友圈</div>
+                <div class="nav-label">客户</div>
             </div>
             <div class="nav-item" onclick="switchPage('profile')">
                 <div class="nav-icon">
