@@ -1930,15 +1930,37 @@
             }
         }
         
+        // 重连计数器
+        let reconnectCount = 0;
+        const maxReconnectCount = 3;
+        let reconnectTimer = null;
+
         // 初始化实时连接
         function initRealtimeConnection() {
             if (!supabaseClient) return;
             
+            // 检查网络状态
+            if (!navigator.onLine) {
+                console.log('网络离线，跳过实时连接初始化');
+                updateConnectionStatus(false);
+                return;
+            }
+            
             console.log('开始初始化实时连接...');
+            
+            // 清除之前的重连定时器
+            if (reconnectTimer) {
+                clearTimeout(reconnectTimer);
+                reconnectTimer = null;
+            }
             
             // 先关闭之前的连接
             if (realtimeChannel) {
-                supabaseClient.removeChannel(realtimeChannel);
+                try {
+                    supabaseClient.removeChannel(realtimeChannel);
+                } catch (e) {
+                    console.log('关闭旧连接失败:', e);
+                }
                 realtimeChannel = null;
             }
             
@@ -1964,10 +1986,22 @@
                     const isConnected = status === 'SUBSCRIBED';
                     updateConnectionStatus(isConnected);
                     
-                    // 如果连接断开，自动重连
-                    if (!isConnected && status !== 'CHANNEL_ERROR') {
-                        console.log('连接断开，1秒后尝试重连...');
-                        setTimeout(initRealtimeConnection, 1000);
+                    // 如果连接成功，重置重连计数器
+                    if (isConnected) {
+                        reconnectCount = 0;
+                        return;
+                    }
+                    
+                    // 如果连接失败且不是CHANNEL_ERROR，尝试重连
+                    if (status !== 'CHANNEL_ERROR' && reconnectCount < maxReconnectCount) {
+                        reconnectCount++;
+                        console.log(`连接断开，${reconnectCount}/${maxReconnectCount}秒后尝试重连...`);
+                        reconnectTimer = setTimeout(() => {
+                            initRealtimeConnection();
+                        }, 3000 * reconnectCount); // 递增延迟
+                    } else if (reconnectCount >= maxReconnectCount) {
+                        console.log('已达到最大重连次数，停止重连');
+                        showToast('网络连接不稳定，请检查网络后刷新页面');
                     }
                 });
         }
@@ -3130,6 +3164,13 @@
         async function loadData() {
             console.log('开始加载数据...');
             
+            // 检查网络状态
+            if (!navigator.onLine) {
+                console.warn('网络离线，使用本地数据');
+                updateConnectionStatus(false);
+                return;
+            }
+            
             if (!supabaseClient) {
                 console.warn('未连接到Supabase，使用本地数据');
                 return;
@@ -3144,6 +3185,12 @@
 
                 if (propertiesError) {
                     console.error('加载房源数据失败:', propertiesError);
+                    // 如果是网络错误，不抛出异常
+                    if (propertiesError.message && propertiesError.message.includes('fetch')) {
+                        console.warn('网络请求失败，使用本地数据');
+                        updateConnectionStatus(false);
+                        return;
+                    }
                     throw propertiesError;
                 }
 
@@ -3160,6 +3207,10 @@
 
                 if (customersError) {
                     console.error('加载客户数据失败:', customersError);
+                    // 如果是网络错误，不抛出异常
+                    if (customersError.message && customersError.message.includes('fetch')) {
+                        console.warn('网络请求失败，使用本地数据');
+                    }
                     // 不抛出错误，继续执行
                 }
 
@@ -3176,7 +3227,13 @@
 
             } catch (error) {
                 console.error('加载数据出错:', error);
-                showToast('⚠️ 数据加载失败，使用本地数据');
+                // 检查是否是网络错误
+                if (error.message && (error.message.includes('fetch') || error.message.includes('network'))) {
+                    console.warn('网络连接问题，使用本地数据');
+                    updateConnectionStatus(false);
+                } else {
+                    showToast('⚠️ 数据加载失败，使用本地数据');
+                }
             }
         }
 
@@ -3272,11 +3329,17 @@
 
             // 定期检查连接状态
             setInterval(() => {
+                // 检查网络状态
+                if (!navigator.onLine) {
+                    console.log('网络离线，跳过连接状态检查');
+                    return;
+                }
+                
                 if (realtimeChannel && supabaseClient) {
                     // 检查通道状态
                     const channelStatus = realtimeChannel.state;
                     console.log('定期检查连接状态:', channelStatus);
-                    if (channelStatus !== 'SUBSCRIBED') {
+                    if (channelStatus !== 'SUBSCRIBED' && reconnectCount < maxReconnectCount) {
                         console.log('连接状态异常，重新连接...');
                         initRealtimeConnection();
                     }
