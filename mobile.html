@@ -1865,7 +1865,7 @@
         </div>
 
         <!-- 浮动按钮 -->
-        <div class="fab" onclick="togglePropertyMenu()">+</div>
+        <div class="fab" id="fabButton" onclick="handleFabClick()">+</div>
         
         <!-- 房源选择菜单 -->
         <div class="property-menu" id="propertyMenu">
@@ -1917,8 +1917,16 @@
             </div>
             <div class="modal-body">
                 <div class="form-group">
+                    <label class="form-label">文案风格</label>
+                    <div class="style-selector" style="display: flex; gap: 10px; margin-bottom: 12px;">
+                        <button class="style-btn active" data-style="simple" onclick="selectStyle('simple')" style="flex: 1; padding: 10px; border: 2px solid var(--primary); background: var(--surface); border-radius: var(--radius); cursor: pointer; font-weight: 500;">简洁</button>
+                        <button class="style-btn" data-style="wonderful" onclick="selectStyle('wonderful')" style="flex: 1; padding: 10px; border: 2px solid var(--border); background: var(--surface); border-radius: var(--radius); cursor: pointer; font-weight: 500;">精彩</button>
+                        <button class="style-btn" data-style="professional" onclick="selectStyle('professional')" style="flex: 1; padding: 10px; border: 2px solid var(--border); background: var(--surface); border-radius: var(--radius); cursor: pointer; font-weight: 500;">专业</button>
+                    </div>
+                </div>
+                <div class="form-group">
                     <label class="form-label">朋友圈文案</label>
-                    <textarea class="form-textarea" id="momentsContent" readonly rows="8"></textarea>
+                    <textarea class="form-textarea" id="momentsContent" readonly rows="10"></textarea>
                 </div>
                 <div class="form-actions">
                     <button class="btn btn-default" onclick="closeMomentsModal()">取消</button>
@@ -3115,7 +3123,7 @@
                 selectedProperties.push(propertyId);
             }
             renderPropertyList();
-            updateShareButton();
+            updateFabButton();
         }
 
         // 更新分享按钮显示
@@ -3131,6 +3139,84 @@
             }
         }
 
+        // 当前文案风格
+        let currentStyle = 'simple';
+
+        // 选择文案风格
+        function selectStyle(style) {
+            currentStyle = style;
+            // 更新按钮样式
+            document.querySelectorAll('.style-btn').forEach(btn => {
+                if (btn.dataset.style === style) {
+                    btn.style.borderColor = 'var(--primary)';
+                    btn.classList.add('active');
+                } else {
+                    btn.style.borderColor = 'var(--border)';
+                    btn.classList.remove('active');
+                }
+            });
+            // 重新生成文案
+            generateMomentsContent();
+        }
+
+        // 生成朋友圈文案内容
+        function generateMomentsContent() {
+            if (selectedProperties.length === 0) return;
+
+            const selectedProps = properties.filter(p => selectedProperties.includes(p.id));
+            let content = '';
+
+            selectedProps.forEach((property, index) => {
+                const priceUnit = property.type === 'sale' ? '万元' : '元/月';
+                
+                if (currentStyle === 'simple') {
+                    // 简洁风格
+                    content += `🏠 ${property.community || '未知小区'} ${property.type === 'rent' ? '出租' : '出售'}\n`;
+                    content += `${property.layout || ''} ${property.area ? property.area + '平' : ''} ${property.decoration || ''}\n`;
+                    content += `💰 ${property.price || '面议'}${priceUnit}\n`;
+                    if (index < selectedProps.length - 1) content += '\n';
+                } else if (currentStyle === 'wonderful') {
+                    // 精彩风格
+                    content += `🎉 好房推荐${index > 0 ? index + 1 : ''}！\n\n`;
+                    content += `📍 ${property.region || ''} · ${property.community || '未知小区'}\n`;
+                    content += `🏡 ${property.layout || ''} ${property.area ? property.area + '平' : ''}\n`;
+                    content += `✨ ${property.decoration || '精装修'}\n`;
+                    content += `💰 ${property.price || '面议'}${priceUnit}\n`;
+                    if (index < selectedProps.length - 1) {
+                        content += '\n━━━━━━━━━━━━━━━━━━\n\n';
+                    }
+                } else if (currentStyle === 'professional') {
+                    // 专业风格
+                    content += `【房源推荐${index > 0 ? index + 1 : ''}】\n`;
+                    content += `小区：${property.community || '未知小区'}\n`;
+                    content += `类型：${property.type === 'rent' ? '出租' : '出售'}\n`;
+                    content += `区域：${property.region || ''}\n`;
+                    content += `户型：${property.layout || ''}\n`;
+                    content += `面积：${property.area ? property.area + '平方米' : '面议'}\n`;
+                    content += `装修：${property.decoration || ''}\n`;
+                    content += `价格：${property.price || '面议'}${priceUnit}\n`;
+                    if (index < selectedProps.length - 1) content += '\n';
+                }
+            });
+
+            // 添加结尾
+            if (currentStyle === 'simple') {
+                content += '\n有意联系，随时看房！';
+            } else if (currentStyle === 'wonderful') {
+                content += '\n🎊 优质好房，不容错过！\n📞 有意者请联系，随时看房！';
+            } else if (currentStyle === 'professional') {
+                content += '\n【联系方式】\n有意者请联系，随时安排看房！';
+            }
+
+            // 更新文本框内容
+            const contentDiv = document.getElementById('momentsContent');
+            if (contentDiv) {
+                contentDiv.value = content;
+            }
+
+            return content;
+        }
+
         // 批量生成朋友圈文案
         function batchGenerateMoments() {
             if (selectedProperties.length === 0) {
@@ -3138,51 +3224,14 @@
                 return;
             }
 
-            const selectedProps = properties.filter(p => selectedProperties.includes(p.id));
-            let content = '';
-
-            selectedProps.forEach((property, index) => {
-                const priceUnit = property.type === 'sale' ? '万元' : '元/月';
-                const statusText = {
-                    'available': '可租/售',
-                    'rented': '已租/售',
-                    'maintenance': '维护中'
-                }[property.status] || '可租/售';
-
-                content += `🏠 好房推荐${index > 0 ? index + 1 : ''}！\n\n`;
-                content += `${property.community || '未知小区'} ${property.type === 'rent' ? '出租' : '出售'}\n`;
-                content += `📍 ${property.region || ''}\n`;
-                content += `🏡 ${property.layout || ''} ${property.area ? property.area + '平' : ''}\n`;
-                content += `✨ ${property.decoration || ''}\n`;
-                content += `💰 ${property.price || '面议'}${priceUnit}\n`;
-                if (index < selectedProps.length - 1) {
-                    content += '\n━━━━━━━━━━━━━━━━━━\n\n';
-                }
-            });
-
-            content += '\n有意者请联系，随时看房！';
-
             // 显示批量分享模态框
             const modal = document.getElementById('momentsModal');
             const title = document.querySelector('#momentsModal .modal-title');
-            const contentDiv = document.getElementById('momentsContent');
-            const copyBtn = document.getElementById('copyMomentsBtn');
 
-            title.textContent = `批量生成朋友圈文案 (${selectedProps.length}套)`;
-            contentDiv.value = content;
-
-            // 复制按钮事件
-            copyBtn.onclick = function() {
-                navigator.clipboard.writeText(content).then(() => {
-                    showToast('✅ 文案已复制到剪贴板');
-                    closeMomentsModal();
-                }).catch(() => {
-                    contentDiv.select();
-                    document.execCommand('copy');
-                    showToast('✅ 文案已复制到剪贴板');
-                    closeMomentsModal();
-                });
-            };
+            title.textContent = `生成朋友圈文案 (${selectedProperties.length}套)`;
+            
+            // 生成文案
+            generateMomentsContent();
 
             modal.classList.add('active');
             
@@ -3210,17 +3259,20 @@
                 return;
             }
 
-            let html = propsToRender.map(p => createPropertyCard(p)).join('');
-            
-            // 添加批量分享按钮
-            html += `
-                <div id="batchShareBtn" style="display: none; position: fixed; bottom: 100px; right: 20px; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; padding: 14px 20px; border-radius: 50px; box-shadow: var(--shadow-lg); cursor: pointer; z-index: 97; font-weight: 600; animation: pulse 2s infinite;" onclick="batchGenerateMoments()">
-                    📢 一键转发 (${selectedProperties.length})
+            // 添加全选按钮
+            const allSelected = selectedProperties.length === propsToRender.length && propsToRender.length > 0;
+            let html = `
+                <div style="padding: 12px 16px; background: var(--surface); border-radius: var(--radius); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 600; color: var(--text);">已选择 ${selectedProperties.length} 套房源</span>
+                    <button onclick="toggleSelectAll()" style="padding: 8px 16px; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
+                        ${allSelected ? '取消全选' : '全选'}
+                    </button>
                 </div>
             `;
+            
+            html += propsToRender.map(p => createPropertyCard(p)).join('');
 
             container.innerHTML = html;
-            updateShareButton();
         }
 
         // 渲染客户列表
@@ -4355,6 +4407,18 @@
             }
         }
 
+        // 处理浮动按钮点击
+        function handleFabClick() {
+            // 检查是否有选中的房源
+            if (selectedProperties.length > 0) {
+                // 有选中房源，直接生成文案
+                batchGenerateMoments();
+            } else {
+                // 没有选中房源，显示房源选择菜单
+                togglePropertyMenu();
+            }
+        }
+
         // 切换房源选择菜单
         function togglePropertyMenu() {
             // 检查当前活动页面
@@ -4368,6 +4432,39 @@
                 const menu = document.getElementById('propertyMenu');
                 menu.classList.toggle('active');
             }
+        }
+
+        // 更新浮动按钮显示
+        function updateFabButton() {
+            const fab = document.getElementById('fabButton');
+            if (fab) {
+                if (selectedProperties.length > 0) {
+                    fab.textContent = '转';
+                    fab.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                    fab.style.animation = 'pulse 1.5s infinite';
+                } else {
+                    fab.textContent = '+';
+                    fab.style.background = '';
+                    fab.style.animation = '';
+                }
+            }
+        }
+
+        // 全选/取消全选房源
+        function toggleSelectAll() {
+            const propsToRender = filteredProperties.length ? filteredProperties : properties;
+            const allSelected = selectedProperties.length === propsToRender.length && propsToRender.length > 0;
+            
+            if (allSelected) {
+                // 取消全选
+                selectedProperties = [];
+            } else {
+                // 全选
+                selectedProperties = propsToRender.map(p => p.id);
+            }
+            
+            renderPropertyList();
+            updateFabButton();
         }
 
         // 点击其他地方关闭菜单
