@@ -1500,7 +1500,6 @@
             <div class="action-buttons">
                 <div class="action-button" onclick="openPropertyModal('rent')">+ 新增租房</div>
                 <div class="action-button" onclick="openPropertyModal('sale')">+ 新增卖房</div>
-                <div class="action-button" onclick="filterProperties('all')">全部</div>
                 <div class="action-button" onclick="filterProperties('rent')">出租</div>
                 <div class="action-button" onclick="filterProperties('sale')">出售</div>
             </div>
@@ -2524,6 +2523,8 @@
                 updateStats();
                 renderRecentProperties();
             } else if (page === 'properties') {
+                // 切换到房源页面时，清空过滤条件，显示全部房源
+                filteredProperties = [];
                 renderPropertyList();
             } else if (page === 'customers') {
                 renderCustomerList();
