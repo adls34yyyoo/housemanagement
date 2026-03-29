@@ -2250,12 +2250,16 @@
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">客户姓名</label>
-                    <input type="text" class="form-input" id="customerName" placeholder="请输入客户姓名">
+                    <label class="form-label">客户姓名或微信备注等</label>
+                    <input type="text" class="form-input" id="customerName" placeholder="请输入客户姓名或微信备注等">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">联系电话</label>
-                    <input type="tel" class="form-input" id="customerPhone" placeholder="请输入联系电话">
+                    <label class="form-label">联系电话或者微信号</label>
+                    <input type="text" class="form-input" id="customerPhone" placeholder="请输入联系电话或者微信号">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">客户预算</label>
+                    <input type="text" class="form-input" id="customerBudget" placeholder="请输入客户预算">
                 </div>
                 <div class="form-group">
                     <label class="form-label">客户需求</label>
@@ -2266,7 +2270,6 @@
                     <select class="form-select" id="customerStatus">
                         <option value="potential">潜在客户</option>
                         <option value="following">跟进中</option>
-                        <option value="completed">已完成</option>
                     </select>
                 </div>
             </div>
@@ -3701,14 +3704,15 @@
             }
 
             container.innerHTML = customersToRender.map(c => `
-                <div class="customer-card">
+                <div class="customer-card" onclick="showCustomerActions('${c.id}')">
                     <div class="customer-avatar">${c.name ? c.name.substring(0, 1) : '客'}</div>
                     <div class="customer-info">
                         <div class="customer-name">${c.name || '未知客户'}</div>
                         <div class="customer-phone">${c.phone || ''}</div>
+                        ${c.budget ? `<div class="customer-budget">预算：${c.budget}</div>` : ''}
                     </div>
-                    <span class="customer-status ${c.status === 'potential' ? 'status-available' : c.status === 'following' ? 'status-rented' : 'status-maintenance'}">
-                        ${c.status === 'potential' ? '潜在客户' : c.status === 'following' ? '跟进中' : '已完成'}
+                    <span class="customer-status ${c.status === 'potential' ? 'status-available' : 'status-rented'}">
+                        ${c.status === 'potential' ? '潜在客户' : '跟进中'}
                     </span>
                 </div>
             `).join('');
@@ -3730,6 +3734,70 @@
                 (p.landlordName && p.landlordName.toLowerCase().includes(keyword))
             );
             renderPropertyList();
+        }
+
+        // 显示客户操作菜单
+        function showCustomerActions(customerId) {
+            const customer = customers.find(c => c.id === customerId);
+            if (!customer) return;
+
+            const actions = [
+                { text: '编辑客户', action: () => editCustomer(customerId) },
+                { text: '删除客户', action: () => confirmDeleteCustomer(customerId) }
+            ];
+
+            let actionHtml = `
+                <div style="padding: 12px; background: var(--surface); border-radius: var(--radius);">
+                    <h3 style="margin: 0 0 12px 0; color: var(--text);">客户操作</h3>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+            `;
+
+            actions.forEach(action => {
+                actionHtml += `
+                    <button onclick="${action.action.toString().replace(/[\n\s]+/g, ' ')}" style="padding: 10px; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; text-align: left;">
+                        ${action.text}
+                    </button>
+                `;
+            });
+
+            actionHtml += `
+                    </div>
+                    <button onclick="document.getElementById('customerActionsModal').classList.remove('active')" style="margin-top: 12px; padding: 10px; width: 100%; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer;">
+                        取消
+                    </button>
+                </div>
+            `;
+
+            // 确保模态框存在
+            if (!document.getElementById('customerActionsModal')) {
+                const modalHtml = `
+                    <div class="modal" id="customerActionsModal">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <span class="modal-title">客户操作</span>
+                                <button class="modal-close" onclick="document.getElementById('customerActionsModal').classList.remove('active')">×</button>
+                            </div>
+                            <div class="modal-body" id="customerActionsContent">
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+            }
+
+            document.getElementById('customerActionsContent').innerHTML = actionHtml;
+            document.getElementById('customerActionsModal').classList.add('active');
+        }
+
+        // 确认删除客户
+        function confirmDeleteCustomer(customerId) {
+            const password = prompt('请输入删除密码：123456');
+            if (password === '123456') {
+                deleteCustomer(customerId);
+                document.getElementById('customerActionsModal').classList.remove('active');
+            } else {
+                showToast('密码错误，删除失败');
+            }
         }
 
         // 搜索客户
@@ -4104,7 +4172,9 @@
 
         // 删除房源
         async function deleteProperty(id) {
-            if (!confirm('确定要删除这个房源吗？')) {
+            const password = prompt('请输入删除密码：123456');
+            if (password !== '123456') {
+                showToast('密码错误，删除失败');
                 return;
             }
 
@@ -4153,14 +4223,73 @@
         function clearCustomerForm() {
             document.getElementById('customerName').value = '';
             document.getElementById('customerPhone').value = '';
+            document.getElementById('customerBudget').value = '';
             document.getElementById('customerDemand').value = '';
             document.getElementById('customerStatus').value = 'potential';
+        }
+
+        // 编辑客户
+        function editCustomer(customerId) {
+            const customer = customers.find(c => c.id === customerId);
+            if (!customer) return;
+
+            editingCustomerId = customerId;
+            document.getElementById('customerName').value = customer.name || '';
+            document.getElementById('customerPhone').value = customer.phone || '';
+            document.getElementById('customerBudget').value = customer.budget || '';
+            document.getElementById('customerDemand').value = customer.demand || '';
+            document.getElementById('customerStatus').value = customer.status || 'potential';
+            document.getElementById('customerModal').classList.add('active');
+        }
+
+        // 删除客户
+        async function deleteCustomer(customerId) {
+            try {
+                // 检查网络状态
+                const isOnline = navigator.onLine && supabaseClient;
+                
+                if (isOnline) {
+                    try {
+                        const { error } = await supabaseClient
+                            .from('customers')
+                            .delete()
+                            .eq('id', customerId);
+                        
+                        if (error) {
+                            console.error('删除客户失败:', error);
+                            // 如果是网络错误，保存到本地
+                            if (error.message && error.message.includes('fetch')) {
+                                throw new Error('network');
+                            }
+                            throw error;
+                        }
+                    } catch (error) {
+                        console.error('删除客户失败:', error);
+                        // 网络错误时，仅从本地删除
+                    }
+                }
+                
+                // 从本地删除
+                const index = customers.findIndex(c => c.id === customerId);
+                if (index !== -1) {
+                    customers.splice(index, 1);
+                    saveCustomersToLocal();
+                }
+                
+                renderCustomerList();
+                showToast('客户删除成功');
+                
+            } catch (error) {
+                console.error('删除客户失败:', error);
+                showToast('删除客户失败');
+            }
         }
 
         // 保存客户
         async function saveCustomer() {
             const name = document.getElementById('customerName').value;
             const phone = document.getElementById('customerPhone').value;
+            const budget = document.getElementById('customerBudget').value;
             const demand = document.getElementById('customerDemand').value;
             const status = document.getElementById('customerStatus').value;
 
@@ -4173,6 +4302,7 @@
                 id: editingCustomerId || Date.now().toString(),
                 name,
                 phone,
+                budget,
                 demand,
                 status,
                 created_at: new Date().toISOString(),
