@@ -3477,8 +3477,8 @@
                                         <span>${p.community || '未知小区'}</span>
                                         <span class="property-status ${statusClass}">${statusText}</span>
                                     </div>
-                                    <div class="property-address">
-                                        ${p.region || ''} ${p.layout || ''} ${p.area ? p.area + '平' : ''}
+                                    <div class="property-address" style="margin-bottom: 8px;">
+                                        ${p.layout || ''} ${p.floor ? p.floor + '楼' : ''} ${p.area ? p.area + '平' : ''}
                                     </div>
                                     <div class="property-meta">
                                         <span class="property-price">${p.price || '面议'}${priceUnit}</span>
@@ -3534,8 +3534,8 @@
                             <span>${property.community || '未知小区'}</span>
                             <span class="property-status ${statusClass}">${statusText}</span>
                         </div>
-                        <div class="property-address">
-                            ${property.region || ''} ${property.layout || ''} ${property.area ? property.area + '平' : ''}
+                        <div class="property-address" style="margin-bottom: 8px;">
+                            ${property.layout || ''} ${property.floor ? property.floor + '楼' : ''} ${property.area ? property.area + '平' : ''}
                         </div>
                         <div class="property-meta">
                             <span class="property-price">${property.price || '面议'}${priceUnit}</span>
@@ -5026,7 +5026,7 @@
                                 ${property.callRecords.map((record, index) => `
                                     <div style="padding: 8px 0; ${index > 0 ? 'border-top: 1px solid var(--border);' : ''}">
                                         <div style="display: flex; justify-content: space-between; font-size: 14px;">
-                                            <span style="font-weight: 600;"><a href="tel:${record.phone}" style="color: var(--primary); text-decoration: none;">${record.phone}</a></span>
+                                            <span style="font-weight: 600;"><a href="tel:${record.phone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">📞 ${record.phone}</a></span>
                                             <span style="color: var(--text-secondary);">${new Date(record.time).toLocaleString()}</span>
                                         </div>
                                         ${record.remark ? `
