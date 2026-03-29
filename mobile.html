@@ -4263,6 +4263,7 @@
         function openPropertyModal(type = 'rent') {
             editingPropertyId = null;
             
+            const priceLabel = document.getElementById('priceLabel');
             if (type === 'rent') {
                 document.getElementById('propertyModalTitle').textContent = '新增租房';
                 // 租房房源状态选项
@@ -4273,6 +4274,8 @@
                     <option value="off_shelf">已下架</option>
                     <option value="on_shelf">已上架</option>
                 `;
+                // 价格标签显示为元/月
+                priceLabel.textContent = '价格（元/月）';
             } else {
                 document.getElementById('propertyModalTitle').textContent = '新增卖房';
                 // 卖房房源状态选项，取消待发布和出售中
@@ -4281,6 +4284,8 @@
                     <option value="on_shelf">已上架</option>
                     <option value="off_shelf">已下架</option>
                 `;
+                // 价格标签显示为万元
+                priceLabel.textContent = '价格（万元）';
             }
             
             clearPropertyForm();
@@ -4342,16 +4347,30 @@
             let propertyType = 'rent';
             let propertyPrice = price ? parseFloat(price) : null;
             
-            // 根据模态框标题判断是新增卖房还是租房
-            const modalTitle = document.getElementById('propertyModalTitle').textContent;
-            if (modalTitle === '新增卖房') {
-                propertyType = 'sale';
-                // 确保价格单位为万元
-                propertyPrice = propertyPrice;
-            } else if (price > 10000) {
-                propertyType = 'sale';
-                // 确保价格单位为万元
-                propertyPrice = propertyPrice / 10000;
+            // 判断是新增还是编辑
+            if (editingPropertyId) {
+                // 编辑模式：根据原房源类型判断
+                const originalProperty = properties.find(p => p.id === editingPropertyId);
+                if (originalProperty && originalProperty.type === 'sale') {
+                    propertyType = 'sale';
+                    // 确保价格单位为万元
+                    propertyPrice = propertyPrice;
+                } else {
+                    // 编辑租房房源
+                    propertyType = 'rent';
+                }
+            } else {
+                // 新增模式：根据模态框标题判断是新增卖房还是租房
+                const modalTitle = document.getElementById('propertyModalTitle').textContent;
+                if (modalTitle === '新增卖房') {
+                    propertyType = 'sale';
+                    // 确保价格单位为万元
+                    propertyPrice = propertyPrice;
+                } else if (price > 10000) {
+                    propertyType = 'sale';
+                    // 确保价格单位为万元
+                    propertyPrice = propertyPrice / 10000;
+                }
             }
             
             const property = {
@@ -4475,14 +4494,17 @@
             editingPropertyId = id;
             document.getElementById('propertyModalTitle').textContent = '编辑房源';
 
-            // 根据房源类型更新状态下拉框选项
+            // 根据房源类型更新状态下拉框选项和价格标签
             const statusSelect = document.getElementById('propStatus');
+            const priceLabel = document.getElementById('priceLabel');
             if (property.type === 'sale') {
                 // 卖房房源状态选项，取消待发布和出售中
                 statusSelect.innerHTML = `
                     <option value="on_shelf">已上架</option>
                     <option value="off_shelf">已下架</option>
                 `;
+                // 价格标签显示为万元
+                priceLabel.textContent = '价格（万元）';
             } else {
                 // 租房房源状态选项
                 statusSelect.innerHTML = `
@@ -4491,6 +4513,8 @@
                     <option value="off_shelf">已下架</option>
                     <option value="on_shelf">已上架</option>
                 `;
+                // 价格标签显示为元/月
+                priceLabel.textContent = '价格（元/月）';
             }
 
             document.getElementById('propCommunity').value = property.community || '';
