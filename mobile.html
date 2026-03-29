@@ -3655,25 +3655,30 @@
                 return;
             }
 
-            // 添加全选按钮和一键转发按钮
+            // 添加全选按钮
             const allSelected = selectedProperties.length === propsToRender.length && propsToRender.length > 0;
             let html = `
                 <div style="padding: 12px 16px; background: var(--surface); border-radius: var(--radius); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
                     <span style="font-weight: 600; color: var(--text);">已选择 ${selectedProperties.length} 套房源</span>
-                    <div style="display: flex; gap: 8px;">
-                        <button onclick="toggleSelectAll()" style="padding: 8px 16px; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
-                            ${allSelected ? '取消全选' : '全选'}
-                        </button>
-                        ${selectedProperties.length > 0 ? `
-                            <button id="batchShareBtn" onclick="generateMomentsContent()" style="padding: 8px 16px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
-                                📢 一键转发 (${selectedProperties.length})
-                            </button>
-                        ` : ''}
-                    </div>
+                    <button onclick="toggleSelectAll()" style="padding: 8px 16px; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
+                        ${allSelected ? '取消全选' : '全选'}
+                    </button>
                 </div>
             `;
             
+            // 添加房源卡片
             html += propsToRender.map(p => createPropertyCard(p)).join('');
+            
+            // 添加一键转发按钮到房源最下方
+            if (selectedProperties.length > 0) {
+                html += `
+                    <div style="padding: 12px 16px; background: var(--surface); border-radius: var(--radius); margin-top: 12px; display: flex; justify-content: center;">
+                        <button id="batchShareBtn" onclick="generateMomentsContent()" style="padding: 12px 24px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500; font-size: 16px;">
+                            一键转发 (${selectedProperties.length})
+                        </button>
+                    </div>
+                `;
+            }
 
             container.innerHTML = html;
         }
