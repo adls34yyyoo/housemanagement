@@ -4879,7 +4879,7 @@
                 <div style="padding: 16px;">
                     <div style="text-align: center; margin-bottom: 24px;">
                         <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 8px;">${property.community || '未知小区'}</h3>
-                        <div style="padding: 6px 16px; background: rgba(59, 130, 246, 0.1); color: var(--primary); border-radius: 20px; display: inline-block; font-weight: 600;">
+                        <div style="padding: 6px 16px; background: rgba(59, 130, 246, 0.1); color: var(--primary); border-radius: 20px; display: inline-block; font-weight: 600; cursor: pointer;" onclick="showRentSaleToggleModal('${property.id}')">
                             ${typeText}
                         </div>
                     </div>
@@ -4991,6 +4991,99 @@
         // 关闭房源详情模态框
         function closePropertyDetailModal() {
             document.getElementById('propertyDetailModal').classList.remove('active');
+        }
+
+        // 显示租售互转模态框
+        function showRentSaleToggleModal(propertyId) {
+            const property = properties.find(p => p.id === propertyId);
+            if (!property) return;
+
+            const currentType = property.type;
+            const newType = currentType === 'rent' ? 'sale' : 'rent';
+            const currentTypeText = currentType === 'rent' ? '出租' : '出售';
+            const newTypeText = newType === 'rent' ? '出租' : '出售';
+            const priceUnit = newType === 'sale' ? '万元' : '元/月';
+
+            // 创建模态框
+            const modalHTML = `
+                <div class="modal" id="rentSaleToggleModal" style="display: flex; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000;">
+                    <div class="modal-content" style="background: white; border-radius: var(--radius); padding: 20px; width: 90%; max-width: 400px;">
+                        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin: 0; color: var(--text);">转换房源类型</h3>
+                            <button onclick="closeRentSaleToggleModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);">&times;</button>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <p style="margin-bottom: 16px;">确定将房源从 <strong style="color: var(--primary);">${currentTypeText}</strong> 转换为 <strong style="color: var(--primary);">${newTypeText}</strong> 吗？</p>
+                            ${newType === 'sale' ? `
+                                <div class="form-group">
+                                    <label class="form-label">确认价格 (${priceUnit})</label>
+                                    <input type="number" id="togglePrice" value="${property.price || 0}" step="0.1" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 16px;">
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="form-actions" style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button class="btn btn-default" onclick="closeRentSaleToggleModal()">取消</button>
+                            <button class="btn btn-primary" onclick="toggleRentSale('${property.id}')">确认转换</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 插入模态框到页面
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        // 关闭租售互转模态框
+        function closeRentSaleToggleModal() {
+            const modal = document.getElementById('rentSaleToggleModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // 执行租售互转
+        function toggleRentSale(propertyId) {
+            const property = properties.find(p => p.id === propertyId);
+            if (!property) return;
+
+            const currentType = property.type;
+            const newType = currentType === 'rent' ? 'sale' : 'rent';
+
+            // 获取确认的价格
+            const priceInput = document.getElementById('togglePrice');
+            if (priceInput) {
+                const newPrice = parseFloat(priceInput.value);
+                if (!isNaN(newPrice)) {
+                    property.price = newPrice;
+                }
+            }
+
+            // 转换类型
+            property.type = newType;
+            property.updated_at = new Date().toISOString();
+            property.synced = false;
+
+            // 添加更改记录
+            if (!property.changeHistory) {
+                property.changeHistory = [];
+            }
+            property.changeHistory.push({
+                timestamp: new Date().toISOString(),
+                action: `转换为${newType === 'sale' ? '出售' : '出租'}`,
+                user: currentUser || 'admin'
+            });
+
+            // 保存到本地存储
+            saveToLocalStorage();
+
+            // 关闭模态框
+            closeRentSaleToggleModal();
+
+            // 重新打开房源详情，显示更新后的信息
+            openPropertyDetailModal(propertyId);
+
+            // 显示成功提示
+            showToast(`✅ 房源已成功转换为${newType === 'sale' ? '出售' : '出租'}`);
         }
 
         // 训练模型（模拟）
