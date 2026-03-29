@@ -866,6 +866,37 @@
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         }
 
+        .filter-checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .filter-checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 8px 12px;
+            background: var(--background);
+            border-radius: var(--radius);
+            border: 2px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .filter-checkbox-item:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .filter-checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
         @keyframes slideUp {
             from {
                 transform: translateY(100%);
@@ -1884,21 +1915,31 @@
                 <div class="filter-body">
                     <div class="filter-section">
                         <div class="filter-label">类型</div>
-                        <select class="filter-select" id="filterType" onchange="applyFilters()">
-                            <option value="">全部</option>
-                            <option value="rent">租房</option>
-                            <option value="sale">卖房</option>
-                        </select>
+                        <div class="filter-checkbox-group">
+                            <label class="filter-checkbox-item">
+                                <input type="checkbox" value="rent" onchange="applyFilters()"> 租房
+                            </label>
+                            <label class="filter-checkbox-item">
+                                <input type="checkbox" value="sale" onchange="applyFilters()"> 卖房
+                            </label>
+                        </div>
                     </div>
                     <div class="filter-section">
                         <div class="filter-label">状态</div>
-                        <select class="filter-select" id="filterStatus" onchange="applyFilters()">
-                            <option value="">全部</option>
-                            <option value="pending">待发布</option>
-                            <option value="selling">出售中</option>
-                            <option value="off_shelf">已下架</option>
-                            <option value="on_shelf">已上架</option>
-                        </select>
+                        <div class="filter-checkbox-group">
+                            <label class="filter-checkbox-item">
+                                <input type="checkbox" value="pending" onchange="applyFilters()"> 待发布
+                            </label>
+                            <label class="filter-checkbox-item">
+                                <input type="checkbox" value="selling" onchange="applyFilters()"> 出售中
+                            </label>
+                            <label class="filter-checkbox-item">
+                                <input type="checkbox" value="off_shelf" onchange="applyFilters()"> 已下架
+                            </label>
+                            <label class="filter-checkbox-item">
+                                <input type="checkbox" value="on_shelf" onchange="applyFilters()"> 已上架
+                            </label>
+                        </div>
                     </div>
                     <div class="filter-section">
                         <div class="filter-label">区域</div>
@@ -2299,8 +2340,12 @@
                     <input type="text" class="form-input" id="customerName" placeholder="请输入客户姓名或微信备注等">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">联系电话或者微信号</label>
-                    <input type="text" class="form-input" id="customerPhone" placeholder="请输入联系电话或者微信号">
+                    <label class="form-label">联系电话</label>
+                    <input type="text" class="form-input" id="customerPhone" placeholder="请输入联系电话">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">微信号</label>
+                    <input type="text" class="form-input" id="customerWechat" placeholder="请输入微信号">
                 </div>
                 <div class="form-group">
                     <label class="form-label">客户预算</label>
@@ -3909,7 +3954,8 @@
                     <div style="margin-bottom: 16px;">
                         <h3 style="margin: 0 0 8px 0; color: var(--text); font-size: 16px;">基本信息</h3>
                         <div style="background: var(--background); border-radius: var(--radius); padding: 12px;">
-                            <div style="margin-bottom: 8px;"><strong>联系电话/微信：</strong>${customer.phone || '未填写'}</div>
+                            ${customer.phone ? `<div style="margin-bottom: 8px;"><strong>联系电话：</strong><a href="tel:${customer.phone}" style="color: var(--primary); text-decoration: none; cursor: pointer;" onclick="showCommunicationModal('${customer.id}', '${customer.phone}')">${customer.phone}</a></div>` : '<div style="margin-bottom: 8px;"><strong>联系电话：</strong>未填写</div>'}
+                            ${customer.wechat ? `<div style="margin-bottom: 8px;"><strong>微信号：</strong><span style="color: var(--primary); cursor: pointer; text-decoration: underline;" onclick="copyWeChat('${customer.wechat}')">${customer.wechat}</span></div>` : '<div style="margin-bottom: 8px;"><strong>微信号：</strong>未填写</div>'}
                             <div style="margin-bottom: 8px;"><strong>预算：</strong>${customer.budget || '未填写'}</div>
                             <div><strong>需求：</strong>${customer.demand || '未填写'}</div>
                         </div>
@@ -3922,6 +3968,27 @@
                             <div><strong>更新时间：</strong>${new Date(customer.updated_at).toLocaleString()}</div>
                         </div>
                     </div>
+                    
+                    ${customer.communicationRecords && customer.communicationRecords.length > 0 ? `
+                        <div style="margin-bottom: 16px;">
+                            <h3 style="margin: 0 0 8px 0; color: var(--text); font-size: 16px;">沟通记录</h3>
+                            <div style="background: var(--background); border-radius: var(--radius); padding: 12px;">
+                                ${customer.communicationRecords.map((record, index) => `
+                                    <div style="padding: 8px 0; ${index > 0 ? 'border-top: 1px solid var(--border);' : ''}">
+                                        <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                                            <span style="font-weight: 600;">${record.type === 'call' ? '电话沟通' : '微信沟通'}</span>
+                                            <span style="color: var(--text-secondary);">${new Date(record.timestamp).toLocaleString()}</span>
+                                        </div>
+                                        ${record.remark ? `
+                                            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
+                                                备注：${record.remark}
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
                     
                     ${customer.changeHistory && customer.changeHistory.length > 0 ? `
                         <div style="margin-bottom: 16px;">
@@ -3943,6 +4010,9 @@
                     ` : ''}
                     
                     <div style="display: flex; gap: 12px; margin-top: 24px;">
+                        <button onclick="showCommunicationModal('${customer.id}')" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #2196F3 0%, #0b7dda 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
+                            添加沟通记录
+                        </button>
                         <button onclick="editCustomer('${customer.id}'); document.getElementById('customerDetailModal').classList.remove('active')" style="flex: 1; padding: 12px; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
                             编辑
                         </button>
@@ -4060,8 +4130,10 @@
 
         // 应用筛选条件
         function applyFilters() {
-            const typeValue = document.getElementById('filterType').value;
-            const statusValue = document.getElementById('filterStatus').value;
+            // 获取类型和状态的多选值
+            const typeCheckboxes = document.querySelectorAll('.filter-checkbox-group input[type="checkbox"]');
+            const selectedValues = Array.from(typeCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+            
             const regionValue = document.getElementById('filterRegion').value;
             const communityValue = document.getElementById('filterCommunity').value;
             const layoutValue = document.getElementById('filterLayout').value;
@@ -4072,14 +4144,9 @@
             filteredProperties = properties.filter(property => {
                 let match = true;
                 
-                // 类型筛选
-                if (typeValue && match) {
-                    match = property.type === typeValue;
-                }
-                
-                // 状态筛选
-                if (statusValue && match) {
-                    match = property.status === statusValue;
+                // 类型和状态筛选（多选）
+                if (selectedValues.length > 0 && match) {
+                    match = selectedValues.includes(property.type) || selectedValues.includes(property.status);
                 }
                 
                 // 区域筛选
@@ -4130,8 +4197,10 @@
 
         // 清除筛选条件
         function clearFilters() {
-            document.getElementById('filterType').value = '';
-            document.getElementById('filterStatus').value = '';
+            // 清除复选框选中状态
+            const checkboxes = document.querySelectorAll('.filter-checkbox-group input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = false);
+            
             document.getElementById('filterRegion').value = '';
             document.getElementById('filterCommunity').value = '';
             document.getElementById('filterLayout').value = '';
@@ -4445,6 +4514,7 @@
             editingCustomerId = customerId;
             document.getElementById('customerName').value = customer.name || '';
             document.getElementById('customerPhone').value = customer.phone || '';
+            document.getElementById('customerWechat').value = customer.wechat || '';
             document.getElementById('customerBudget').value = customer.budget || '';
             document.getElementById('customerDemand').value = customer.demand || '';
             document.getElementById('customerStatus').value = customer.status || 'potential';
@@ -4498,6 +4568,7 @@
         async function saveCustomer() {
             const name = document.getElementById('customerName').value;
             const phone = document.getElementById('customerPhone').value;
+            const wechat = document.getElementById('customerWechat').value;
             const budget = document.getElementById('customerBudget').value;
             const demand = document.getElementById('customerDemand').value;
             const status = document.getElementById('customerStatus').value;
@@ -4511,10 +4582,10 @@
                 id: editingCustomerId || Date.now().toString(),
                 name,
                 phone,
+                wechat: wechat || name, // 微信备注默认为客户姓名
                 budget,
                 demand,
                 status,
-                wechat: name, // 微信备注默认为客户姓名
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
                 synced: false, // 添加同步状态标记
@@ -4526,7 +4597,8 @@
                     timestamp: new Date().toISOString(),
                     action: '创建',
                     user: currentUser || 'admin'
-                }]
+                }],
+                communicationRecords: editingCustomerId ? (customers.find(c => c.id === editingCustomerId)?.communicationRecords || []) : []
             };
 
             try {
@@ -5208,6 +5280,107 @@
 
             // 显示成功提示
             showToast('✅ 通话记录已保存');
+        }
+
+        // 显示沟通记录模态框
+        function showCommunicationModal(customerId, phone = '') {
+            // 创建沟通记录模态框
+            const modalHTML = `
+                <div class="modal" id="communicationModal" style="display: flex; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000;">
+                    <div class="modal-content" style="background: white; border-radius: var(--radius); padding: 20px; width: 90%; max-width: 400px; max-height: 80vh; overflow-y: auto;">
+                        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin: 0; color: var(--text);">添加沟通记录</h3>
+                            <button onclick="closeCommunicationModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);">&times;</button>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">沟通方式</label>
+                            <select id="communicationType" class="form-select" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 16px;">
+                                <option value="call">电话沟通</option>
+                                <option value="wechat">微信沟通</option>
+                            </select>
+                        </div>
+                        ${phone ? `
+                            <div class="form-group">
+                                <label class="form-label">电话号码</label>
+                                <input type="text" id="communicationPhone" value="${phone}" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 16px;" disabled>
+                            </div>
+                        ` : ''}
+                        <div class="form-group">
+                            <label class="form-label">沟通时间</label>
+                            <input type="datetime-local" id="communicationTime" value="${new Date().toISOString().slice(0, 16)}" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 16px;">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">沟通备注</label>
+                            <textarea id="communicationRemark" rows="4" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 16px; resize: vertical;"></textarea>
+                        </div>
+                        <div class="form-actions" style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button class="btn btn-default" onclick="closeCommunicationModal()">取消</button>
+                            <button class="btn btn-primary" onclick="saveCommunicationRecord('${customerId}')">保存记录</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 插入模态框到页面
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        // 关闭沟通记录模态框
+        function closeCommunicationModal() {
+            const modal = document.getElementById('communicationModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // 保存沟通记录
+        function saveCommunicationRecord(customerId) {
+            const type = document.getElementById('communicationType').value;
+            const time = document.getElementById('communicationTime').value;
+            const remark = document.getElementById('communicationRemark').value;
+
+            if (!time) {
+                showToast('请选择沟通时间');
+                return;
+            }
+
+            // 找到对应的客户
+            const customer = customers.find(c => c.id === customerId);
+            if (!customer) {
+                showToast('未找到对应的客户');
+                return;
+            }
+
+            // 添加沟通记录
+            if (!customer.communicationRecords) {
+                customer.communicationRecords = [];
+            }
+
+            customer.communicationRecords.push({
+                id: Date.now().toString(),
+                type,
+                timestamp: time,
+                remark,
+                created_at: new Date().toISOString()
+            });
+
+            // 更新客户的更新时间
+            customer.updated_at = new Date().toISOString();
+            
+            // 标记为未同步
+            customer.synced = false;
+
+            // 保存到本地存储
+            saveToLocalStorage();
+
+            // 关闭模态框
+            closeCommunicationModal();
+
+            // 重新显示客户详情，以更新沟通记录
+            showCustomerDetail(customerId);
+
+            // 显示成功提示
+            showToast('✅ 沟通记录已保存');
         }
 
         // 同步本地未上传的数据到云数据库
