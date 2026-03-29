@@ -513,6 +513,34 @@
             background: var(--background);
         }
 
+        .property-tabs {
+            display: flex;
+            margin: 16px;
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        
+        .property-tabs .tab {
+            flex: 1;
+            text-align: center;
+            padding: 12px 8px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+        
+        .property-tabs .tab.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+        
+        .property-tabs .tab:not(.active) {
+            color: var(--text);
+        }
+        
         .nav-icon {
             width: 28px;
             height: 28px;
@@ -1661,6 +1689,7 @@
             <div class="app-header">
                 <div class="header-content">
                     <span class="header-title">首页</span>
+                    <span class="header-user" id="headerUser">admin</span>
                 </div>
             </div>
             
@@ -1745,6 +1774,11 @@
             
             <div class="search-bar">
                 <input type="text" class="search-input" id="propertySearch" placeholder="搜索房源..." oninput="searchProperties()">
+            </div>
+            
+            <div class="property-tabs">
+                <div class="tab active" onclick="switchPropertyTab('own')">自有房源</div>
+                <div class="tab" onclick="switchPropertyTab('agent')">可代理房源</div>
             </div>
             
             <div class="action-buttons">
@@ -1893,7 +1927,7 @@
                 <div class="nav-icon">
                     <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>
                 </div>
-                <div class="nav-label">转发</div>
+                <div class="nav-label">一键发</div>
             </div>
         </div>
     </div>
@@ -2118,6 +2152,16 @@
                 <button class="modal-close" onclick="closeCustomerModal()">×</button>
             </div>
             <div class="modal-body">
+                <!-- AI识别输入框 -->
+                <div class="form-group">
+                    <label class="form-label">
+                        AI识别输入
+                        <span style="font-size: 12px; color: var(--text-tertiary); margin-left: 8px;">输入客户信息，AI自动提取</span>
+                    </label>
+                    <textarea class="form-textarea" id="customerAiInput" placeholder="例如：张三 13812345678 想租两居室 预算5000元" style="margin-bottom: 8px;"></textarea>
+                    <div class="ai-button" onclick="aiExtractCustomerFromInput()">AI识别并填充</div>
+                </div>
+                
                 <div class="form-group">
                     <label class="form-label">客户姓名</label>
                     <input type="text" class="form-input" id="customerName" placeholder="请输入客户姓名">
@@ -2766,6 +2810,90 @@
             showToast('✅ AI识别完成，已自动填充表单');
         }
 
+        // 客户AI识别填充功能
+        function aiExtractCustomerFromInput() {
+            const inputText = document.getElementById('customerAiInput').value;
+            if (!inputText.trim()) {
+                showToast('请输入客户信息');
+                return;
+            }
+
+            const extractedData = analyzeCustomerText(inputText);
+            fillCustomerFormWithExtractedData(extractedData);
+            showToast('✅ AI识别完成，已自动填充表单');
+        }
+
+        // 客户文本分析
+        function analyzeCustomerText(text) {
+            const result = {
+                name: '',
+                phone: '',
+                demand: ''
+            };
+
+            // 姓名识别
+            const namePatterns = [
+                /([\u4e00-\u9fa5]{2,4})(?:先生|女士|老师)?/,
+                /姓名[:：]?[\s]*([\u4e00-\u9fa5]{2,4})/,
+                /客户[:：]?[\s]*([\u4e00-\u9fa5]{2,4})/
+            ];
+
+            for (const pattern of namePatterns) {
+                const match = text.match(pattern);
+                if (match) {
+                    result.name = match[1];
+                    break;
+                }
+            }
+
+            // 电话号码识别
+            const phonePatterns = [
+                /1[3-9]\d{9}/,
+                /电话[:：]?[\s]*(1[3-9]\d{9})/,
+                /手机[:：]?[\s]*(1[3-9]\d{9})/
+            ];
+
+            for (const pattern of phonePatterns) {
+                const match = text.match(pattern);
+                if (match) {
+                    result.phone = match[0];
+                    break;
+                }
+            }
+
+            // 需求识别
+            const demandPattern = /(想租|想购|要买|要租|需要|需求)[\s]*(.+?)(?:预算|价格|电话|手机|姓名|$)/s;
+            const match = text.match(demandPattern);
+            if (match) {
+                result.demand = match[2].trim();
+            } else if (!result.demand) {
+                // 如果没有明确的需求标识，提取剩余文本作为需求
+                let demandText = text;
+                if (result.name) {
+                    demandText = demandText.replace(result.name, '');
+                }
+                if (result.phone) {
+                    demandText = demandText.replace(result.phone, '');
+                }
+                result.demand = demandText.trim();
+            }
+
+            return result;
+        }
+
+        // 填充客户表单
+        function fillCustomerFormWithExtractedData(data) {
+            if (data.name) {
+                document.getElementById('customerName').value = data.name;
+            }
+            if (data.phone) {
+                document.getElementById('customerPhone').value = data.phone;
+            }
+            if (data.demand) {
+                document.getElementById('customerDemand').value = data.demand;
+            }
+        }
+
         // 增强的文本分析规则
         function analyzeTextWithEnhancedRules(text) {
             const result = {
@@ -3060,6 +3188,16 @@
             } else if (page === 'customers') {
                 renderCustomerList();
             }
+        }
+
+        // 切换房源标签
+        function switchPropertyTab(tab) {
+            // 切换标签激活状态
+            document.querySelectorAll('.property-tabs .tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // 过滤并渲染房源
+            renderPropertyList(tab);
         }
 
         // 更新统计数据
@@ -3364,11 +3502,18 @@
         }
 
         // 渲染房源列表
-        function renderPropertyList() {
+        function renderPropertyList(tab = 'own') {
             const container = document.getElementById('propertyList');
             if (!container) return;
 
-            const propsToRender = filteredProperties.length ? filteredProperties : properties;
+            let propsToRender = filteredProperties.length ? filteredProperties : properties;
+            
+            // 根据标签筛选房源
+            if (tab === 'own') {
+                propsToRender = propsToRender.filter(p => !p.isAgent || p.isAgent === false);
+            } else if (tab === 'agent') {
+                propsToRender = propsToRender.filter(p => p.isAgent === true);
+            }
 
             if (propsToRender.length === 0) {
                 container.innerHTML = `
