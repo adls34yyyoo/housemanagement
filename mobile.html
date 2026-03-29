@@ -2507,6 +2507,12 @@
                 return;
             }
             
+            // 检查是否正在重连中，避免重复连接
+            if (reconnectTimer) {
+                console.log('正在重连中，跳过本次初始化');
+                return;
+            }
+            
             console.log('开始初始化实时连接...');
             
             // 清除之前的重连定时器
@@ -2559,9 +2565,13 @@
                         if (status !== 'CHANNEL_ERROR' && reconnectCount < maxReconnectCount) {
                             reconnectCount++;
                             console.log(`连接断开，${reconnectCount}/${maxReconnectCount}秒后尝试重连...`);
+                            // 清除之前的定时器，避免重复
+                            if (reconnectTimer) {
+                                clearTimeout(reconnectTimer);
+                            }
                             reconnectTimer = setTimeout(() => {
                                 initRealtimeConnection();
-                            }, 3000 * reconnectCount); // 递增延迟
+                            }, 5000 * reconnectCount); // 增加延迟时间，从3秒改为5秒
                         } else if (reconnectCount >= maxReconnectCount) {
                             console.log('已达到最大重连次数，停止重连');
                             showToast('⚠️ 网络连接不稳定，请检查网络后刷新页面');
@@ -4934,7 +4944,7 @@
 
             console.log('增强实时连接...');
 
-            // 心跳检测 - 更频繁的检测
+            // 心跳检测 - 适当频率
             setInterval(() => {
                 if (realtimeChannel) {
                     realtimeChannel.send({
@@ -4942,19 +4952,28 @@
                         timestamp: Date.now()
                     }).catch((error) => {
                         console.log('心跳失败，尝试重连...', error);
-                        initRealtimeConnection();
+                        // 只有当重连计数器未达到最大值时才尝试重连
+                        if (reconnectCount < maxReconnectCount) {
+                            initRealtimeConnection();
+                        }
                     });
                 } else {
                     console.log('实时通道不存在，重新初始化...');
-                    initRealtimeConnection();
+                    // 只有当重连计数器未达到最大值时才尝试重连
+                    if (reconnectCount < maxReconnectCount) {
+                        initRealtimeConnection();
+                    }
                 }
-            }, 15000); // 每15秒发送一次心跳
+            }, 30000); // 每30秒发送一次心跳，减少频率
 
             // 网络状态监听
             window.addEventListener('online', () => {
                 console.log('网络已恢复，重新连接...');
                 updateConnectionStatus(true);
-                initRealtimeConnection();
+                // 只有当重连计数器未达到最大值时才尝试重连
+                if (reconnectCount < maxReconnectCount) {
+                    initRealtimeConnection();
+                }
                 showToast('🌐 网络已恢复');
             });
 
@@ -4969,7 +4988,9 @@
                 if (document.visibilityState === 'visible') {
                     console.log('页面重新可见，刷新数据...');
                     // 重新连接
-                    initRealtimeConnection();
+                    if (reconnectCount < maxReconnectCount) {
+                        initRealtimeConnection();
+                    }
                     // 加载最新数据
                     loadData().then(() => {
                         updateStats();
@@ -4991,12 +5012,13 @@
                     // 检查通道状态
                     const channelStatus = realtimeChannel.state;
                     console.log('定期检查连接状态:', channelStatus);
+                    // 只有当重连计数器未达到最大值时才尝试重连
                     if (channelStatus !== 'SUBSCRIBED' && reconnectCount < maxReconnectCount) {
                         console.log('连接状态异常，重新连接...');
                         initRealtimeConnection();
                     }
                 }
-            }, 60000); // 每分钟检查一次
+            }, 120000); // 每2分钟检查一次，减少频率
         }
 
         // 页面加载完成后初始化
