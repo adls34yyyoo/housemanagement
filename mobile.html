@@ -620,6 +620,21 @@
             background: var(--background);
         }
         
+        .menu-item-large {
+            padding: 24px 16px;
+        }
+        
+        .menu-item-large .menu-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 24px;
+            margin-right: 20px;
+        }
+        
+        .menu-item-large .menu-text {
+            font-size: 20px;
+        }
+        
         .menu-icon {
             width: 32px;
             height: 32px;
@@ -1974,7 +1989,7 @@
                 </div>
                 
                 <div class="menu-section">
-                    <div class="menu-item" onclick="openOptionsModal()">
+                    <div class="menu-item menu-item-large" onclick="openOptionsModal()">
                         <span class="menu-icon">⚙️</span>
                         <span class="menu-text">选项管理</span>
                         <span class="menu-arrow">›</span>
@@ -2303,7 +2318,7 @@
     </div>
 
     <!-- 一键转发悬浮按钮 -->
-    <div id="floatingShareBtn" class="floating-btn" onclick="generateMomentsContent()" style="display: none;">
+    <div id="floatingShareBtn" class="floating-btn" onclick="batchGenerateMoments()" style="display: none;">
         一键转发
     </div>
 
@@ -3389,7 +3404,8 @@
                     </div>
                     <div class="property-actions">
                         ${property.isAgent ? `
-                            <button class="action-btn" onclick="event.stopPropagation(); addAgentProperty('${property.id}')" style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white;">新增代卖房（代理房源）</button>
+                            <button class="action-btn" onclick="event.stopPropagation(); addAgentProperty('${property.id}')" style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white;">增加可代理房源（卖房）</button>
+                            <button class="action-btn" onclick="event.stopPropagation(); filterPropertiesByAgent()" style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white;">筛选</button>
                         ` : `
                             <button class="action-btn" onclick="event.stopPropagation(); editProperty('${property.id}')">编辑</button>
                             <button class="action-btn" onclick="event.stopPropagation(); deleteProperty('${property.id}')" style="color: var(--danger);">删除</button>
@@ -3908,6 +3924,13 @@
                 (c.phone && c.phone.includes(keyword))
             );
             renderCustomerList();
+        }
+
+        // 筛选可代理房源
+        function filterPropertiesByAgent() {
+            filteredProperties = properties.filter(p => p.isAgent);
+            renderPropertyList();
+            showToast('已筛选可代理房源');
         }
 
         // 筛选房源
