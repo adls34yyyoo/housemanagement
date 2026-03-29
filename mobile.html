@@ -3359,7 +3359,7 @@
                     </div>
                     <div class="property-actions">
                         ${property.isAgent ? `
-                            <button class="action-btn" onclick="event.stopPropagation(); addAgentProperty('${property.id}')" style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white;">添加可代理房源卖房</button>
+                            <button class="action-btn" onclick="event.stopPropagation(); addAgentProperty('${property.id}')" style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white;">新增代卖房（代理房源）</button>
                         ` : `
                             <button class="action-btn" onclick="event.stopPropagation(); editProperty('${property.id}')">编辑</button>
                             <button class="action-btn" onclick="event.stopPropagation(); deleteProperty('${property.id}')" style="color: var(--danger);">删除</button>
@@ -3665,7 +3665,7 @@
                             ${allSelected ? '取消全选' : '全选'}
                         </button>
                         ${selectedProperties.length > 0 ? `
-                            <button id="batchShareBtn" onclick="batchGenerateMoments()" style="padding: 8px 16px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
+                            <button id="batchShareBtn" onclick="generateMomentsContent()" style="padding: 8px 16px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
                                 📢 一键转发 (${selectedProperties.length})
                             </button>
                         ` : ''}
