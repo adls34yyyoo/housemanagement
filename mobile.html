@@ -2104,6 +2104,7 @@
                 </div>
                 <div class="form-actions">
                     <button class="btn btn-default" onclick="closeMomentsModal()">取消</button>
+                    <button class="btn btn-secondary" onclick="generateMomentsContent()" style="background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%); color: white; margin-right: 10px;">生成文案</button>
                     <button class="btn btn-primary" onclick="copyMomentsContent()">一键复制</button>
                 </div>
             </div>
@@ -3425,10 +3426,13 @@
             }
             renderPropertyList();
             
-            // 显示或隐藏悬浮按钮
+            // 显示或隐藏悬浮按钮，只在房源管理界面显示
             const floatingBtn = document.getElementById('floatingShareBtn');
+            const currentPage = document.querySelector('.page.active');
+            const isPropertyPage = currentPage && currentPage.id === 'pageProperties';
+            
             if (floatingBtn) {
-                if (selectedProperties.length > 0) {
+                if (isPropertyPage && selectedProperties.length > 0) {
                     floatingBtn.style.display = 'block';
                     floatingBtn.textContent = `一键转发 (${selectedProperties.length})`;
                 } else {
@@ -3508,49 +3512,16 @@
 
             selectedProps.forEach((property, index) => {
                 const priceUnit = property.type === 'sale' ? '万元' : '元/月';
+                const typeText = property.type === 'rent' ? '出租' : '出售';
                 
-                if (currentStyle === 'simple') {
-                    // 简洁风格 - 只显示普通正常数据
-                    content += `${property.community || '未知小区'} ${property.type === 'rent' ? '出租' : '出售'}\n`;
-                    content += `${property.layout || ''} ${property.area ? property.area + '平' : ''} ${property.decoration || ''}\n`;
-                    content += `${property.price || '面议'}${priceUnit}\n`;
-                    if (index < selectedProps.length - 1) content += '\n';
-                } else if (currentStyle === 'wonderful') {
-                    // 精彩风格 - 添加各种夸张的东西
-                    const exaggerations = ['超级', '顶级', '奢华', '稀缺', '抢手', '黄金', '绝版', '豪华', '精品', '完美'];
-                    const randomExaggeration = exaggerations[Math.floor(Math.random() * exaggerations.length)];
-                    content += `🎉 ${randomExaggeration}好房推荐${index > 0 ? index + 1 : ''}！错过绝对后悔！\n\n`;
-                    content += `📍 黄金地段 · ${property.region || '核心区域'} · ${property.community || '品质小区'}\n`;
-                    content += `🏡 ${property.layout || '理想户型'} ${property.area ? property.area + '平' : '宽敞空间'} · 采光极佳\n`;
-                    content += `✨ ${property.decoration || '豪华装修'} · 拎包入住\n`;
-                    content += `💰 超值价格：${property.price || '惊喜价'}${priceUnit} · 性价比之王\n`;
-                    content += `🌟 机会难得 · 手慢无 · 赶紧联系！\n`;
-                    if (index < selectedProps.length - 1) {
-                        content += '\n━━━━━━━━━━━━━━━━━━\n\n';
-                    }
-                } else if (currentStyle === 'professional') {
-                    // 专业风格 - 固定的后缀
-                    content += `【房源推荐${index > 0 ? index + 1 : ''}】\n`;
-                    content += `小区：${property.community || '未知小区'}\n`;
-                    content += `类型：${property.type === 'rent' ? '出租' : '出售'}\n`;
-                    content += `区域：${property.region || ''}\n`;
-                    content += `户型：${property.layout || ''}\n`;
-                    content += `面积：${property.area ? property.area + '平方米' : '面议'}\n`;
-                    content += `装修：${property.decoration || ''}\n`;
-                    content += `价格：${property.price || '面议'}${priceUnit}\n`;
-                    if (index < selectedProps.length - 1) content += '\n';
-                }
+                // 统一使用用户要求的格式
+                content += `${typeText}：${property.community || '未知小区'}${property.floor ? ' ' + property.floor + '楼' : ''} ${property.layout || ''} ${property.decoration || ''} ${property.price || '面议'}${priceUnit}\n`;
+                
+                if (index < selectedProps.length - 1) content += '\n';
             });
 
-            // 添加结尾
-            if (currentStyle === 'simple') {
-                content += '\n有意联系，随时看房！';
-            } else if (currentStyle === 'wonderful') {
-                content += '\n🎊 优质好房，不容错过！\n📞 有意者请联系，随时看房！';
-            } else if (currentStyle === 'professional') {
-                // 专业文案 - 固定的后缀
-                content += '\n【专业房产顾问】\n资深房产经纪人为您服务\n随时提供专业咨询和看房安排\n让您的房产交易更加安心放心';
-            }
+            // 添加统一的结尾
+            content += '\n合作热线：18019166290';
 
             // 更新文本框内容
             const contentDiv = document.getElementById('momentsContent');
@@ -5078,10 +5049,13 @@
             
             renderPropertyList();
             
-            // 显示或隐藏悬浮按钮
+            // 显示或隐藏悬浮按钮，只在房源管理界面显示
             const floatingBtn = document.getElementById('floatingShareBtn');
+            const currentPage = document.querySelector('.page.active');
+            const isPropertyPage = currentPage && currentPage.id === 'pageProperties';
+            
             if (floatingBtn) {
-                if (selectedProperties.length > 0) {
+                if (isPropertyPage && selectedProperties.length > 0) {
                     floatingBtn.style.display = 'block';
                     floatingBtn.textContent = `一键转发 (${selectedProperties.length})`;
                 } else {
