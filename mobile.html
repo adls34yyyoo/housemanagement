@@ -1994,6 +1994,11 @@
                         <span class="menu-text">选项管理</span>
                         <span class="menu-arrow">›</span>
                     </div>
+                    <div class="menu-item" onclick="syncLocalData()">
+                        <span class="menu-icon">🔄</span>
+                        <span class="menu-text">同步数据</span>
+                        <span class="menu-arrow">›</span>
+                    </div>
                     <div class="menu-item" onclick="openTrainModal()">
                         <span class="menu-icon">🤖</span>
                         <span class="menu-text">AI训练</span>
@@ -4142,7 +4147,8 @@
                 description: desc,
                 remark,
                 created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
+                updated_at: new Date().toISOString(),
+                synced: false // 添加同步状态标记
             };
 
             try {
@@ -4168,6 +4174,7 @@
 
                             const index = properties.findIndex(p => p.id === editingPropertyId);
                             if (index !== -1) {
+                                property.synced = true; // 标记为已同步
                                 properties[index] = property;
                             }
                         } else {
@@ -4184,6 +4191,7 @@
                                 throw error;
                             }
 
+                            property.synced = true; // 标记为已同步
                             properties.push(property);
                         }
                         showToast('✅ 房源保存成功');
@@ -4404,7 +4412,8 @@
                 demand,
                 status,
                 created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
+                updated_at: new Date().toISOString(),
+                synced: false // 添加同步状态标记
             };
 
             try {
@@ -4430,6 +4439,7 @@
 
                             const index = customers.findIndex(c => c.id === editingCustomerId);
                             if (index !== -1) {
+                                customer.synced = true; // 标记为已同步
                                 customers[index] = customer;
                             }
                         } else {
@@ -4446,6 +4456,7 @@
                                 throw error;
                             }
 
+                            customer.synced = true; // 标记为已同步
                             customers.push(customer);
                         }
                         showToast('✅ 客户保存成功');
@@ -4938,6 +4949,127 @@
             }
         }
 
+        // 同步本地未上传的数据到云数据库
+        async function syncLocalData() {
+            console.log('开始同步本地数据...');
+            
+            // 检查网络状态
+            if (!navigator.onLine || !supabaseClient) {
+                console.warn('网络离线或Supabase未初始化，跳过同步');
+                return;
+            }
+            
+            try {
+                // 同步未上传的房源数据
+                const unsyncedProperties = properties.filter(p => !p.synced);
+                if (unsyncedProperties.length > 0) {
+                    console.log(`开始同步 ${unsyncedProperties.length} 条房源数据...`);
+                    
+                    for (const property of unsyncedProperties) {
+                        try {
+                            // 检查是否已存在
+                            const { data: existingProps } = await supabaseClient
+                                .from('properties')
+                                .select('id')
+                                .eq('id', property.id)
+                                .limit(1);
+                            
+                            if (existingProps && existingProps.length > 0) {
+                                // 更新现有数据
+                                const { error } = await supabaseClient
+                                    .from('properties')
+                                    .update(property)
+                                    .eq('id', property.id);
+                                
+                                if (!error) {
+                                    property.synced = true;
+                                    console.log(`更新房源成功: ${property.id}`);
+                                } else {
+                                    console.error('更新房源失败:', error);
+                                }
+                            } else {
+                                // 插入新数据
+                                const { error } = await supabaseClient
+                                    .from('properties')
+                                    .insert([property]);
+                                
+                                if (!error) {
+                                    property.synced = true;
+                                    console.log(`插入房源成功: ${property.id}`);
+                                } else {
+                                    console.error('插入房源失败:', error);
+                                }
+                            }
+                        } catch (error) {
+                            console.error('同步房源失败:', error);
+                        }
+                    }
+                }
+                
+                // 同步未上传的客户数据
+                const unsyncedCustomers = customers.filter(c => !c.synced);
+                if (unsyncedCustomers.length > 0) {
+                    console.log(`开始同步 ${unsyncedCustomers.length} 条客户数据...`);
+                    
+                    for (const customer of unsyncedCustomers) {
+                        try {
+                            // 检查是否已存在
+                            const { data: existingCustomers } = await supabaseClient
+                                .from('customers')
+                                .select('id')
+                                .eq('id', customer.id)
+                                .limit(1);
+                            
+                            if (existingCustomers && existingCustomers.length > 0) {
+                                // 更新现有数据
+                                const { error } = await supabaseClient
+                                    .from('customers')
+                                    .update(customer)
+                                    .eq('id', customer.id);
+                                
+                                if (!error) {
+                                    customer.synced = true;
+                                    console.log(`更新客户成功: ${customer.id}`);
+                                } else {
+                                    console.error('更新客户失败:', error);
+                                }
+                            } else {
+                                // 插入新数据
+                                const { error } = await supabaseClient
+                                    .from('customers')
+                                    .insert([customer]);
+                                
+                                if (!error) {
+                                    customer.synced = true;
+                                    console.log(`插入客户成功: ${customer.id}`);
+                                } else {
+                                    console.error('插入客户失败:', error);
+                                }
+                            }
+                        } catch (error) {
+                            console.error('同步客户失败:', error);
+                        }
+                    }
+                }
+                
+                // 保存同步状态
+                saveToLocalStorage();
+                
+                // 统计同步结果
+                const totalUnsynced = unsyncedProperties.length + unsyncedCustomers.length;
+                const totalSynced = properties.filter(p => p.synced).length + customers.filter(c => c.synced).length;
+                
+                if (totalUnsynced > 0) {
+                    showToast(`✅ 同步完成，已同步 ${totalSynced} 条数据`);
+                }
+                
+                console.log('数据同步完成');
+            } catch (error) {
+                console.error('同步数据出错:', error);
+                showToast('⚠️ 数据同步失败');
+            }
+        }
+
         // 增强实时连接
         function enhanceRealtimeConnection() {
             if (!supabaseClient) return;
@@ -4974,6 +5106,8 @@
                 if (reconnectCount < maxReconnectCount) {
                     initRealtimeConnection();
                 }
+                // 网络恢复时同步本地数据
+                syncLocalData();
                 showToast('🌐 网络已恢复');
             });
 
