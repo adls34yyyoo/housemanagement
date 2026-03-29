@@ -5221,32 +5221,12 @@
             }
             
             try {
-                // 获取本地数据数量
-                const localPropertyCount = properties.length;
-                const localCustomerCount = customers.length;
-                
-                // 获取云数据库数据数量
-                let cloudPropertyCount = 0;
-                let cloudCustomerCount = 0;
-                
-                try {
-                    const { data: cloudProperties } = await supabaseClient
-                        .from('properties')
-                        .select('id');
-                    cloudPropertyCount = cloudProperties ? cloudProperties.length : 0;
-                    
-                    const { data: cloudCustomers } = await supabaseClient
-                        .from('customers')
-                        .select('id');
-                    cloudCustomerCount = cloudCustomers ? cloudCustomers.length : 0;
-                } catch (error) {
-                    console.error('获取云数据库数据数量失败:', error);
-                }
+                // 1. 同步本地未上传的数据到云数据库
                 
                 // 同步未上传的房源数据
                 const unsyncedProperties = properties.filter(p => !p.synced);
                 if (unsyncedProperties.length > 0) {
-                    console.log(`开始同步 ${unsyncedProperties.length} 条房源数据...`);
+                    console.log(`开始同步 ${unsyncedProperties.length} 条房源数据到云数据库...`);
                     
                     for (const property of unsyncedProperties) {
                         try {
@@ -5292,7 +5272,7 @@
                 // 同步未上传的客户数据
                 const unsyncedCustomers = customers.filter(c => !c.synced);
                 if (unsyncedCustomers.length > 0) {
-                    console.log(`开始同步 ${unsyncedCustomers.length} 条客户数据...`);
+                    console.log(`开始同步 ${unsyncedCustomers.length} 条客户数据到云数据库...`);
                     
                     for (const customer of unsyncedCustomers) {
                         try {
@@ -5335,10 +5315,76 @@
                     }
                 }
                 
+                // 2. 从云数据库同步本地没有的数据
+                
+                // 获取云数据库中的所有房源数据
+                try {
+                    const { data: cloudProperties } = await supabaseClient
+                        .from('properties')
+                        .select('*');
+                    
+                    if (cloudProperties && cloudProperties.length > 0) {
+                        console.log(`开始从云数据库同步 ${cloudProperties.length} 条房源数据...`);
+                        
+                        for (const cloudProperty of cloudProperties) {
+                            // 检查本地是否已存在
+                            const localProperty = properties.find(p => p.id === cloudProperty.id);
+                            if (!localProperty) {
+                                // 本地不存在，添加到本地
+                                cloudProperty.synced = true;
+                                properties.push(cloudProperty);
+                                console.log(`从云数据库同步房源成功: ${cloudProperty.id}`);
+                            } else if (new Date(cloudProperty.updated_at) > new Date(localProperty.updated_at)) {
+                                // 云数据库中的数据更新，更新本地数据
+                                Object.assign(localProperty, cloudProperty);
+                                localProperty.synced = true;
+                                console.log(`从云数据库更新房源成功: ${cloudProperty.id}`);
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('从云数据库同步房源失败:', error);
+                }
+                
+                // 获取云数据库中的所有客户数据
+                try {
+                    const { data: cloudCustomers } = await supabaseClient
+                        .from('customers')
+                        .select('*');
+                    
+                    if (cloudCustomers && cloudCustomers.length > 0) {
+                        console.log(`开始从云数据库同步 ${cloudCustomers.length} 条客户数据...`);
+                        
+                        for (const cloudCustomer of cloudCustomers) {
+                            // 检查本地是否已存在
+                            const localCustomer = customers.find(c => c.id === cloudCustomer.id);
+                            if (!localCustomer) {
+                                // 本地不存在，添加到本地
+                                cloudCustomer.synced = true;
+                                customers.push(cloudCustomer);
+                                console.log(`从云数据库同步客户成功: ${cloudCustomer.id}`);
+                            } else if (new Date(cloudCustomer.updated_at) > new Date(localCustomer.updated_at)) {
+                                // 云数据库中的数据更新，更新本地数据
+                                Object.assign(localCustomer, cloudCustomer);
+                                localCustomer.synced = true;
+                                console.log(`从云数据库更新客户成功: ${cloudCustomer.id}`);
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('从云数据库同步客户失败:', error);
+                }
+                
                 // 保存同步状态
                 saveToLocalStorage();
                 
-                // 重新获取云数据库数据数量，以确认同步后的状态
+                // 3. 获取同步后的本地和云数据库数据数量
+                const localPropertyCount = properties.length;
+                const localCustomerCount = customers.length;
+                
+                let cloudPropertyCount = 0;
+                let cloudCustomerCount = 0;
+                
                 try {
                     const { data: cloudProperties } = await supabaseClient
                         .from('properties')
@@ -5350,15 +5396,15 @@
                         .select('id');
                     cloudCustomerCount = cloudCustomers ? cloudCustomers.length : 0;
                 } catch (error) {
-                    console.error('获取同步后云数据库数据数量失败:', error);
+                    console.error('获取云数据库数据数量失败:', error);
                 }
                 
-                // 检查数据是否一致
+                // 4. 检查数据是否一致
                 const isPropertySync = localPropertyCount === cloudPropertyCount;
                 const isCustomerSync = localCustomerCount === cloudCustomerCount;
                 const isDataSync = isPropertySync && isCustomerSync;
                 
-                // 显示同步结果
+                // 5. 显示同步结果
                 showToast(`
 ✅ 同步完成
 
@@ -5373,6 +5419,11 @@
 数据${isDataSync ? '一致' : '不一致'}
 已同步
                 `.trim());
+                
+                // 6. 刷新列表
+                renderPropertyList();
+                renderRecentProperties();
+                renderCustomerList();
                 
                 console.log('数据同步完成');
             } catch (error) {
