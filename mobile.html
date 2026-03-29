@@ -3419,6 +3419,15 @@
                         </div>
                     </div>
                     <div class="property-actions">
+                        ${property.landlordPhone ? `
+                            <button class="action-btn" onclick="event.stopPropagation(); window.location.href='tel:${property.landlordPhone}'" style="background: linear-gradient(135deg, #2196F3 0%, #0b7dda 100%); color: white; display: flex; align-items: center; gap: 5px;">
+                                📞 拨打电话
+                            </button>
+                        ` : property.landlordName ? `
+                            <button class="action-btn" onclick="event.stopPropagation(); copyWeChat('${property.landlordName}')" style="background: linear-gradient(135deg, #07C160 0%, #05a050 100%); color: white; display: flex; align-items: center; gap: 5px;">
+                                💬 微信备注
+                            </button>
+                        ` : ''}
                         ${property.isAgent ? `
                             <button class="action-btn" onclick="event.stopPropagation(); addAgentProperty('${property.id}')" style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white;">增加可代理房源（卖房）</button>
                             <button class="action-btn" onclick="event.stopPropagation(); filterPropertiesByAgent()" style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white;">筛选</button>
@@ -3440,20 +3449,6 @@
                 selectedProperties.push(propertyId);
             }
             renderPropertyList();
-            
-            // 显示或隐藏悬浮按钮，只在房源管理界面显示
-            const floatingBtn = document.getElementById('floatingShareBtn');
-            const currentPage = document.querySelector('.page.active');
-            const isPropertyPage = currentPage && currentPage.id === 'pageProperties';
-            
-            if (floatingBtn) {
-                if (isPropertyPage && selectedProperties.length > 0) {
-                    floatingBtn.style.display = 'block';
-                    floatingBtn.textContent = `一键转发 (${selectedProperties.length})`;
-                } else {
-                    floatingBtn.style.display = 'none';
-                }
-            }
         }
 
         // 添加可代理房源卖房
@@ -3697,14 +3692,21 @@
                 return;
             }
 
-            // 添加全选按钮
+            // 添加全选和一键转发按钮
             const allSelected = selectedProperties.length === propsToRender.length && propsToRender.length > 0;
             let html = `
-                <div style="padding: 12px 16px; background: var(--surface); border-radius: var(--radius); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="padding: 12px 16px; background: var(--surface); border-radius: var(--radius); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
                     <span style="font-weight: 600; color: var(--text);">已选择 ${selectedProperties.length} 套房源</span>
-                    <button onclick="toggleSelectAll()" style="padding: 8px 16px; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
-                        ${allSelected ? '取消全选' : '全选'}
-                    </button>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="toggleSelectAll()" style="padding: 8px 16px; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
+                            ${allSelected ? '取消全选' : '全选'}
+                        </button>
+                        ${selectedProperties.length > 0 ? `
+                            <button onclick="batchGenerateMoments()" style="padding: 8px 16px; background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
+                                一键转发 (${selectedProperties.length})
+                            </button>
+                        ` : ''}
+                    </div>
                 </div>
             `;
             
@@ -4148,7 +4150,16 @@
                 remark,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
-                synced: false // 添加同步状态标记
+                synced: false, // 添加同步状态标记
+                changeHistory: editingPropertyId ? (properties.find(p => p.id === editingPropertyId)?.changeHistory || []).concat({
+                    timestamp: new Date().toISOString(),
+                    action: '更新',
+                    user: currentUser || 'admin'
+                }) : [{ // 首次创建时添加记录
+                    timestamp: new Date().toISOString(),
+                    action: '创建',
+                    user: currentUser || 'admin'
+                }]
             };
 
             try {
@@ -4753,6 +4764,25 @@
                         </div>
                     ` : ''}
                     
+                    ${property.changeHistory && property.changeHistory.length > 0 ? `
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">更改记录</h4>
+                            <div style="background: var(--background); border-radius: var(--radius); padding: 16px;">
+                                ${property.changeHistory.map((record, index) => `
+                                    <div style="padding: 8px 0; ${index > 0 ? 'border-top: 1px solid var(--border);' : ''}">
+                                        <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                                            <span style="font-weight: 600;">${record.action}</span>
+                                            <span style="color: var(--text-secondary);">${new Date(record.timestamp).toLocaleString()}</span>
+                                        </div>
+                                        <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
+                                            操作人：${record.user}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
                     <div style="display: flex; gap: 12px;">
                         <button class="btn btn-primary" onclick="editProperty('${property.id}'); closePropertyDetailModal()">编辑</button>
                     </div>
@@ -4947,6 +4977,25 @@
             } else {
                 showToast('❌ 用户名或密码错误');
             }
+        }
+
+        // 复制微信备注并跳转微信搜索
+        function copyWeChat(wechatName) {
+            // 复制微信备注到剪贴板
+            navigator.clipboard.writeText(wechatName).then(() => {
+                showToast('✅ 微信备注已复制');
+                // 尝试跳转微信搜索
+                try {
+                    // 微信的URL scheme
+                    window.location.href = `weixin://search?keyword=${encodeURIComponent(wechatName)}`;
+                } catch (error) {
+                    console.error('跳转微信失败:', error);
+                    showToast('⚠️ 无法跳转微信，请手动搜索');
+                }
+            }).catch(err => {
+                console.error('复制失败:', err);
+                showToast('⚠️ 复制失败，请手动复制');
+            });
         }
 
         // 同步本地未上传的数据到云数据库
@@ -5216,20 +5265,6 @@
             }
             
             renderPropertyList();
-            
-            // 显示或隐藏悬浮按钮，只在房源管理界面显示
-            const floatingBtn = document.getElementById('floatingShareBtn');
-            const currentPage = document.querySelector('.page.active');
-            const isPropertyPage = currentPage && currentPage.id === 'pageProperties';
-            
-            if (floatingBtn) {
-                if (isPropertyPage && selectedProperties.length > 0) {
-                    floatingBtn.style.display = 'block';
-                    floatingBtn.textContent = `一键转发 (${selectedProperties.length})`;
-                } else {
-                    floatingBtn.style.display = 'none';
-                }
-            }
         }
 
         // 点击其他地方关闭菜单
