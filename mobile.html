@@ -1839,8 +1839,13 @@
                 </div>
             </div>
             
-
-            
+            <div class="recent-properties-section">
+                <div class="section-header">
+                    <h3>最近房源</h3>
+                    <button class="section-more" onclick="switchPage('properties')">查看更多 ›</button>
+                </div>
+                <div class="recent-properties" id="recentProperties"></div>
+            </div>
 
         </div>
 
@@ -3365,9 +3370,13 @@
         function renderRecentProperties() {
             const rentContainer = document.getElementById('recentRentProperties');
             const saleContainer = document.getElementById('recentSaleProperties');
+            const homeContainer = document.getElementById('recentProperties');
 
             const rentProps = properties.filter(p => p.type === 'rent').slice(0, 3);
             const saleProps = properties.filter(p => p.type === 'sale').slice(0, 3);
+            const recentProps = properties
+                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                .slice(0, 5);
 
             if (rentContainer) {
                 rentContainer.innerHTML = rentProps.length ? rentProps.map(p => createPropertyCard(p)).join('') : '<div class="empty-state">暂无租房信息</div>';
@@ -3375,6 +3384,53 @@
 
             if (saleContainer) {
                 saleContainer.innerHTML = saleProps.length ? saleProps.map(p => createPropertyCard(p)).join('') : '<div class="empty-state">暂无售房信息</div>';
+            }
+
+            if (homeContainer) {
+                if (recentProps.length === 0) {
+                    homeContainer.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">🏠</div>
+                            <div class="empty-text">暂无房源信息</div>
+                        </div>
+                    `;
+                } else {
+                    homeContainer.innerHTML = recentProps.map(p => {
+                        const statusClass = {
+                            'pending': 'status-pending',
+                            'selling': 'status-selling',
+                            'off_shelf': 'status-off-shelf',
+                            'on_shelf': 'status-on-shelf'
+                        }[p.status] || 'status-pending';
+
+                        const statusText = {
+                            'pending': '待发布',
+                            'selling': '出售中',
+                            'off_shelf': '已下架',
+                            'on_shelf': '已上架'
+                        }[p.status] || '待发布';
+
+                        const priceUnit = p.type === 'sale' ? '万元' : '元/月';
+
+                        return `
+                            <div class="property-card" style="padding: 16px; cursor: pointer; transition: var(--transition);" onclick="openPropertyDetailModal('${p.id}')">
+                                <div class="property-info">
+                                    <div class="property-title">
+                                        <span>${p.community || '未知小区'}</span>
+                                        <span class="property-status ${statusClass}">${statusText}</span>
+                                    </div>
+                                    <div class="property-address">
+                                        ${p.region || ''} ${p.layout || ''} ${p.area ? p.area + '平' : ''}
+                                    </div>
+                                    <div class="property-meta">
+                                        <span class="property-price">${p.price || '面议'}${priceUnit}</span>
+                                        <span class="property-specs">${p.decoration || ''}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
             }
         }
 
@@ -3417,12 +3473,13 @@
                     </div>
                     <div class="property-actions">
                         ${property.landlordPhone ? `
-                            <button class="action-btn" onclick="event.stopPropagation(); window.location.href='tel:${property.landlordPhone}'" style="background: linear-gradient(135deg, #2196F3 0%, #0b7dda 100%); color: white; display: flex; align-items: center; gap: 5px;">
-                                📞 拨打电话
+                            <button class="action-btn" onclick="event.stopPropagation(); window.location.href='tel:${property.landlordPhone}'" style="background: linear-gradient(135deg, #2196F3 0%, #0b7dda 100%); color: white; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%;">
+                                📞
                             </button>
-                        ` : property.landlordName ? `
-                            <button class="action-btn" onclick="event.stopPropagation(); copyWeChat('${property.landlordName}')" style="background: linear-gradient(135deg, #07C160 0%, #05a050 100%); color: white; display: flex; align-items: center; gap: 5px;">
-                                💬 微信备注
+                        ` : ''}
+                        ${property.landlordName ? `
+                            <button class="action-btn" onclick="event.stopPropagation(); copyWeChat('${property.landlordName}')" style="background: linear-gradient(135deg, #07C160 0%, #05a050 100%); color: white; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%;">
+                                💬
                             </button>
                         ` : ''}
                         ${property.isAgent ? `
@@ -3739,6 +3796,9 @@
                         <div class="customer-name">${c.name || '未知客户'}</div>
                         <div class="customer-phone">${c.phone || ''}</div>
                         ${c.budget ? `<div class="customer-budget">预算：${c.budget}</div>` : ''}
+                        ${c.wechat ? `<div class="customer-wechat" style="display: flex; align-items: center; gap: 5px; margin-top: 4px; font-size: 14px; color: #07C160;">
+                            💬 <span onclick="event.stopPropagation(); copyWeChat('${c.wechat}')" style="cursor: pointer; text-decoration: underline;">${c.wechat}</span>
+                        </div>` : ''}
                     </div>
                     <span class="customer-status ${c.status === 'potential' ? 'status-available' : 'status-rented'}">
                         ${c.status === 'potential' ? '潜在客户' : '跟进中'}
@@ -4419,6 +4479,7 @@
                 budget,
                 demand,
                 status,
+                wechat: name, // 微信备注默认为客户姓名
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
                 synced: false // 添加同步状态标记
