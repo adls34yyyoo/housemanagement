@@ -3454,23 +3454,26 @@
                 const priceUnit = property.type === 'sale' ? '万元' : '元/月';
                 
                 if (currentStyle === 'simple') {
-                    // 简洁风格
-                    content += `🏠 ${property.community || '未知小区'} ${property.type === 'rent' ? '出租' : '出售'}\n`;
+                    // 简洁风格 - 只显示普通正常数据
+                    content += `${property.community || '未知小区'} ${property.type === 'rent' ? '出租' : '出售'}\n`;
                     content += `${property.layout || ''} ${property.area ? property.area + '平' : ''} ${property.decoration || ''}\n`;
-                    content += `💰 ${property.price || '面议'}${priceUnit}\n`;
+                    content += `${property.price || '面议'}${priceUnit}\n`;
                     if (index < selectedProps.length - 1) content += '\n';
                 } else if (currentStyle === 'wonderful') {
-                    // 精彩风格
-                    content += `🎉 好房推荐${index > 0 ? index + 1 : ''}！\n\n`;
-                    content += `📍 ${property.region || ''} · ${property.community || '未知小区'}\n`;
-                    content += `🏡 ${property.layout || ''} ${property.area ? property.area + '平' : ''}\n`;
-                    content += `✨ ${property.decoration || '精装修'}\n`;
-                    content += `💰 ${property.price || '面议'}${priceUnit}\n`;
+                    // 精彩风格 - 添加各种夸张的东西
+                    const exaggerations = ['超级', '顶级', '奢华', '稀缺', '抢手', '黄金', '绝版', '豪华', '精品', '完美'];
+                    const randomExaggeration = exaggerations[Math.floor(Math.random() * exaggerations.length)];
+                    content += `🎉 ${randomExaggeration}好房推荐${index > 0 ? index + 1 : ''}！错过绝对后悔！\n\n`;
+                    content += `📍 黄金地段 · ${property.region || '核心区域'} · ${property.community || '品质小区'}\n`;
+                    content += `🏡 ${property.layout || '理想户型'} ${property.area ? property.area + '平' : '宽敞空间'} · 采光极佳\n`;
+                    content += `✨ ${property.decoration || '豪华装修'} · 拎包入住\n`;
+                    content += `💰 超值价格：${property.price || '惊喜价'}${priceUnit} · 性价比之王\n`;
+                    content += `🌟 机会难得 · 手慢无 · 赶紧联系！\n`;
                     if (index < selectedProps.length - 1) {
                         content += '\n━━━━━━━━━━━━━━━━━━\n\n';
                     }
                 } else if (currentStyle === 'professional') {
-                    // 专业风格
+                    // 专业风格 - 固定的后缀
                     content += `【房源推荐${index > 0 ? index + 1 : ''}】\n`;
                     content += `小区：${property.community || '未知小区'}\n`;
                     content += `类型：${property.type === 'rent' ? '出租' : '出售'}\n`;
@@ -3489,7 +3492,8 @@
             } else if (currentStyle === 'wonderful') {
                 content += '\n🎊 优质好房，不容错过！\n📞 有意者请联系，随时看房！';
             } else if (currentStyle === 'professional') {
-                content += '\n【联系方式】\n有意者请联系，随时安排看房！';
+                // 专业文案 - 固定的后缀
+                content += '\n【专业房产顾问】\n资深房产经纪人为您服务\n随时提供专业咨询和看房安排\n让您的房产交易更加安心放心';
             }
 
             // 更新文本框内容
