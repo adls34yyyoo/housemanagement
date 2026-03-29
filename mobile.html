@@ -3451,13 +3451,13 @@
                         // 根据房源类型显示不同的状态文本
                         let statusText;
                         if (p.type === 'sale') {
-                            // 卖房房源状态
+                            // 卖房房源状态，取消待发布和出售中
                             statusText = {
-                                'pending': '待发布',
-                                'selling': '出售中',
+                                'pending': '已上架',
+                                'selling': '已上架',
                                 'off_shelf': '已下架',
                                 'on_shelf': '已上架'
-                            }[p.status] || '待发布';
+                            }[p.status] || '已上架';
                         } else {
                             // 租房房源状态
                             statusText = {
@@ -4265,8 +4265,22 @@
             
             if (type === 'rent') {
                 document.getElementById('propertyModalTitle').textContent = '新增租房';
+                // 租房房源状态选项
+                const statusSelect = document.getElementById('propStatus');
+                statusSelect.innerHTML = `
+                    <option value="pending">待发布</option>
+                    <option value="selling">出租中</option>
+                    <option value="off_shelf">已下架</option>
+                    <option value="on_shelf">已上架</option>
+                `;
             } else {
                 document.getElementById('propertyModalTitle').textContent = '新增卖房';
+                // 卖房房源状态选项，取消待发布和出售中
+                const statusSelect = document.getElementById('propStatus');
+                statusSelect.innerHTML = `
+                    <option value="on_shelf">已上架</option>
+                    <option value="off_shelf">已下架</option>
+                `;
             }
             
             clearPropertyForm();
@@ -4460,6 +4474,24 @@
 
             editingPropertyId = id;
             document.getElementById('propertyModalTitle').textContent = '编辑房源';
+
+            // 根据房源类型更新状态下拉框选项
+            const statusSelect = document.getElementById('propStatus');
+            if (property.type === 'sale') {
+                // 卖房房源状态选项，取消待发布和出售中
+                statusSelect.innerHTML = `
+                    <option value="on_shelf">已上架</option>
+                    <option value="off_shelf">已下架</option>
+                `;
+            } else {
+                // 租房房源状态选项
+                statusSelect.innerHTML = `
+                    <option value="pending">待发布</option>
+                    <option value="selling">出租中</option>
+                    <option value="off_shelf">已下架</option>
+                    <option value="on_shelf">已上架</option>
+                `;
+            }
 
             document.getElementById('propCommunity').value = property.community || '';
             document.getElementById('propDecoration').value = property.decoration || '';
@@ -4920,13 +4952,13 @@
             // 根据房源类型显示不同的状态文本
             let statusText;
             if (property.type === 'sale') {
-                // 卖房房源状态
+                // 卖房房源状态，取消待发布和出售中
                 statusText = {
-                    'pending': '待发布',
-                    'selling': '出售中',
+                    'pending': '已上架',
+                    'selling': '已上架',
                     'off_shelf': '已下架',
                     'on_shelf': '已上架'
-                }[property.status] || '待发布';
+                }[property.status] || '已上架';
             } else {
                 // 租房房源状态
                 statusText = {
