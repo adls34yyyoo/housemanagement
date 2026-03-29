@@ -4905,11 +4905,15 @@
                 currentUser = username;
                 document.getElementById('loginPage').style.display = 'none';
                 document.getElementById('appContainer').style.display = 'block';
-                document.getElementById('headerUser').textContent = username;
-                document.getElementById('headerUser2').textContent = username;
-                document.getElementById('headerUser3').textContent = username;
-                document.getElementById('headerUser4').textContent = username;
-                document.getElementById('profileUsername').textContent = username;
+                
+                // 安全设置用户名显示，检查元素是否存在
+                const userElements = ['headerUser', 'headerUser2', 'headerUser3', 'headerUser4', 'profileUsername'];
+                userElements.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.textContent = username;
+                    }
+                });
 
                 // 初始化
                 initSelectOptions();
@@ -5011,7 +5015,11 @@
             // 添加选中的主题类
             document.body.classList.add(theme);
             // 保存主题设置
-            localStorage.setItem('theme', theme);
+            try {
+                localStorage.setItem('theme', theme);
+            } catch (e) {
+                console.error('保存主题设置失败:', e);
+            }
             showToast('主题已切换为' + getThemeName(theme));
         }
 
@@ -5026,9 +5034,13 @@
         }
 
         function initTheme() {
-            const savedTheme = localStorage.getItem('theme');
-            if (savedTheme) {
-                setTheme(savedTheme);
+            try {
+                const savedTheme = localStorage.getItem('theme');
+                if (savedTheme) {
+                    setTheme(savedTheme);
+                }
+            } catch (e) {
+                console.error('加载主题设置失败:', e);
             }
         }
 
@@ -5069,7 +5081,7 @@
             const menu = document.getElementById('propertyMenu');
             const fab = document.querySelector('.fab');
             
-            if (!menu.contains(e.target) && !fab.contains(e.target)) {
+            if (menu && fab && !menu.contains(e.target) && !fab.contains(e.target)) {
                 menu.classList.remove('active');
             }
         });
