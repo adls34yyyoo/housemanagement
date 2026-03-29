@@ -1976,8 +1976,7 @@
             </div>
         </div>
 
-        <!-- 浮动按钮 -->
-        <div class="fab" id="fabButton" onclick="handleFabClick()">+</div>
+
         
         <!-- 房源选择菜单 -->
         <div class="property-menu" id="propertyMenu">
@@ -3375,7 +3374,7 @@
                 selectedProperties.push(propertyId);
             }
             renderPropertyList();
-            updateFabButton();
+
         }
 
         // 更新分享按钮显示
@@ -4766,48 +4765,7 @@
             }
         }
 
-        // 处理浮动按钮点击
-        function handleFabClick() {
-            // 检查是否有选中的房源
-            if (selectedProperties.length > 0) {
-                // 有选中房源，直接生成文案
-                batchGenerateMoments();
-            } else {
-                // 没有选中房源，显示房源选择菜单
-                togglePropertyMenu();
-            }
-        }
 
-        // 切换房源选择菜单
-        function togglePropertyMenu() {
-            // 检查当前活动页面
-            const activePage = document.querySelector('.page.active');
-            
-            if (activePage && activePage.id === 'pageCustomers') {
-                // 在客户管理页面，直接打开增加客户模态框
-                openCustomerModal();
-            } else {
-                // 在其他页面，显示房源选择菜单
-                const menu = document.getElementById('propertyMenu');
-                menu.classList.toggle('active');
-            }
-        }
-
-        // 更新浮动按钮显示
-        function updateFabButton() {
-            const fab = document.getElementById('fabButton');
-            if (fab) {
-                if (selectedProperties.length > 0) {
-                    fab.textContent = '转';
-                    fab.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-                    fab.style.animation = 'pulse 1.5s infinite';
-                } else {
-                    fab.textContent = '+';
-                    fab.style.background = '';
-                    fab.style.animation = '';
-                }
-            }
-        }
 
         // 全选/取消全选房源
         function toggleSelectAll() {
@@ -4823,7 +4781,7 @@
             }
             
             renderPropertyList();
-            updateFabButton();
+
         }
 
         // 点击其他地方关闭菜单
