@@ -394,19 +394,24 @@
             font-weight: 600;
         }
 
-        .status-available {
+        .status-pending {
+            background: rgba(107, 114, 128, 0.1);
+            color: #6b7280;
+        }
+
+        .status-selling {
             background: rgba(16, 185, 129, 0.1);
             color: var(--success);
         }
 
-        .status-rented {
-            background: rgba(245, 158, 11, 0.1);
-            color: var(--warning);
-        }
-
-        .status-maintenance {
+        .status-off-shelf {
             background: rgba(239, 68, 68, 0.1);
             color: var(--danger);
+        }
+
+        .status-on-shelf {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
         }
 
         .property-address {
@@ -1665,13 +1670,13 @@
                     <div class="stat-value" id="statTotal">0</div>
                     <div class="stat-label">总房源</div>
                 </div>
-                <div class="stat-card" onclick="switchPage('properties'); setTimeout(() => filterPropertiesByStatus('available'), 100)" style="cursor: pointer;">
-                    <div class="stat-value" id="statAvailable">0</div>
-                    <div class="stat-label">可租/售</div>
+                <div class="stat-card" onclick="switchPage('properties'); setTimeout(() => filterPropertiesByStatus('selling'), 100)" style="cursor: pointer;">
+                    <div class="stat-value" id="statSelling">0</div>
+                    <div class="stat-label">出售中</div>
                 </div>
-                <div class="stat-card" onclick="switchPage('properties'); setTimeout(() => filterPropertiesByStatus('rented'), 100)" style="cursor: pointer;">
-                    <div class="stat-value" id="statRented">0</div>
-                    <div class="stat-label">已租/售</div>
+                <div class="stat-card" onclick="switchPage('properties'); setTimeout(() => filterPropertiesByStatus('on_shelf'), 100)" style="cursor: pointer;">
+                    <div class="stat-value" id="statOnShelf">0</div>
+                    <div class="stat-label">已上架</div>
                 </div>
                 <div class="stat-card" onclick="switchPage('customers')" style="cursor: pointer;">
                     <div class="stat-value" id="statCustomers">0</div>
@@ -1740,8 +1745,10 @@
                         <div class="filter-label">状态</div>
                         <select class="filter-select" id="filterStatus" onchange="applyFilters()">
                             <option value="">全部</option>
-                            <option value="available">可租/售</option>
-                            <option value="rented">已租/售</option>
+                            <option value="pending">待发布</option>
+                            <option value="selling">出售中</option>
+                            <option value="off_shelf">已下架</option>
+                            <option value="on_shelf">已上架</option>
                         </select>
                     </div>
                     <div class="filter-section">
@@ -1904,6 +1911,32 @@
                     <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
                 </div>
                 <div class="nav-label">我的</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 房源选择模态框（首页用） -->
+    <div class="modal" id="propertySelectorModal">
+        <div class="modal-content" style="max-height: 80vh; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <span class="modal-title">选择要转发的房源</span>
+                <button class="modal-close" onclick="closePropertySelectorModal()">×</button>
+            </div>
+            <div class="modal-body" style="flex: 1; overflow-y: auto; padding: 0;">
+                <div style="padding: 12px 16px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10;">
+                    <span style="font-weight: 600; color: var(--text);">已选择 <span id="selectorCount">0</span> 套房源</span>
+                    <button onclick="toggleSelectorSelectAll()" style="padding: 8px 16px; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
+                        全选
+                    </button>
+                </div>
+                <div id="propertySelectorList" style="padding: 16px;">
+                    <!-- 房源列表将通过JavaScript动态填充 -->
+                </div>
+            </div>
+            <div style="padding: 16px; border-top: 1px solid var(--border); background: var(--surface);">
+                <button class="btn btn-primary" onclick="confirmPropertySelection()" style="width: 100%;">
+                    生成文案
+                </button>
             </div>
         </div>
     </div>
@@ -2072,9 +2105,10 @@
                 <div class="form-group">
                     <label class="form-label">房源状态</label>
                     <select class="form-select" id="propStatus">
-                        <option value="available">可租/售</option>
-                        <option value="rented">已租/售</option>
-                        <option value="maintenance">维护中</option>
+                        <option value="pending">待发布</option>
+                        <option value="selling">出售中</option>
+                        <option value="off_shelf">已下架</option>
+                        <option value="on_shelf">已上架</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -3048,8 +3082,10 @@
         // 更新统计数据
         function updateStats() {
             document.getElementById('statTotal').textContent = properties.length;
-            document.getElementById('statAvailable').textContent = properties.filter(p => p.status === 'available').length;
-            document.getElementById('statRented').textContent = properties.filter(p => p.status === 'rented').length;
+            const statSelling = document.getElementById('statSelling');
+            const statOnShelf = document.getElementById('statOnShelf');
+            if (statSelling) statSelling.textContent = properties.filter(p => p.status === 'selling').length;
+            if (statOnShelf) statOnShelf.textContent = properties.filter(p => p.status === 'on_shelf').length;
             document.getElementById('statCustomers').textContent = customers.length;
         }
 
@@ -3073,16 +3109,18 @@
         // 创建房源卡片HTML
         function createPropertyCard(property) {
             const statusClass = {
-                'available': 'status-available',
-                'rented': 'status-rented',
-                'maintenance': 'status-maintenance'
-            }[property.status] || 'status-available';
+                'pending': 'status-pending',
+                'selling': 'status-selling',
+                'off_shelf': 'status-off-shelf',
+                'on_shelf': 'status-on-shelf'
+            }[property.status] || 'status-pending';
 
             const statusText = {
-                'available': '可租/售',
-                'rented': '已租/售',
-                'maintenance': '维护中'
-            }[property.status] || '可租/售';
+                'pending': '待发布',
+                'selling': '出售中',
+                'off_shelf': '已下架',
+                'on_shelf': '已上架'
+            }[property.status] || '待发布';
 
             const priceUnit = property.type === 'sale' ? '万元' : '元/月';
             const isSelected = selectedProperties.includes(property.id);
@@ -3240,6 +3278,107 @@
             if (fab) {
                 fab.style.display = 'none';
             }
+        }
+
+        // 首页房源选择相关变量
+        let selectorSelectedProperties = [];
+
+        // 打开房源选择器（首页用）
+        function openMomentsSelector() {
+            selectorSelectedProperties = [];
+            renderPropertySelectorList();
+            document.getElementById('propertySelectorModal').classList.add('active');
+            updateSelectorCount();
+        }
+
+        // 关闭房源选择器
+        function closePropertySelectorModal() {
+            document.getElementById('propertySelectorModal').classList.remove('active');
+        }
+
+        // 渲染房源选择列表
+        function renderPropertySelectorList() {
+            const container = document.getElementById('propertySelectorList');
+            if (!container) return;
+
+            if (properties.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🏠</div>
+                        <div class="empty-text">暂无房源信息</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = properties.map(p => `
+                <div onclick="toggleSelectorProperty('${p.id}')" style="padding: 16px; background: var(--surface); border-radius: var(--radius); margin-bottom: 12px; cursor: pointer; border: 2px solid ${selectorSelectedProperties.includes(p.id) ? 'var(--primary)' : 'transparent'}; transition: var(--transition);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-weight: 600; color: var(--text); font-size: 16px;">${p.community || '未知小区'}</span>
+                        <span style="padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; background: ${p.type === 'rent' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(245, 158, 11, 0.1)'}; color: ${p.type === 'rent' ? '#3b82f6' : '#f59e0b'};">
+                            ${p.type === 'rent' ? '出租' : '出售'}
+                        </span>
+                    </div>
+                    <div style="color: var(--text-secondary); font-size: 14px; margin-bottom: 4px;">
+                        ${p.layout || ''} · ${p.area ? p.area + '平' : ''} · ${p.decoration || ''}
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: var(--text-secondary); font-size: 14px;">${p.region || ''}</span>
+                        <span style="font-weight: 600; color: ${p.type === 'rent' ? '#3b82f6' : '#f59e0b'}; font-size: 16px;">
+                            ${p.price || '面议'}${p.type === 'sale' ? '万元' : '元/月'}
+                        </span>
+                    </div>
+                    ${selectorSelectedProperties.includes(p.id) ? '<div style="text-align: center; margin-top: 8px; color: var(--primary); font-weight: 500;">✓ 已选择</div>' : ''}
+                </div>
+            `).join('');
+        }
+
+        // 切换房源选择
+        function toggleSelectorProperty(propertyId) {
+            const index = selectorSelectedProperties.indexOf(propertyId);
+            if (index > -1) {
+                selectorSelectedProperties.splice(index, 1);
+            } else {
+                selectorSelectedProperties.push(propertyId);
+            }
+            renderPropertySelectorList();
+            updateSelectorCount();
+        }
+
+        // 更新选择计数
+        function updateSelectorCount() {
+            const countEl = document.getElementById('selectorCount');
+            if (countEl) {
+                countEl.textContent = selectorSelectedProperties.length;
+            }
+        }
+
+        // 全选/取消全选
+        function toggleSelectorSelectAll() {
+            if (selectorSelectedProperties.length === properties.length) {
+                selectorSelectedProperties = [];
+            } else {
+                selectorSelectedProperties = properties.map(p => p.id);
+            }
+            renderPropertySelectorList();
+            updateSelectorCount();
+        }
+
+        // 确认选择并生成文案
+        function confirmPropertySelection() {
+            if (selectorSelectedProperties.length === 0) {
+                showToast('请先选择要分享的房源');
+                return;
+            }
+            
+            // 将选择的房源赋值给selectedProperties
+            selectedProperties = [...selectorSelectedProperties];
+            
+            // 关闭选择器
+            closePropertySelectorModal();
+            
+            // 直接生成文案
+            batchGenerateMoments();
         }
 
         // 渲染房源列表
