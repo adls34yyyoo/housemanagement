@@ -3473,7 +3473,7 @@
                     </div>
                     <div class="property-actions">
                         ${property.landlordPhone ? `
-                            <button class="action-btn" onclick="event.stopPropagation(); showCallRecordCard('${property.id}', '${property.landlordPhone}')" style="background: white; color: #2196F3; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; border: 1px solid #2196F3;">
+                            <button class="action-btn" onclick="event.stopPropagation(); showCallRecordCard('${property.id}', '${property.landlordPhone}')" style="background: white; color: #2196F3; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; border: none;">
                                 📞
                             </button>
                         ` : ''}
@@ -4892,7 +4892,7 @@
                                 ${property.callRecords.map((record, index) => `
                                     <div style="padding: 8px 0; ${index > 0 ? 'border-top: 1px solid var(--border);' : ''}">
                                         <div style="display: flex; justify-content: space-between; font-size: 14px;">
-                                            <span style="font-weight: 600;">${record.phone}</span>
+                                            <span style="font-weight: 600;"><a href="tel:${record.phone}" style="color: var(--primary); text-decoration: none;">${record.phone}</a></span>
                                             <span style="color: var(--text-secondary);">${new Date(record.time).toLocaleString()}</span>
                                         </div>
                                         ${record.remark ? `
