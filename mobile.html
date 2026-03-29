@@ -5003,6 +5003,26 @@
             const currentTypeText = currentType === 'rent' ? '出租' : '出售';
             const newTypeText = newType === 'rent' ? '出租' : '出售';
             const priceUnit = newType === 'sale' ? '万元' : '元/月';
+            
+            // 计算市场推荐价格（基于同小区、同户型的平均价格）
+            const similarProperties = properties.filter(p => 
+                p.community === property.community && 
+                p.layout === property.layout && 
+                p.type === newType && 
+                p.price
+            );
+            let marketPrice = 0;
+            let marketPriceText = '暂无市场参考价';
+            
+            if (similarProperties.length > 0) {
+                const totalPrice = similarProperties.reduce((sum, p) => sum + parseFloat(p.price), 0);
+                marketPrice = totalPrice / similarProperties.length;
+                if (newType === 'sale') {
+                    marketPriceText = `市场参考价：${marketPrice.toFixed(1)} 万元（${similarProperties.length} 套同小区同户型房源）`;
+                } else {
+                    marketPriceText = `市场参考价：${marketPrice.toFixed(0)} 元/月（${similarProperties.length} 套同小区同户型房源）`;
+                }
+            }
 
             // 创建模态框
             const modalHTML = `
@@ -5014,12 +5034,20 @@
                         </div>
                         <div style="margin-bottom: 20px;">
                             <p style="margin-bottom: 16px;">确定将房源从 <strong style="color: var(--primary);">${currentTypeText}</strong> 转换为 <strong style="color: var(--primary);">${newTypeText}</strong> 吗？</p>
-                            ${newType === 'sale' ? `
-                                <div class="form-group">
-                                    <label class="form-label">确认价格 (${priceUnit})</label>
-                                    <input type="number" id="togglePrice" value="${property.price || 0}" step="0.1" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 16px;">
-                                </div>
-                            ` : ''}
+                            
+                            <div class="form-group">
+                                <label class="form-label">确认价格 (${priceUnit})</label>
+                                <input type="number" id="togglePrice" value="${property.price || 0}" step="${newType === 'sale' ? '0.1' : '100'}" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 16px;">
+                            </div>
+                            
+                            <div style="background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: var(--radius); padding: 12px; margin-bottom: 16px;">
+                                <div style="color: var(--primary); font-size: 14px;">${marketPriceText}</div>
+                                ${marketPrice > 0 ? `
+                                    <button onclick="document.getElementById('togglePrice').value = ${marketPrice.toFixed(newType === 'sale' ? 1 : 0)}" style="margin-top: 8px; padding: 6px 12px; background: var(--primary); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-size: 12px;">
+                                        使用参考价
+                                    </button>
+                                ` : ''}
+                            </div>
                         </div>
                         <div class="form-actions" style="display: flex; gap: 10px; justify-content: flex-end;">
                             <button class="btn btn-default" onclick="closeRentSaleToggleModal()">取消</button>
