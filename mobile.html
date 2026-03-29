@@ -3448,12 +3448,25 @@
                             'on_shelf': 'status-on-shelf'
                         }[p.status] || 'status-pending';
 
-                        const statusText = {
-                            'pending': '待发布',
-                            'selling': '出售中',
-                            'off_shelf': '已下架',
-                            'on_shelf': '已上架'
-                        }[p.status] || '待发布';
+                        // 根据房源类型显示不同的状态文本
+                        let statusText;
+                        if (p.type === 'sale') {
+                            // 卖房房源状态
+                            statusText = {
+                                'pending': '待发布',
+                                'selling': '出售中',
+                                'off_shelf': '已下架',
+                                'on_shelf': '已上架'
+                            }[p.status] || '待发布';
+                        } else {
+                            // 租房房源状态
+                            statusText = {
+                                'pending': '待发布',
+                                'selling': '出租中',
+                                'off_shelf': '已下架',
+                                'on_shelf': '已上架'
+                            }[p.status] || '待发布';
+                        }
 
                         const priceUnit = p.type === 'sale' ? '万元' : '元/月';
 
@@ -3488,12 +3501,25 @@
                 'on_shelf': 'status-on-shelf'
             }[property.status] || 'status-pending';
 
-            const statusText = {
-                'pending': '待发布',
-                'selling': '出售中',
-                'off_shelf': '已下架',
-                'on_shelf': '已上架'
-            }[property.status] || '待发布';
+            // 根据房源类型显示不同的状态文本
+            let statusText;
+            if (property.type === 'sale') {
+                // 卖房房源状态
+                statusText = {
+                    'pending': '待发布',
+                    'selling': '出售中',
+                    'off_shelf': '已下架',
+                    'on_shelf': '已上架'
+                }[property.status] || '待发布';
+            } else {
+                // 租房房源状态
+                statusText = {
+                    'pending': '待发布',
+                    'selling': '出租中',
+                    'off_shelf': '已下架',
+                    'on_shelf': '已上架'
+                }[property.status] || '待发布';
+            }
 
             const priceUnit = property.type === 'sale' ? '万元' : '元/月';
             const isSelected = selectedProperties.includes(property.id);
@@ -4890,11 +4916,26 @@
 
             const priceUnit = property.type === 'sale' ? '万元' : '元/月';
             const typeText = property.type === 'sale' ? '出售' : '出租';
-            const statusText = {
-                'available': '可租/售',
-                'rented': '已租/售',
-                'maintenance': '维护中'
-            }[property.status] || '可租/售';
+            
+            // 根据房源类型显示不同的状态文本
+            let statusText;
+            if (property.type === 'sale') {
+                // 卖房房源状态
+                statusText = {
+                    'pending': '待发布',
+                    'selling': '出售中',
+                    'off_shelf': '已下架',
+                    'on_shelf': '已上架'
+                }[property.status] || '待发布';
+            } else {
+                // 租房房源状态
+                statusText = {
+                    'pending': '待发布',
+                    'selling': '出租中',
+                    'off_shelf': '已下架',
+                    'on_shelf': '已上架'
+                }[property.status] || '待发布';
+            }
 
             const detailHTML = `
                 <div style="padding: 16px;">
