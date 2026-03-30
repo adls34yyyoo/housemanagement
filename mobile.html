@@ -2338,6 +2338,12 @@
                 </div>
                 <div class="nav-label">我的</div>
             </div>
+            <div class="nav-item" onclick="openShareModal()">
+                <div class="nav-icon">
+                    <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
+                </div>
+                <div class="nav-label">转发</div>
+            </div>
         </div>
     </div>
 
@@ -2607,7 +2613,7 @@
     </div>
 
     <!-- 一键转发悬浮按钮 -->
-    <div id="floatingShareBtn" class="floating-btn" onclick="batchGenerateMoments()" style="display: none;">
+    <div id="floatingShareBtn" class="floating-btn" onclick="openShareModal()" style="display: none;">
         一键转发
     </div>
 
@@ -3679,6 +3685,11 @@
                 <div class="property-card" style="padding: 16px; cursor: pointer; transition: var(--transition); position: relative;" onclick="openPropertyDetailModal('${property.id}')">
                     <div style="position: absolute; top: 12px; left: 12px; z-index: 10;" onclick="event.stopPropagation(); togglePropertySelection('${property.id}')">
                         <input type="checkbox" style="width: 22px; height: 22px; cursor: pointer;" ${isSelected ? 'checked' : ''} onchange="event.stopPropagation(); togglePropertySelection('${property.id}')">
+                    </div>
+                    <div style="position: absolute; top: 12px; right: 12px; z-index: 10;" onclick="event.stopPropagation(); shareProperty('${property.id}')">
+                        <button style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                            转
+                        </button>
                     </div>
                     <div class="property-info" style="padding: 0; padding-left: 40px;">
                         <div class="property-title">
@@ -5142,21 +5153,12 @@
 
         // 分享房源
         function shareProperty(id) {
-            const property = properties.find(p => p.id === id);
-            if (!property) return;
-
-            const shareText = `【${property.community}】\n户型：${property.layout || '未知'}\n面积：${property.area || '未知'}平\n价格：${property.price || '面议'}${property.type === 'sale' ? '万元' : '元/月'}\n装修：${property.decoration || '未知'}\n楼层：${property.floor || '未知'}楼\n地区：${property.region || '未知'}\n联系人：${property.landlordName || '未知'} ${property.landlordPhone || ''}`;
-
-            if (navigator.share) {
-                navigator.share({
-                    title: property.community,
-                    text: shareText
-                });
-            } else {
-                navigator.clipboard.writeText(shareText).then(() => {
-                    showToast('房源信息已复制到剪贴板');
-                });
-            }
+            // 清空之前的选择
+            selectedProperties = [];
+            // 添加当前房源到选择
+            selectedProperties.push(id);
+            // 打开一键转发模态框
+            openShareModal();
         }
 
         // 生成朋友圈文案
@@ -5927,6 +5929,126 @@
             setTimeout(() => {
                 toast.classList.remove('show');
             }, 3000);
+        }
+
+        // 打开一键转发模态框
+        function openShareModal() {
+            // 创建一键转发模态框
+            const modalHTML = `
+                <div class="modal" id="shareModal" style="display: flex; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000;">
+                    <div class="modal-content" style="background: white; border-radius: var(--radius); padding: 20px; width: 90%; max-width: 400px; max-height: 80vh; overflow-y: auto;">
+                        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin: 0; color: var(--text);">一键转发</h3>
+                            <button onclick="closeShareModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);">&times;</button>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">选择转发方式</label>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px;">
+                                <button onclick="shareToWeChat()" style="background: linear-gradient(135deg, #07C160 0%, #05a050 100%); color: white; border: none; border-radius: var(--radius); padding: 16px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                    <span>💬</span>
+                                    <span>微信好友</span>
+                                </button>
+                                <button onclick="shareToWeChatMoment()" style="background: linear-gradient(135deg, #E91E63 0%, #C2185B 100%); color: white; border: none; border-radius: var(--radius); padding: 16px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                    <span>📱</span>
+                                    <span>朋友圈</span>
+                                </button>
+                                <button onclick="shareToCopy()" style="background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); color: white; border: none; border-radius: var(--radius); padding: 16px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                    <span>📋</span>
+                                    <span>复制文案</span>
+                                </button>
+                                <button onclick="shareToSystem()" style="background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); color: white; border: none; border-radius: var(--radius); padding: 16px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                    <span>📤</span>
+                                    <span>系统分享</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">转发内容</label>
+                            <textarea id="shareContent" rows="6" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 16px; resize: vertical;">${getSelectedPropertiesShareText()}</textarea>
+                        </div>
+                        <div class="form-actions" style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button class="btn btn-default" onclick="closeShareModal()">取消</button>
+                            <button class="btn btn-primary" onclick="confirmShare()">确认转发</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 插入模态框到页面
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        // 关闭一键转发模态框
+        function closeShareModal() {
+            const modal = document.getElementById('shareModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // 获取选中房源的分享文本
+        function getSelectedPropertiesShareText() {
+            if (selectedProperties.length === 0) {
+                return '请先选择要转发的房源';
+            }
+
+            const selectedProps = properties.filter(p => selectedProperties.includes(p.id));
+            let shareText = '【房源推荐】\n\n';
+
+            selectedProps.forEach((property, index) => {
+                shareText += `房源 ${index + 1}:\n`;
+                shareText += `小区：${property.community || '未知'}\n`;
+                shareText += `户型：${property.layout || '未知'}\n`;
+                shareText += `面积：${property.area || '未知'}平\n`;
+                shareText += `价格：${property.price || '面议'}${property.type === 'sale' ? '万元' : '元/月'}\n`;
+                shareText += `装修：${property.decoration || '未知'}\n`;
+                shareText += `楼层：${property.floor || '未知'}楼\n`;
+                shareText += `地区：${property.region || '未知'}\n`;
+                shareText += `联系人：${property.landlordName || '未知'} ${property.landlordPhone || ''}\n\n`;
+            });
+
+            return shareText;
+        }
+
+        // 分享到微信好友
+        function shareToWeChat() {
+            showToast('请手动打开微信分享给好友');
+            // 这里可以添加实际的微信分享逻辑
+        }
+
+        // 分享到朋友圈
+        function shareToWeChatMoment() {
+            showToast('请手动打开微信分享到朋友圈');
+            // 这里可以添加实际的朋友圈分享逻辑
+        }
+
+        // 复制文案
+        function shareToCopy() {
+            const shareContent = document.getElementById('shareContent').value;
+            navigator.clipboard.writeText(shareContent).then(() => {
+                showToast('文案已复制到剪贴板');
+            });
+        }
+
+        // 系统分享
+        function shareToSystem() {
+            const shareContent = document.getElementById('shareContent').value;
+            if (navigator.share) {
+                navigator.share({
+                    title: '房源推荐',
+                    text: shareContent
+                });
+            } else {
+                navigator.clipboard.writeText(shareContent).then(() => {
+                    showToast('文案已复制到剪贴板，请手动分享');
+                });
+            }
+        }
+
+        // 确认转发
+        function confirmShare() {
+            showToast('转发功能已触发，请根据提示操作');
+            closeShareModal();
         }
 
         // 显示上海房产最新行情详情
