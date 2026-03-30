@@ -2362,6 +2362,10 @@
                     <input type="text" class="form-input" id="propLandlordName" placeholder="请输入房东姓名">
                 </div>
                 <div class="form-group">
+                    <label class="form-label">微信备注</label>
+                    <input type="text" class="form-input" id="propLandlordWechat" placeholder="请输入微信备注或微信号">
+                </div>
+                <div class="form-group">
                     <label class="form-label">房东电话</label>
                     <input type="tel" class="form-input" id="propLandlordPhone" placeholder="请输入房东电话">
                 </div>
@@ -2413,16 +2417,16 @@
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">客户姓名或微信备注等</label>
-                    <input type="text" class="form-input" id="customerName" placeholder="请输入客户姓名或微信备注等">
+                    <label class="form-label">客户姓名</label>
+                    <input type="text" class="form-input" id="customerName" placeholder="请输入客户姓名">
                 </div>
                 <div class="form-group">
                     <label class="form-label">联系电话</label>
                     <input type="text" class="form-input" id="customerPhone" placeholder="请输入联系电话">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">微信号</label>
-                    <input type="text" class="form-input" id="customerWechat" placeholder="请输入微信号">
+                    <label class="form-label">微信号或微信备注等</label>
+                    <input type="text" class="form-input" id="customerWechat" placeholder="请输入微信号或微信备注等">
                 </div>
                 <div class="form-group">
                     <label class="form-label">客户预算</label>
@@ -3626,11 +3630,14 @@
                                 📞
                             </button>
                         ` : ''}
-                        ${property.landlordName ? `
-                            <button class="action-btn" onclick="event.stopPropagation(); copyWeChat('${property.landlordName}')" style="background: linear-gradient(135deg, #07C160 0%, #05a050 100%); color: white; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%;">
-                                💬
+                        ${property.landlordWechat ? `
+                            <button class="action-btn" onclick="event.stopPropagation(); copyWeChat('${property.landlordWechat}')" style="background: linear-gradient(135deg, #07C160 0%, #05a050 100%); color: white; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%;">
+                                🌐
                             </button>
                         ` : ''}
+                        <button class="action-btn" onclick="event.stopPropagation(); generateMomentCopy('${property.id}')" style="background: linear-gradient(135deg, #E91E63 0%, #C2185B 100%); color: white; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%;">
+                            📝
+                        </button>
                         ${property.isAgent ? `
                             <button class="action-btn" onclick="event.stopPropagation(); addAgentProperty('${property.id}')" style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white;">增加可代理房源（卖房）</button>
                             <button class="action-btn" onclick="event.stopPropagation(); filterPropertiesByAgent()" style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white;">筛选</button>
@@ -4235,13 +4242,15 @@
                     <div class="customer-avatar">${c.name ? c.name.substring(0, 1) : '客'}</div>
                     <div class="customer-info">
                         <div class="customer-name">${c.name || '未知客户'}</div>
-                        <div class="customer-phone" style="display: flex; align-items: center;">
-                            ${c.phone ? `<a href="tel:${c.phone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">📞</a>` : ''}
+                        <div style="display: flex; gap: 16px; align-items: center; margin-top: 4px;">
+                            ${c.phone ? `<a href="tel:${c.phone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                                📞 <span style="font-size: 14px;">电话</span>
+                            </a>` : ''}
+                            ${c.wechat ? `<div onclick="event.stopPropagation(); copyWeChat('${c.wechat}')" style="color: #07C160; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+                                🌐 <span style="font-size: 14px;">微信</span>
+                            </div>` : ''}
                         </div>
                         ${c.budget ? `<div class="customer-budget">预算：${c.budget}</div>` : ''}
-                        ${c.wechat ? `<div class="customer-wechat" style="display: flex; align-items: center; gap: 5px; margin-top: 4px; font-size: 14px; color: #07C160;">
-                            💬 <span onclick="event.stopPropagation(); copyWeChat('${c.wechat}')" style="cursor: pointer; text-decoration: underline;">${c.wechat}</span>
-                        </div>` : ''}
                     </div>
                     <span class="customer-status ${c.status === 'potential' ? 'status-available' : 'status-rented'}">
                         ${c.status === 'potential' ? '潜在客户' : '跟进中'}
@@ -4325,7 +4334,7 @@
 
         // 确认删除客户
         function confirmDeleteCustomer(customerId) {
-            const password = prompt('请输入删除密码：123456');
+            const password = prompt('请输入删除密码：');
             if (password === '123456') {
                 deleteCustomer(customerId);
                 if (document.getElementById('customerDetailModal')) {
@@ -4354,8 +4363,20 @@
                     <div style="margin-bottom: 16px;">
                         <h3 style="margin: 0 0 8px 0; color: var(--text); font-size: 16px;">基本信息</h3>
                         <div style="background: var(--background); border-radius: var(--radius); padding: 12px;">
-                            ${customer.phone ? `<div style="margin-bottom: 8px;"><strong>联系电话：</strong><a href="tel:${customer.phone}" style="color: var(--primary); text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">📞</a></div>` : '<div style="margin-bottom: 8px;"><strong>联系电话：</strong>未填写</div>'}
-                            ${customer.wechat ? `<div style="margin-bottom: 8px;"><strong>微信号：</strong><span style="color: var(--primary); cursor: pointer; text-decoration: underline;" onclick="copyWeChat('${customer.wechat}')">${customer.wechat}</span></div>` : '<div style="margin-bottom: 8px;"><strong>微信号：</strong>未填写</div>'}
+                            <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 12px;">
+                                ${customer.phone ? `<div style="display: flex; align-items: center; gap: 6px;">
+                                    <strong>联系电话：</strong>
+                                    <a href="tel:${customer.phone}" style="color: var(--primary); text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                                        📞 <span>电话</span>
+                                    </a>
+                                </div>` : '<div><strong>联系电话：</strong>未填写</div>'}
+                                ${customer.wechat ? `<div style="display: flex; align-items: center; gap: 6px;">
+                                    <strong>微信号：</strong>
+                                    <div onclick="copyWeChat('${customer.wechat}')" style="color: #07C160; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+                                        🌐 <span>微信</span>
+                                    </div>
+                                </div>` : '<div><strong>微信号：</strong>未填写</div>'}
+                            </div>
                             <div style="margin-bottom: 8px;"><strong>预算：</strong>${customer.budget || '未填写'}</div>
                             <div><strong>需求：</strong>${customer.demand || '未填写'}</div>
                         </div>
@@ -4745,6 +4766,7 @@
             document.getElementById('propFloor').value = '';
             document.getElementById('propFloorCustom').value = '';
             document.getElementById('propLandlordName').value = '';
+            document.getElementById('propLandlordWechat').value = '';
             document.getElementById('propLandlordPhone').value = '';
             document.getElementById('propCertificate').value = '';
             document.getElementById('propStatus').value = 'pending';
@@ -4762,6 +4784,7 @@
             const area = document.getElementById('propArea').value;
             const floor = document.getElementById('propFloor').value || document.getElementById('propFloorCustom').value;
             const landlordName = document.getElementById('propLandlordName').value;
+            const landlordWechat = document.getElementById('propLandlordWechat').value;
             const landlordPhone = document.getElementById('propLandlordPhone').value;
             const certificate = document.getElementById('propCertificate').value;
             const status = document.getElementById('propStatus').value;
@@ -4872,6 +4895,7 @@
                 area: area ? parseFloat(area) : null,
                 floor,
                 landlordName: isAgentMode ? '' : landlordName,
+                landlordWechat: isAgentMode ? '' : landlordWechat,
                 landlordPhone: isAgentMode ? '' : landlordPhone,
                 certificate: isAgentMode ? '' : certificate,
                 status,
@@ -5039,6 +5063,7 @@
             document.getElementById('propArea').value = property.area || '';
             document.getElementById('propFloor').value = property.floor || '';
             document.getElementById('propLandlordName').value = property.landlordName || '';
+            document.getElementById('propLandlordWechat').value = property.landlordWechat || '';
             document.getElementById('propLandlordPhone').value = property.landlordPhone || '';
             document.getElementById('propCertificate').value = property.certificate || '';
             document.getElementById('propStatus').value = property.status || 'pending';
@@ -5065,9 +5090,71 @@
             }
         }
 
+        // 生成朋友圈文案
+        function generateMomentCopy(propertyId) {
+            const property = properties.find(p => p.id === propertyId);
+            if (!property) return;
+
+            // 生成不同风格的朋友圈文案
+            const copyOptions = [
+                // 简洁风格
+                `【${property.community || '精品房源'}】\n${property.layout || '优质'}户型，${property.area || '宽敞'}㎡\n${property.type === 'sale' ? '售价' : '月租'}：${property.price || '面议'}${property.type === 'sale' ? '万' : '元/月'}\n${property.decoration || '精美'}装修，${property.floor || '黄金'}楼层\n随时看房，手慢无！\n\n📞 联系电话：${property.landlordPhone || '请咨询'}`,
+                
+                // 温馨风格
+                `✨ 好房推荐 ✨\n\n🏠 ${property.community || '理想家园'}\n🏡 ${property.layout || '舒适'}户型\n📏 ${property.area || '宽敞'}平方米\n💰 ${property.type === 'sale' ? '总价' : '月租'}：${property.price || '面议'}${property.type === 'sale' ? '万元' : '元/月'}\n🎨 ${property.decoration || '精致'}装修\n🏢 ${property.floor || '优选'}楼层\n\n📍 位置优越，周边配套齐全\n👀 机会难得，欢迎随时看房\n\n📞 ${property.landlordPhone || '联系电话'}`,
+                
+                // 专业风格
+                `【房产经纪人推荐】\n\n项目：${property.community || '优质小区'}\n户型：${property.layout || '标准'}格局\n面积：${property.area || '合理'}㎡\n价格：${property.price || '市场价格'}${property.type === 'sale' ? '万元' : '元/月'}\n装修：${property.decoration || '良好'}标准\n楼层：${property.floor || '适宜'}层\n\n核心卖点：位置优越、交通便利、配套完善\n\n预约看房：${property.landlordPhone || '请致电'}`
+            ];
+
+            // 创建文案选择模态框
+            const modalHTML = `
+                <div class="modal" id="momentCopyModal" style="display: flex; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000;">
+                    <div class="modal-content" style="background: white; border-radius: var(--radius); padding: 20px; width: 90%; max-width: 400px; max-height: 80vh; overflow-y: auto;">
+                        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin: 0; color: var(--text);">生成朋友圈文案</h3>
+                            <button onclick="closeMomentCopyModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);">&times;</button>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            ${copyOptions.map((copy, index) => `
+                                <div style="margin-bottom: 16px; padding: 16px; border: 1px solid var(--border); border-radius: var(--radius);">
+                                    <div style="margin-bottom: 12px; font-weight: 600; color: var(--primary);">文案 ${index + 1}</div>
+                                    <div style="white-space: pre-wrap; line-height: 1.5; margin-bottom: 12px;">${copy}</div>
+                                    <button onclick="copyMomentCopy('${copy}')" style="background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: var(--radius); cursor: pointer;">复制文案</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="form-actions" style="display: flex; justify-content: flex-end;">
+                            <button class="btn btn-primary" onclick="closeMomentCopyModal()">关闭</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 插入模态框到页面
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        // 关闭朋友圈文案模态框
+        function closeMomentCopyModal() {
+            const modal = document.getElementById('momentCopyModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // 复制朋友圈文案
+        function copyMomentCopy(copy) {
+            navigator.clipboard.writeText(copy).then(() => {
+                showToast('✅ 文案已复制到剪贴板');
+            }).catch(err => {
+                showToast('⚠️ 复制失败，请手动复制');
+            });
+        }
+
         // 删除房源
         async function deleteProperty(id) {
-            const password = prompt('请输入删除密码：123456');
+            const password = prompt('请输入删除密码：');
             if (password !== '123456') {
                 showToast('密码错误，删除失败');
                 return;
@@ -5679,7 +5766,7 @@
                         </div>
                         <div class="form-actions" style="display: flex; gap: 10px; justify-content: flex-end;">
                             <button class="btn btn-default" onclick="closeRentSaleToggleModal()">取消</button>
-                            <button class="btn btn-primary" onclick="toggleRentSale('${property.id}')" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">确认转换</button>
+                            <button class="btn btn-primary" onclick="toggleRentSale('${property.id}')" style="background: #FFD700;">确认转换</button>
                         </div>
                     </div>
                 </div>
@@ -6001,9 +6088,11 @@
                             <h3 style="margin: 0; color: var(--text);">沟通记录</h3>
                             <button onclick="closeCallRecordModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);">&times;</button>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">电话号码</label>
-                            <input type="text" id="callPhone" value="${phoneNumber}" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 16px;" disabled>
+                        <div class="form-group" style="text-align: center; margin-bottom: 16px;">
+                            <button onclick="window.location.href='tel:${phoneNumber}'" style="background: #2196F3; color: white; border: none; border-radius: 50%; width: 80px; height: 80px; font-size: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                                📞
+                            </button>
+                            <div style="margin-top: 8px; color: var(--text-secondary); font-size: 14px;">点击拨打电话</div>
                         </div>
                         <div class="form-group">
                             <label class="form-label">沟通时间</label>
@@ -6015,7 +6104,7 @@
                         </div>
                         <div class="form-actions" style="display: flex; gap: 10px; justify-content: flex-end;">
                             <button class="btn btn-default" onclick="closeCallRecordModal()">取消</button>
-                            <button class="btn btn-primary" onclick="saveCallRecord('${propertyId}')">保存记录</button>
+                            <button class="btn btn-primary" onclick="saveCallRecord('${propertyId}', '${phoneNumber}')">保存记录</button>
                         </div>
                     </div>
                 </div>
@@ -6034,8 +6123,7 @@
         }
 
         // 保存沟通记录
-        function saveCallRecord(propertyId) {
-            const phone = document.getElementById('callPhone').value;
+        function saveCallRecord(propertyId, phone) {
             const time = document.getElementById('callTime').value;
             const remark = document.getElementById('callRemark').value;
 
