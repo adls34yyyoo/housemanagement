@@ -6344,9 +6344,9 @@
 
         // 显示沟通记录卡片
         function showCallRecordCard(propertyId, phoneNumber) {
-            // 找到对应的房源，获取微信号
+            // 找到对应的房源，获取微信号和微信备注
             const property = properties.find(p => p.id === propertyId);
-            const wechatName = property ? property.landlordWechat : '';
+            const wechatName = property ? (property.landlordWechat || property.landlordWechatRemark || '') : '';
             
             // 创建沟通记录模态框
             const modalHTML = `
