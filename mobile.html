@@ -2303,47 +2303,14 @@
             
             <div class="content-section" style="padding: 20px;">
                 <div class="form-group">
-                    <label class="form-label">选择转发方式</label>
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px;">
-                        <button onclick="shareToWeChat()" style="background: linear-gradient(135deg, #07C160 0%, #05a050 100%); color: white; border: none; border-radius: var(--radius); padding: 16px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                            <span>💬</span>
-                            <span>微信好友</span>
-                        </button>
-                        <button onclick="shareToWeChatMoment()" style="background: linear-gradient(135deg, #E91E63 0%, #C2185B 100%); color: white; border: none; border-radius: var(--radius); padding: 16px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                            <span>📱</span>
-                            <span>朋友圈</span>
-                        </button>
-                        <button onclick="shareToCopy()" style="background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); color: white; border: none; border-radius: var(--radius); padding: 16px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                            <span>📋</span>
-                            <span>复制文案</span>
-                        </button>
-                        <button onclick="shareToSystem()" style="background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); color: white; border: none; border-radius: var(--radius); padding: 16px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                            <span>📤</span>
-                            <span>系统分享</span>
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="form-group">
                     <label class="form-label">转发内容</label>
                     <textarea id="shareContent" rows="8" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 20px; resize: vertical;">${getSelectedPropertiesShareText()}</textarea>
                 </div>
                 
-                <div class="form-group">
-                    <label class="form-label">已选择房源</label>
-                    <div id="selectedPropertiesList" style="background: var(--surface); border-radius: var(--radius); padding: 16px; margin-bottom: 20px; max-height: 200px; overflow-y: auto;">
-                        ${selectedProperties.length > 0 ? properties.filter(p => selectedProperties.includes(p.id)).map(p => `
-                            <div style="padding: 8px 0; border-bottom: 1px solid var(--border);">
-                                <div style="font-weight: 600;">${p.community || '未知小区'}</div>
-                                <div style="font-size: 14px; color: var(--text-secondary);">${p.layout || '未知'} | ${p.area || '未知'}平 | ${p.price || '面议'}${p.type === 'sale' ? '万元' : '元/月'}</div>
-                            </div>
-                        `).join('') : '<div style="text-align: center; color: var(--text-tertiary); padding: 20px;">暂无选择的房源</div>'}
-                    </div>
-                </div>
-                
                 <div class="form-actions" style="display: flex; gap: 12px;">
-                    <button class="btn btn-default" onclick="switchPage('properties')">返回</button>
+                    <button class="btn btn-default" onclick="shareToCopy()">复制文案</button>
                     <button class="btn btn-primary" onclick="confirmShare()">确认转发</button>
+                    <button class="btn btn-default" onclick="switchPage('properties')">返回</button>
                 </div>
             </div>
         </div>
@@ -3740,45 +3707,36 @@
             const isSelected = selectedProperties.includes(property.id);
 
             return `
-                <div class="property-card" style="padding: 16px; cursor: pointer; transition: var(--transition); position: relative;" onclick="openPropertyDetailModal('${property.id}')">
-                    <div style="position: absolute; top: 12px; left: 12px; z-index: 10;" onclick="event.stopPropagation(); togglePropertySelection('${property.id}')">
-                        <input type="checkbox" style="width: 22px; height: 22px; cursor: pointer;" ${isSelected ? 'checked' : ''} onchange="event.stopPropagation(); togglePropertySelection('${property.id}')">
+                <div class="property-card" style="padding: 12px 16px; cursor: pointer; transition: var(--transition); position: relative; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid var(--border);" onclick="openPropertyDetailModal('${property.id}')">
+                    <div style="display: flex; align-items: center; flex: 1;">
+                        <div style="margin-right: 12px; z-index: 10;" onclick="event.stopPropagation(); togglePropertySelection('${property.id}')">
+                            <input type="checkbox" style="width: 18px; height: 18px; cursor: pointer;" ${isSelected ? 'checked' : ''} onchange="event.stopPropagation(); togglePropertySelection('${property.id}')">
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                                <span style="font-weight: 500; color: var(--text);">${property.community || '未知小区'}</span>
+                                <span class="property-status ${statusClass}" style="font-size: 12px;">${statusText}</span>
+                            </div>
+                            <div style="font-size: 14px; color: var(--text-secondary); display: flex; justify-content: space-between;">
+                                <span>${property.layout || ''} ${property.area ? property.area + '平' : ''} ${property.floor ? property.floor + '楼' : ''}</span>
+                                <span style="font-weight: 500; color: ${property.type === 'sale' ? '#ef4444' : '#22c55e'};">${property.price || '面议'}${priceUnit}</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="property-info" style="padding: 0; padding-left: 40px;">
-                        <div class="property-title">
-                            <span>${property.community || '未知小区'}</span>
-                            <span class="property-status ${statusClass}">${statusText}</span>
-                        </div>
-                        <div class="property-address" style="margin-bottom: 8px;">
-                            ${property.layout || ''} ${property.floor ? property.floor + '楼' : ''} ${property.area ? property.area + '平' : ''}
-                        </div>
-                        <div class="property-meta">
-                            <span class="property-price">${property.price || '面议'}${priceUnit}</span>
-                            <span class="property-specs">${property.decoration || ''}</span>
-                        </div>
-                    </div>
-                    <div class="property-actions">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-left: 12px;">
                         ${property.landlordPhone ? `
-                            <button class="action-btn" onclick="event.stopPropagation(); showCallRecordCard('${property.id}', '${property.landlordPhone}')" style="background: white; color: #2196F3; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; border: none;">
+                            <button class="action-btn" onclick="event.stopPropagation(); showCallRecordCard('${property.id}', '${property.landlordPhone}')" style="background: none; color: #2196F3; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: none;">
                                 📞
                             </button>
                         ` : ''}
                         ${property.landlordWechat ? `
-                            <button class="action-btn" onclick="event.stopPropagation(); copyWeChat('${property.landlordWechat}')" style="background: linear-gradient(135deg, #07C160 0%, #05a050 100%); color: white; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%;">
+                            <button class="action-btn" onclick="event.stopPropagation(); copyWeChat('${property.landlordWechat}')" style="background: none; color: #07C160; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: none;">
                                 🌐
                             </button>
                         ` : ''}
-                        <button class="action-btn" onclick="event.stopPropagation(); shareProperty('${property.id}')" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%;">
+                        <button class="action-btn" onclick="event.stopPropagation(); shareProperty('${property.id}')" style="background: none; color: var(--primary); display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: none;">
                             📤
                         </button>
-
-                        ${property.isAgent ? `
-                            <button class="action-btn" onclick="event.stopPropagation(); addAgentProperty('${property.id}')" style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white;">增加可代理房源（卖房）</button>
-                            <button class="action-btn" onclick="event.stopPropagation(); filterPropertiesByAgent()" style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white;">筛选</button>
-                        ` : `
-                            <button class="action-btn" onclick="event.stopPropagation(); editProperty('${property.id}')">编辑</button>
-                            <button class="action-btn" onclick="event.stopPropagation(); deleteProperty('${property.id}')" style="color: var(--danger);">删除</button>
-                        `}
                     </div>
                 </div>
             `;
