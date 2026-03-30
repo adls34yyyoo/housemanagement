@@ -1856,13 +1856,13 @@
                     <div class="stat-value" id="statTotal">0</div>
                     <div class="stat-label">总房源</div>
                 </div>
-                <div class="stat-card" onclick="switchPage('properties'); setTimeout(() => filterPropertiesByStatus('selling'), 100)" style="cursor: pointer;">
-                    <div class="stat-value" id="statSelling">0</div>
-                    <div class="stat-label">出售中</div>
+                <div class="stat-card" onclick="switchPage('properties'); setTimeout(() => filterPropertiesByStatus('pending'), 100)" style="cursor: pointer;">
+                    <div class="stat-value" id="statPending">0</div>
+                    <div class="stat-label">待发布</div>
                 </div>
-                <div class="stat-card" onclick="switchPage('properties'); setTimeout(() => filterPropertiesByStatus('on_shelf'), 100)" style="cursor: pointer;">
-                    <div class="stat-value" id="statOnShelf">0</div>
-                    <div class="stat-label">已上架</div>
+                <div class="stat-card" onclick="switchPage('properties'); setTimeout(() => filterPropertiesByStatus('off_shelf'), 100)" style="cursor: pointer;">
+                    <div class="stat-value" id="statOffShelf">0</div>
+                    <div class="stat-label">已下架</div>
                 </div>
                 <div class="stat-card" onclick="switchPage('customers')" style="cursor: pointer;">
                     <div class="stat-value" id="statCustomers">0</div>
@@ -1941,13 +1941,7 @@
                                 <input type="checkbox" value="pending" onchange="applyFilters()"> 待发布
                             </label>
                             <label class="filter-checkbox-item">
-                                <input type="checkbox" value="selling" onchange="applyFilters()"> 出售中
-                            </label>
-                            <label class="filter-checkbox-item">
                                 <input type="checkbox" value="off_shelf" onchange="applyFilters()"> 已下架
-                            </label>
-                            <label class="filter-checkbox-item">
-                                <input type="checkbox" value="on_shelf" onchange="applyFilters()"> 已上架
                             </label>
                         </div>
                     </div>
@@ -2051,13 +2045,7 @@
                                 <input type="checkbox" value="pending" class="agent-filter-status" onchange="applyAgentFilters()"> 待发布
                             </label>
                             <label class="filter-checkbox-item">
-                                <input type="checkbox" value="selling" class="agent-filter-status" onchange="applyAgentFilters()"> 出售中
-                            </label>
-                            <label class="filter-checkbox-item">
                                 <input type="checkbox" value="off_shelf" class="agent-filter-status" onchange="applyAgentFilters()"> 已下架
-                            </label>
-                            <label class="filter-checkbox-item">
-                                <input type="checkbox" value="on_shelf" class="agent-filter-status" onchange="applyAgentFilters()"> 已上架
                             </label>
                         </div>
                     </div>
@@ -2388,9 +2376,7 @@
                     <label class="form-label">房源状态</label>
                     <select class="form-select" id="propStatus">
                         <option value="pending">待发布</option>
-                        <option value="selling">出售中</option>
                         <option value="off_shelf">已下架</option>
-                        <option value="on_shelf">已上架</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -3502,10 +3488,10 @@
         // 更新统计数据
         function updateStats() {
             document.getElementById('statTotal').textContent = properties.length;
-            const statSelling = document.getElementById('statSelling');
-            const statOnShelf = document.getElementById('statOnShelf');
-            if (statSelling) statSelling.textContent = properties.filter(p => p.status === 'selling').length;
-            if (statOnShelf) statOnShelf.textContent = properties.filter(p => p.status === 'on_shelf').length;
+            const statPending = document.getElementById('statPending');
+            const statOffShelf = document.getElementById('statOffShelf');
+            if (statPending) statPending.textContent = properties.filter(p => p.status === 'pending').length;
+            if (statOffShelf) statOffShelf.textContent = properties.filter(p => p.status === 'off_shelf').length;
             document.getElementById('statCustomers').textContent = customers.length;
         }
 
@@ -3564,17 +3550,13 @@
             let statusText;
             if (p.type === 'sale') {
                 statusText = {
-                    'pending': '已上架',
-                    'selling': '已上架',
-                    'off_shelf': '已下架',
-                    'on_shelf': '已上架'
-                }[p.status] || '已上架';
+                    'pending': '待发布',
+                    'off_shelf': '已下架'
+                }[p.status] || '待发布';
             } else {
                 statusText = {
                     'pending': '待发布',
-                    'selling': '出租中',
-                    'off_shelf': '已下架',
-                    'on_shelf': '已上架'
+                    'off_shelf': '已下架'
                 }[p.status] || '待发布';
             }
 
@@ -3603,9 +3585,7 @@
         function createPropertyCard(property) {
             const statusClass = {
                 'pending': 'status-pending',
-                'selling': 'status-selling',
-                'off_shelf': 'status-off-shelf',
-                'on_shelf': 'status-on-shelf'
+                'off_shelf': 'status-off-shelf'
             }[property.status] || 'status-pending';
 
             // 根据房源类型显示不同的状态文本
@@ -3614,17 +3594,13 @@
                 // 卖房房源状态
                 statusText = {
                     'pending': '待发布',
-                    'selling': '出售中',
-                    'off_shelf': '已下架',
-                    'on_shelf': '已上架'
+                    'off_shelf': '已下架'
                 }[property.status] || '待发布';
             } else {
                 // 租房房源状态
                 statusText = {
                     'pending': '待发布',
-                    'selling': '出租中',
-                    'off_shelf': '已下架',
-                    'on_shelf': '已上架'
+                    'off_shelf': '已下架'
                 }[property.status] || '待发布';
             }
 
@@ -4063,25 +4039,19 @@
         function createAgentPropertyCard(property) {
             const statusClass = {
                 'pending': 'status-pending',
-                'selling': 'status-selling',
-                'off_shelf': 'status-off-shelf',
-                'on_shelf': 'status-on-shelf'
+                'off_shelf': 'status-off-shelf'
             }[property.status] || 'status-pending';
 
             let statusText;
             if (property.type === 'sale') {
                 statusText = {
-                    'pending': '已上架',
-                    'selling': '已上架',
-                    'off_shelf': '已下架',
-                    'on_shelf': '已上架'
-                }[property.status] || '已上架';
+                    'pending': '待发布',
+                    'off_shelf': '已下架'
+                }[property.status] || '待发布';
             } else {
                 statusText = {
                     'pending': '待发布',
-                    'selling': '出租中',
-                    'off_shelf': '已下架',
-                    'on_shelf': '已上架'
+                    'off_shelf': '已下架'
                 }[property.status] || '待发布';
             }
 
@@ -4619,18 +4589,16 @@
                 const statusSelect = document.getElementById('propStatus');
                 statusSelect.innerHTML = `
                     <option value="pending">待发布</option>
-                    <option value="selling">出租中</option>
                     <option value="off_shelf">已下架</option>
-                    <option value="on_shelf">已上架</option>
                 `;
                 // 价格标签显示为元/月
                 priceLabel.textContent = '价格（元/月）';
             } else {
                 document.getElementById('propertyModalTitle').textContent = isAgent ? '新增代理售房' : '新增卖房';
-                // 卖房房源状态选项，取消待发布和出售中
+                // 卖房房源状态选项
                 const statusSelect = document.getElementById('propStatus');
                 statusSelect.innerHTML = `
-                    <option value="on_shelf">已上架</option>
+                    <option value="pending">待发布</option>
                     <option value="off_shelf">已下架</option>
                 `;
                 // 价格标签显示为万元
@@ -4666,7 +4634,7 @@
             document.getElementById('propLandlordName').value = '';
             document.getElementById('propLandlordPhone').value = '';
             document.getElementById('propCertificate').value = '';
-            document.getElementById('propStatus').value = 'available';
+            document.getElementById('propStatus').value = 'pending';
             document.getElementById('propDesc').value = '';
             document.getElementById('propRemark').value = '';
         }
@@ -4926,9 +4894,9 @@
             const statusSelect = document.getElementById('propStatus');
             const priceLabel = document.getElementById('priceLabel');
             if (property.type === 'sale') {
-                // 卖房房源状态选项，取消待发布和出售中
+                // 卖房房源状态选项
                 statusSelect.innerHTML = `
-                    <option value="on_shelf">已上架</option>
+                    <option value="pending">待发布</option>
                     <option value="off_shelf">已下架</option>
                 `;
                 // 价格标签显示为万元
@@ -4937,9 +4905,7 @@
                 // 租房房源状态选项
                 statusSelect.innerHTML = `
                     <option value="pending">待发布</option>
-                    <option value="selling">出租中</option>
                     <option value="off_shelf">已下架</option>
-                    <option value="on_shelf">已上架</option>
                 `;
                 // 价格标签显示为元/月
                 priceLabel.textContent = '价格（元/月）';
@@ -4955,7 +4921,7 @@
             document.getElementById('propLandlordName').value = property.landlordName || '';
             document.getElementById('propLandlordPhone').value = property.landlordPhone || '';
             document.getElementById('propCertificate').value = property.certificate || '';
-            document.getElementById('propStatus').value = property.status || 'available';
+            document.getElementById('propStatus').value = property.status || 'pending';
 
             document.getElementById('propertyModal').classList.add('active');
         }
@@ -5404,20 +5370,16 @@
             // 根据房源类型显示不同的状态文本
             let statusText;
             if (property.type === 'sale') {
-                // 卖房房源状态，取消待发布和出售中
+                // 卖房房源状态
                 statusText = {
-                    'pending': '已上架',
-                    'selling': '已上架',
-                    'off_shelf': '已下架',
-                    'on_shelf': '已上架'
-                }[property.status] || '已上架';
+                    'pending': '待发布',
+                    'off_shelf': '已下架'
+                }[property.status] || '待发布';
             } else {
                 // 租房房源状态
                 statusText = {
                     'pending': '待发布',
-                    'selling': '出租中',
-                    'off_shelf': '已下架',
-                    'on_shelf': '已上架'
+                    'off_shelf': '已下架'
                 }[property.status] || '待发布';
             }
 
