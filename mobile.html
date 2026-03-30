@@ -2183,8 +2183,7 @@
             </div>
             
             <div class="action-buttons">
-                <div class="action-button" onclick="openAgentPropertyModal('sale')">💰 新增代理售房</div>
-                <div class="action-button" onclick="openAgentPropertyModal('rent')">🏠 新增代理租房</div>
+                <div class="action-button" onclick="openAgentPropertyModal('sale')">💰 新增代理房源</div>
                 <div class="action-button" onclick="toggleAgentFilterMenu()">🔍 筛选</div>
             </div>
             
@@ -3894,7 +3893,9 @@
         function generateMomentsContent() {
             if (selectedProperties.length === 0) return;
 
-            const selectedProps = properties.filter(p => selectedProperties.includes(p.id));
+            // 合并所有房源（普通房源和代理房源）
+            const allProperties = [...properties, ...agentProperties];
+            const selectedProps = allProperties.filter(p => selectedProperties.includes(p.id));
             let content = '';
 
             selectedProps.forEach((property, index) => {
@@ -4211,7 +4212,7 @@
             `;
         }
 
-        // 渲染房源方信息
+        // 渲染被代理方信息
         function renderAgentParties(property) {
             // 优先使用agentParties数组
             const parties = property.agentParties || [];
@@ -4227,7 +4228,7 @@
             
             return parties.map((party, index) => `
                 <div style="font-size: 13px; color: var(--text-secondary);">
-                    👤 房源方${parties.length > 1 ? index + 1 : ''}：${party.name || ''} ${party.phone ? `<a href="tel:${party.phone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">📞</a>` : ''}
+                    👤 被代理方${parties.length > 1 ? index + 1 : ''}：${party.name || ''} ${party.phone ? `<a href="tel:${party.phone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">📞</a>` : ''}
                 </div>
             `).join('');
         }
@@ -4297,7 +4298,7 @@
         // 打开可代理房源编辑模态框
         function openAgentPropertyModal(type = 'sale') {
             // 复用房源模态框，但添加isAgent标记
-            openPropertyModal(type, true);
+            openPropertyModal('sale', true);
         }
 
         // 编辑可代理房源
@@ -4373,13 +4374,17 @@
             // 打开模态框
             if (modal && title) {
                 modal.style.display = 'block';
-                title.textContent = property.type === 'sale' ? '编辑代理售房' : '编辑代理租房';
+                title.textContent = '编辑代理房源';
             }
         }
 
         // 删除可代理房源
         function deleteAgentProperty(propertyId) {
-            if (!confirm('确定要删除这套可代理房源吗？')) return;
+            const password = prompt('请输入密码以确认删除：');
+            if (password !== '123456') {
+                showToast('密码错误，无法删除');
+                return;
+            }
             
             agentProperties = agentProperties.filter(p => p.id !== propertyId);
             localStorage.setItem('agentProperties', JSON.stringify(agentProperties));
@@ -4896,7 +4901,7 @@
             }
             
             if (type === 'rent') {
-                document.getElementById('propertyModalTitle').textContent = isAgent ? '新增代理租房' : '新增租房';
+                document.getElementById('propertyModalTitle').textContent = isAgent ? '新增代理房源' : '新增租房';
                 // 租房房源状态选项
                 const statusSelect = document.getElementById('propStatus');
                 statusSelect.innerHTML = `
@@ -4906,7 +4911,7 @@
                 // 价格标签显示为元/月
                 priceLabel.textContent = '价格（元/月）';
             } else {
-                document.getElementById('propertyModalTitle').textContent = isAgent ? '新增代理售房' : '新增卖房';
+                document.getElementById('propertyModalTitle').textContent = isAgent ? '新增代理房源' : '新增卖房';
                 // 卖房房源状态选项
                 const statusSelect = document.getElementById('propStatus');
                 statusSelect.innerHTML = `
@@ -4943,7 +4948,7 @@
             partyDiv.className = 'agent-party-item';
             partyDiv.style.cssText = 'display: flex; gap: 8px; margin-bottom: 8px; align-items: center;';
             partyDiv.innerHTML = `
-                <input type="text" class="form-input agent-party-name" placeholder="姓名" style="flex: 1;" value="${name}">
+                <input type="text" class="form-input agent-party-name" placeholder="被代理方" style="flex: 1;" value="${name}">
                 <input type="tel" class="form-input agent-party-phone" placeholder="电话" style="flex: 1;" value="${phone}">
                 <button type="button" onclick="removeAgentParty(this)" style="padding: 8px 12px; background: #ef4444; color: white; border: none; border-radius: var(--radius); cursor: pointer;">删除</button>
             `;
@@ -4954,18 +4959,36 @@
         function removeAgentParty(btn) {
             const list = document.getElementById('agentPartiesList');
             const items = list.querySelectorAll('.agent-party-item');
+            
+            // 获取要删除的房源方信息
+            const partyItem = btn.parentElement;
+            const name = partyItem.querySelector('.agent-party-name')?.value || '';
+            const phone = partyItem.querySelector('.agent-party-phone')?.value || '';
+            
+            // 检查该房源方是否被任何房源使用
+            const isPartyInUse = agentProperties.some(property => {
+                const parties = property.agentParties || [];
+                return parties.some(party => party.name === name && party.phone === phone);
+            });
+            
+            if (isPartyInUse) {
+                showToast('该房源方正在被使用，无法删除');
+                return;
+            }
+            
+            // 密码验证
+            const password = prompt('请输入密码以确认删除：');
+            if (password !== '123456') {
+                showToast('密码错误，无法删除');
+                return;
+            }
+            
             if (items.length > 1) {
                 btn.parentElement.remove();
             } else {
-                // 当只剩下一个房源方时，需要密码验证
-                const password = prompt('请输入密码以确认删除最后一个房源方：');
-                if (password === '123456') {
-                    btn.parentElement.remove();
-                    // 添加一个空的房源方输入框
-                    addAgentParty();
-                } else {
-                    showToast('密码错误，无法删除最后一个房源方');
-                }
+                btn.parentElement.remove();
+                // 添加一个空的房源方输入框
+                addAgentParty();
             }
         }
 
@@ -6109,7 +6132,9 @@
                 return '请先选择要转发的房源';
             }
 
-            const selectedProps = properties.filter(p => selectedProperties.includes(p.id));
+            // 合并所有房源（普通房源和代理房源）
+            const allProperties = [...properties, ...agentProperties];
+            const selectedProps = allProperties.filter(p => selectedProperties.includes(p.id));
             let shareText = '【房源推荐】\n\n';
 
             selectedProps.forEach((property, index) => {
@@ -6121,7 +6146,18 @@
                 shareText += `装修：${property.decoration || '未知'}\n`;
                 shareText += `楼层：${property.floor || '未知'}楼\n`;
                 shareText += `地区：${property.region || '未知'}\n`;
-                shareText += `联系人：${property.landlordName || '未知'} ${property.landlordPhone || ''}\n\n`;
+                if (property.isAgent) {
+                    // 代理房源显示被代理方信息
+                    if (property.agentParties && property.agentParties.length > 0) {
+                        const firstAgent = property.agentParties[0];
+                        shareText += `被代理方：${firstAgent.name || '未知'} ${firstAgent.phone || ''}\n\n`;
+                    } else {
+                        shareText += `被代理方：未知\n\n`;
+                    }
+                } else {
+                    // 普通房源显示房东信息
+                    shareText += `联系人：${property.landlordName || '未知'} ${property.landlordPhone || ''}\n\n`;
+                }
             });
 
             return shareText;
@@ -6180,8 +6216,11 @@
             const areaFilter = document.getElementById('shareFilterArea').value;
             const priceFilter = document.getElementById('shareFilterPrice').value;
 
+            // 合并所有房源（普通房源和代理房源）
+            const allProperties = [...properties, ...agentProperties];
+
             // 筛选房源
-            let filteredProps = properties.filter(property => {
+            let filteredProps = allProperties.filter(property => {
                 let match = true;
                 if (typeFilter !== 'all' && match) {
                     match = property.type === typeFilter;
@@ -6295,8 +6334,11 @@
             const typeFilter = document.getElementById('shareFilterType').value;
             const statusFilter = document.getElementById('shareFilterStatus').value;
 
+            // 合并所有房源（普通房源和代理房源）
+            const allProperties = [...properties, ...agentProperties];
+
             // 筛选房源
-            let filteredProps = properties.filter(property => {
+            let filteredProps = allProperties.filter(property => {
                 let match = true;
                 if (typeFilter !== 'all' && match) {
                     match = property.type === typeFilter;
@@ -6353,7 +6395,9 @@
 
         // 生成朋友圈文案
         function generateMomentsContent(style) {
-            const selectedProps = properties.filter(p => selectedProperties.includes(p.id));
+            // 合并所有房源（普通房源和代理房源）
+            const allProperties = [...properties, ...agentProperties];
+            const selectedProps = allProperties.filter(p => selectedProperties.includes(p.id));
             if (selectedProps.length === 0) {
                 showToast('请先选择要转发的房源');
                 return;
