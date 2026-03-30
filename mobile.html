@@ -4595,7 +4595,10 @@
                                     <div style="padding: 8px 0; ${index > 0 ? 'border-top: 1px solid var(--border);' : ''}">
                                         <div style="display: flex; justify-content: space-between; font-size: 14px;">
                                             <span style="font-weight: 600;">${record.type === 'call' ? '电话沟通' : '微信沟通'}</span>
-                                            <span style="color: var(--text-secondary);">${new Date(record.timestamp).toLocaleString()}</span>
+                                            <span style="color: var(--text-secondary);">${new Date(record.timestamp).toLocaleDateString()}</span>
+                                        </div>
+                                        <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
+                                            操作人员：${record.operator || '管理员'}
                                         </div>
                                         ${record.remark ? `
                                             <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
@@ -5877,7 +5880,10 @@
                                     <div style="padding: 8px 0; ${index > 0 ? 'border-top: 1px solid var(--border);' : ''}">
                                         <div style="display: flex; justify-content: space-between; font-size: 14px;">
                                             <span style="font-weight: 600;"><a href="tel:${record.phone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">📞</a></span>
-                                            <span style="color: var(--text-secondary);">${new Date(record.time).toLocaleString()}</span>
+                                            <span style="color: var(--text-secondary);">${new Date(record.time).toLocaleDateString()}</span>
+                                        </div>
+                                        <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
+                                            操作人员：${record.operator || '管理员'}
                                         </div>
                                         ${record.remark ? `
                                             <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
@@ -7271,8 +7277,12 @@
                             ` : ''}
                         </div>
                         <div class="form-group">
-                            <label class="form-label">沟通时间</label>
-                            <input type="datetime-local" id="callTime" value="${new Date().toISOString().slice(0, 16)}" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 16px;">
+                            <label class="form-label">沟通日期</label>
+                            <input type="date" id="callTime" value="${new Date().toISOString().slice(0, 10)}" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 16px;">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">操作人员</label>
+                            <input type="text" id="callOperator" value="管理员" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 16px;">
                         </div>
                         <div class="form-group">
                             <label class="form-label">沟通备注</label>
@@ -7302,9 +7312,10 @@
         function saveCallRecord(propertyId, phone) {
             const time = document.getElementById('callTime').value;
             const remark = document.getElementById('callRemark').value;
+            const operator = document.getElementById('callOperator').value || '管理员';
 
             if (!time) {
-                showToast('请选择沟通时间');
+                showToast('请选择沟通日期');
                 return;
             }
 
@@ -7325,6 +7336,7 @@
                 phone,
                 time,
                 remark,
+                operator,
                 created_at: new Date().toISOString()
             });
 
@@ -7368,8 +7380,12 @@
                             </div>
                         ` : ''}
                         <div class="form-group">
-                            <label class="form-label">沟通时间</label>
-                            <input type="datetime-local" id="communicationTime" value="${new Date().toISOString().slice(0, 16)}" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 16px;">
+                            <label class="form-label">沟通日期</label>
+                            <input type="date" id="communicationTime" value="${new Date().toISOString().slice(0, 10)}" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 16px;">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">操作人员</label>
+                            <input type="text" id="communicationOperator" value="管理员" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 16px;">
                         </div>
                         <div class="form-group">
                             <label class="form-label">沟通备注</label>
@@ -7400,9 +7416,10 @@
             const type = document.getElementById('communicationType').value;
             const time = document.getElementById('communicationTime').value;
             const remark = document.getElementById('communicationRemark').value;
+            const operator = document.getElementById('communicationOperator').value || '管理员';
 
             if (!time) {
-                showToast('请选择沟通时间');
+                showToast('请选择沟通日期');
                 return;
             }
 
@@ -7423,6 +7440,7 @@
                 type,
                 timestamp: time,
                 remark,
+                operator,
                 created_at: new Date().toISOString()
             });
 
