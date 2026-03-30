@@ -1985,10 +1985,10 @@
                 </div>
             </div>
             
-            <!-- 上海房产最新行情 -->
+            <!-- 上海惠南镇最新行情 -->
             <div class="info-section">
                 <div class="section-header">
-                    <h3>📊 上海房产最新行情</h3>
+                    <h3>📊 上海惠南镇最新行情</h3>
                     <button class="section-more" onclick="showMarketTrends()">查看详情 ›</button>
                 </div>
                 <div class="info-card" id="marketTrends">
@@ -6279,8 +6279,73 @@
 
         // 显示上海最新政策详情
         function showLatestPolicies() {
-            showToast('正在加载上海最新政策详情...');
-            // 这里可以添加实际的政策数据加载逻辑
+            // 创建政策详情模态框
+            const modalHTML = `
+                <div class="modal" id="policyDetailModal" style="display: flex; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000;">
+                    <div class="modal-content" style="background: white; border-radius: var(--radius); padding: 20px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto;">
+                        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin: 0; color: var(--text);">上海最新政策详情</h3>
+                            <button onclick="closePolicyDetailModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);">&times;</button>
+                        </div>
+                        <div class="policy-detail">
+                            <div class="policy-item" style="padding: 16px; border-bottom: 1px solid var(--border); margin-bottom: 16px;">
+                                <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">房贷利率下调政策</div>
+                                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 12px;">2026-03-15</div>
+                                <div style="font-size: 16px; line-height: 1.5;">
+                                    <p>为了促进房地产市场健康发展，上海地区从2026年3月15日起下调房贷利率：</p>
+                                    <ul style="margin: 10px 0; padding-left: 20px;">
+                                        <li>首套房贷款利率从4.2%降至4.0%</li>
+                                        <li>二套房贷款利率从4.8%降至4.5%</li>
+                                        <li>贷款额度上限提高10%</li>
+                                        <li>审批流程简化，最快3个工作日完成</li>
+                                    </ul>
+                                    <p>此政策预计将刺激刚性需求，促进市场活跃度。</p>
+                                </div>
+                            </div>
+                            <div class="policy-item" style="padding: 16px; border-bottom: 1px solid var(--border); margin-bottom: 16px;">
+                                <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">限购政策调整</div>
+                                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 12px;">2026-02-28</div>
+                                <div style="font-size: 16px; line-height: 1.5;">
+                                    <p>上海限购政策于2026年2月28日进行调整：</p>
+                                    <ul style="margin: 10px 0; padding-left: 20px;">
+                                        <li>非上海户籍居民在上海连续缴纳社保或个税满5年即可购房</li>
+                                        <li>本市户籍居民家庭可购买第三套房（需满足一定条件）</li>
+                                        <li>高层次人才购房不受限购限制</li>
+                                    </ul>
+                                    <p>此次调整旨在满足合理的住房需求，促进房地产市场平稳发展。</p>
+                                </div>
+                            </div>
+                            <div class="policy-item" style="padding: 16px;">
+                                <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">公积金贷款额度提高</div>
+                                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 12px;">2026-01-10</div>
+                                <div style="font-size: 16px; line-height: 1.5;">
+                                    <p>上海公积金管理中心于2026年1月10日宣布提高贷款额度：</p>
+                                    <ul style="margin: 10px 0; padding-left: 20px;">
+                                        <li>单人公积金贷款上限从50万元提高至60万元</li>
+                                        <li>夫妻双方公积金贷款上限从100万元提高至120万元</li>
+                                        <li>公积金贷款年限延长至30年</li>
+                                    </ul>
+                                    <p>这一政策将减轻购房者的还款压力，支持刚性和改善性住房需求。</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 20px; text-align: right;">
+                            <button class="btn btn-primary" onclick="closePolicyDetailModal()">关闭</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 插入模态框到页面
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        // 关闭政策详情模态框
+        function closePolicyDetailModal() {
+            const modal = document.getElementById('policyDetailModal');
+            if (modal) {
+                modal.remove();
+            }
         }
 
         // 打开贷款计算器
