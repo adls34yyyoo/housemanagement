@@ -4440,11 +4440,8 @@
                     <div class="customer-info">
                         <div class="customer-name">${c.name || '未知客户'}</div>
                         <div style="display: flex; gap: 16px; align-items: center; margin-top: 4px;">
-                            ${c.phone ? `<a href="tel:${c.phone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                            ${c.phone ? `<div onclick="showCustomerDetail('${c.id}')" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
                                 📞 <span style="font-size: 14px;">电话</span>
-                            </a>` : ''}
-                            ${c.wechat ? `<div onclick="event.stopPropagation(); copyWeChat('${c.wechat}')" style="color: #07C160; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
-                                🌐 <span style="font-size: 14px;">微信</span>
                             </div>` : ''}
                         </div>
                         ${c.budget ? `<div class="customer-budget">预算：${c.budget}</div>` : ''}
@@ -4560,19 +4557,13 @@
                     <div style="margin-bottom: 16px;">
                         <h3 style="margin: 0 0 8px 0; color: var(--text); font-size: 16px;">基本信息</h3>
                         <div style="background: var(--background); border-radius: var(--radius); padding: 12px;">
-                            <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 12px;">
-                                ${customer.phone ? `<div style="display: flex; align-items: center; gap: 6px;">
-                                    <strong>联系电话：</strong>
-                                    <a href="tel:${customer.phone}" style="color: var(--primary); text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
-                                        📞 <span>电话</span>
-                                    </a>
-                                </div>` : '<div><strong>联系电话：</strong>未填写</div>'}
-                                ${customer.wechat ? `<div style="display: flex; align-items: center; gap: 6px;">
-                                    <strong>微信号：</strong>
-                                    <div onclick="copyWeChat('${customer.wechat}')" style="color: #07C160; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
-                                        🌐 <span>微信</span>
-                                    </div>
-                                </div>` : '<div><strong>微信号：</strong>未填写</div>'}
+                            <div style="display: flex; gap: 20px; justify-content: center; margin-bottom: 16px;">
+                                ${customer.phone ? `<a href="tel:${customer.phone}" style="color: var(--primary); text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 600;">
+                                    📞 <span>电话</span>
+                                </a>` : ''}
+                                ${customer.wechat ? `<div onclick="copyWeChat('${customer.wechat}')" style="color: #07C160; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 600; cursor: pointer;">
+                                    🌐 <span>微信</span>
+                                </div>` : ''}
                             </div>
                             <div style="margin-bottom: 8px;"><strong>预算：</strong>${customer.budget || '未填写'}</div>
                             <div><strong>需求：</strong>${customer.demand || '未填写'}</div>
