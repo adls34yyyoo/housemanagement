@@ -4685,7 +4685,8 @@
             }
             
             clearPropertyForm();
-            document.getElementById('propertyModal').style.display = 'block';
+            document.getElementById('propertyModal').style.display = 'flex';
+            document.getElementById('propertyModal').classList.add('active');
             initSelectOptions();
         }
 
@@ -4747,6 +4748,7 @@
         // 关闭房源模态框
         function closePropertyModal() {
             document.getElementById('propertyModal').classList.remove('active');
+            document.getElementById('propertyModal').style.display = 'none';
             stopVoiceRecognition();
         }
 
@@ -5068,6 +5070,7 @@
             document.getElementById('propCertificate').value = property.certificate || '';
             document.getElementById('propStatus').value = property.status || 'pending';
 
+            document.getElementById('propertyModal').style.display = 'flex';
             document.getElementById('propertyModal').classList.add('active');
         }
 
