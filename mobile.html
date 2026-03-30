@@ -6315,15 +6315,13 @@
                 // 精彩风格
                 content = '🏠 精选好房推荐 🏠\n\n';
                 Object.values(groupedProps).forEach((props, index) => {
-                    const firstProp = props[0];
-                    const typeLabel = firstProp.type === 'rent' ? '出租' : '出售';
-                    content += `✨ ${typeLabel} ${firstProp.community || '未知小区'}\n`;
                     props.forEach((property, propIndex) => {
-                        content += `🌟 户型：${property.layout || '未知'} | 面积：${property.area || '未知'}平 | 价格：${property.price || '面议'}${property.type === 'sale' ? '万元' : '元/月'}\n`;
+                        const typeLabel = property.type === 'rent' ? '出租' : '出售';
+                        content += `✨ ${typeLabel} ${property.community || '未知小区'}${property.floor ? property.floor + '楼' : ''}\n`;
+                        content += `🌟 面积：${property.area || '未知'}平 | 户型：${property.layout || '未知'} | 装修：${property.decoration || '普通装修'} | 价格：${property.price || '面议'}${property.type === 'sale' ? '万元' : '元/月'}\n\n`;
                     });
-                    content += '\n';
                 });
-                content += '🎯 机会难得，先到先得！\n📞 欢迎来电咨询，随时看房！';
+                content += '🎯 机会难得，先到先得！\n📞 欢迎来电咨询，随时看房！18019166290';
             }
 
             document.getElementById('shareContent').value = content;
