@@ -2319,6 +2319,16 @@
                         <span class="menu-text">同步数据</span>
                         <span class="menu-arrow">›</span>
                     </div>
+                    <div class="menu-item" onclick="exportAllData()">
+                        <span class="menu-icon">📤</span>
+                        <span class="menu-text">全盘数据导出</span>
+                        <span class="menu-arrow">›</span>
+                    </div>
+                    <div class="menu-item" onclick="exportPropertyData()">
+                        <span class="menu-icon">🏠</span>
+                        <span class="menu-text">房源数据导出</span>
+                        <span class="menu-arrow">›</span>
+                    </div>
                     <div class="menu-item" onclick="openTrainModal()">
                         <span class="menu-icon">🤖</span>
                         <span class="menu-text">AI训练</span>
@@ -6411,6 +6421,223 @@
             }
         }
 
+
+
+        // 全盘数据导出
+        function exportAllData() {
+            // 创建导出格式选择模态框
+            const modalHTML = `
+                <div class="modal" id="exportModal" style="display: flex; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000;">
+                    <div class="modal-content" style="background: white; border-radius: var(--radius); padding: 20px; width: 90%; max-width: 400px;">
+                        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin: 0; color: var(--text);">全盘数据导出</h3>
+                            <button onclick="document.getElementById('exportModal').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);">&times;</button>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <p style="margin-bottom: 12px; color: var(--text-secondary);">请选择导出格式：</p>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <button onclick="exportAllDataAs('txt')" style="padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); text-align: left; cursor: pointer; transition: var(--transition);">
+                                    <span style="margin-right: 10px;">📄</span> TXT 格式
+                                </button>
+                                <button onclick="exportAllDataAs('json')" style="padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); text-align: left; cursor: pointer; transition: var(--transition);">
+                                    <span style="margin-right: 10px;">📋</span> JSON 格式
+                                </button>
+                                <button onclick="exportAllDataAs('csv')" style="padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); text-align: left; cursor: pointer; transition: var(--transition);">
+                                    <span style="margin-right: 10px;">📊</span> CSV 格式
+                                </button>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <button class="btn btn-default" onclick="document.getElementById('exportModal').remove()">取消</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 插入模态框到页面
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        // 按格式导出全盘数据
+        function exportAllDataAs(format) {
+            const allData = {
+                properties: properties,
+                agentProperties: agentProperties,
+                customers: customers,
+                optionsData: optionsData,
+                exportDate: new Date().toISOString()
+            };
+
+            let content = '';
+            let filename = `全盘数据导出_${new Date().toISOString().slice(0, 10)}`;
+
+            if (format === 'txt') {
+                filename += '.txt';
+                content = `全盘数据导出报告\n`;
+                content += `导出时间: ${new Date().toLocaleString()}\n\n`;
+                
+                content += `=== 房源数据 (${properties.length} 条) ===\n`;
+                properties.forEach((p, index) => {
+                    content += `${index + 1}. ${p.community || '未知小区'} - ${p.type === 'sale' ? '出售' : '出租'}\n`;
+                    content += `   户型: ${p.layout || '未知'}, 面积: ${p.area || '未知'}平, 价格: ${p.price || '面议'}${p.type === 'sale' ? '万元' : '元/月'}\n\n`;
+                });
+
+                content += `=== 可代理房源 (${agentProperties.length} 条) ===\n`;
+                agentProperties.forEach((p, index) => {
+                    content += `${index + 1}. ${p.community || '未知小区'} - ${p.type === 'sale' ? '出售' : '出租'}\n`;
+                    content += `   户型: ${p.layout || '未知'}, 面积: ${p.area || '未知'}平, 价格: ${p.price || '面议'}${p.type === 'sale' ? '万元' : '元/月'}\n\n`;
+                });
+
+                content += `=== 客户数据 (${customers.length} 条) ===\n`;
+                customers.forEach((c, index) => {
+                    content += `${index + 1}. ${c.name || '未知姓名'}\n`;
+                    content += `   电话: ${c.phone || '未知'}, 微信: ${c.wechat || '未知'}\n\n`;
+                });
+
+            } else if (format === 'json') {
+                filename += '.json';
+                content = JSON.stringify(allData, null, 2);
+            } else if (format === 'csv') {
+                filename += '.csv';
+                // 简单的CSV导出
+                content = '类型,名称,电话,微信,小区,户型,面积,价格,类型\n';
+                
+                // 导出房源数据
+                properties.forEach(p => {
+                    content += `房源,,${p.landlordPhone || ''},${p.landlordWechat || ''},${p.community || ''},${p.layout || ''},${p.area || ''},${p.price || ''},${p.type === 'sale' ? '出售' : '出租'}\n`;
+                });
+                
+                // 导出客户数据
+                customers.forEach(c => {
+                    content += `客户,${c.name || ''},${c.phone || ''},${c.wechat || ''},,,,\n`;
+                });
+            }
+
+            // 创建并下载文件
+            const blob = new Blob([content], { type: getMimeType(format) });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            // 关闭模态框
+            document.getElementById('exportModal').remove();
+            showToast(`✅ 数据已导出为 ${format.toUpperCase()} 格式`);
+        }
+
+        // 房源数据导出
+        function exportPropertyData() {
+            // 创建导出格式选择模态框
+            const modalHTML = `
+                <div class="modal" id="propertyExportModal" style="display: flex; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000;">
+                    <div class="modal-content" style="background: white; border-radius: var(--radius); padding: 20px; width: 90%; max-width: 400px;">
+                        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin: 0; color: var(--text);">房源数据导出</h3>
+                            <button onclick="document.getElementById('propertyExportModal').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);">&times;</button>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <p style="margin-bottom: 12px; color: var(--text-secondary);">请选择导出格式：</p>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <button onclick="exportPropertyDataAs('txt')" style="padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); text-align: left; cursor: pointer; transition: var(--transition);">
+                                    <span style="margin-right: 10px;">📄</span> TXT 格式
+                                </button>
+                                <button onclick="exportPropertyDataAs('json')" style="padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); text-align: left; cursor: pointer; transition: var(--transition);">
+                                    <span style="margin-right: 10px;">📋</span> JSON 格式
+                                </button>
+                                <button onclick="exportPropertyDataAs('csv')" style="padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); text-align: left; cursor: pointer; transition: var(--transition);">
+                                    <span style="margin-right: 10px;">📊</span> CSV 格式
+                                </button>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <button class="btn btn-default" onclick="document.getElementById('propertyExportModal').remove()">取消</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 插入模态框到页面
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        // 按格式导出房源数据
+        function exportPropertyDataAs(format) {
+            const allProperties = [...properties, ...agentProperties];
+            
+            let content = '';
+            let filename = `房源数据导出_${new Date().toISOString().slice(0, 10)}`;
+
+            if (format === 'txt') {
+                filename += '.txt';
+                content = `房源数据导出报告\n`;
+                content += `导出时间: ${new Date().toLocaleString()}\n\n`;
+                
+                // 按小区分组
+                const groupedByCommunity = {};
+                allProperties.forEach(p => {
+                    const key = p.community || '未知小区';
+                    if (!groupedByCommunity[key]) {
+                        groupedByCommunity[key] = [];
+                    }
+                    groupedByCommunity[key].push(p);
+                });
+
+                Object.entries(groupedByCommunity).forEach(([community, props]) => {
+                    content += `=== ${community} (${props.length} 条) ===\n`;
+                    props.forEach((p, index) => {
+                        const typeLabel = p.type === 'sale' ? '出售' : '出租';
+                        const isAgent = p.isAgent ? ' (可代理)' : '';
+                        content += `${index + 1}. ${typeLabel}${isAgent}\n`;
+                        content += `   户型: ${p.layout || '未知'}, 面积: ${p.area || '未知'}平, 楼层: ${p.floor || '未知'}\n`;
+                        content += `   装修: ${p.decoration || '未知'}, 价格: ${p.price || '面议'}${p.type === 'sale' ? '万元' : '元/月'}\n`;
+                        if (p.landlordPhone) content += `   房东电话: ${p.landlordPhone}\n`;
+                        if (p.landlordWechat) content += `   房东微信: ${p.landlordWechat}\n`;
+                        content += '\n';
+                    });
+                });
+
+            } else if (format === 'json') {
+                filename += '.json';
+                content = JSON.stringify(allProperties, null, 2);
+            } else if (format === 'csv') {
+                filename += '.csv';
+                content = '类型,小区,户型,面积,楼层,装修,价格,价格单位,房东电话,房东微信,是否可代理\n';
+                
+                allProperties.forEach(p => {
+                    content += `${p.type === 'sale' ? '出售' : '出租'},${p.community || ''},${p.layout || ''},${p.area || ''},${p.floor || ''},${p.decoration || ''},${p.price || ''},${p.type === 'sale' ? '万元' : '元/月'},${p.landlordPhone || ''},${p.landlordWechat || ''},${p.isAgent ? '是' : '否'}\n`;
+                });
+            }
+
+            // 创建并下载文件
+            const blob = new Blob([content], { type: getMimeType(format) });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            // 关闭模态框
+            document.getElementById('propertyExportModal').remove();
+            showToast(`✅ 房源数据已导出为 ${format.toUpperCase()} 格式`);
+        }
+
+        // 获取文件MIME类型
+        function getMimeType(format) {
+            switch (format) {
+                case 'txt': return 'text/plain;charset=utf-8';
+                case 'json': return 'application/json;charset=utf-8';
+                case 'csv': return 'text/csv;charset=utf-8';
+                default: return 'application/octet-stream';
+            }
+        }
+
         // 显示单个政策详情
         function showPolicyDetail(policyId) {
             // 政策详情数据
@@ -6484,6 +6711,8 @@
             // 插入模态框到页面
             document.body.insertAdjacentHTML('beforeend', modalHTML);
         }
+
+
 
         // 打开贷款计算器
         function openLoanCalculator() {
