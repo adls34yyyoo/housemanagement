@@ -963,6 +963,121 @@
             box-shadow: var(--shadow);
         }
 
+        /* 信息区域样式 */
+        .info-section {
+            padding: 0 16px 16px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .section-header h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .section-more {
+            font-size: 14px;
+            color: var(--primary);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
+        }
+
+        .section-more:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .info-card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .info-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .info-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .policy-item {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .policy-item:hover {
+            background: rgba(0, 0, 0, 0.02);
+            padding-left: 8px;
+        }
+
+        .policy-item:last-child {
+            border-bottom: none;
+        }
+
+        .policy-date {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-right: 12px;
+        }
+
+        .policy-title {
+            font-size: 14px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .calculator-preview {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .calculator-icon {
+            font-size: 32px;
+            margin-right: 12px;
+        }
+
+        .calculator-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
         .search-input {
             width: 100%;
             padding: 14px 18px;
@@ -1870,22 +1985,62 @@
                 </div>
             </div>
             
-            <!-- 最近出售房源 -->
-            <div class="recent-properties-section">
+            <!-- 上海房产最新行情 -->
+            <div class="info-section">
                 <div class="section-header">
-                    <h3>🏠 最近出售</h3>
-                    <button class="section-more" onclick="switchPage('properties')">查看更多 ›</button>
+                    <h3>📊 上海房产最新行情</h3>
+                    <button class="section-more" onclick="showMarketTrends()">查看详情 ›</button>
                 </div>
-                <div class="recent-properties" id="recentSaleProperties"></div>
+                <div class="info-card" id="marketTrends">
+                    <div class="info-item">
+                        <span class="info-label">平均房价</span>
+                        <span class="info-value">68,500 元/㎡</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">环比上月</span>
+                        <span class="info-value" style="color: #10b981;">+0.8%</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">同比去年</span>
+                        <span class="info-value" style="color: #ef4444;">-2.3%</span>
+                    </div>
+                </div>
             </div>
 
-            <!-- 最近出租房源 -->
-            <div class="recent-properties-section">
+            <!-- 上海最新政策 -->
+            <div class="info-section">
                 <div class="section-header">
-                    <h3>🔑 最近出租</h3>
-                    <button class="section-more" onclick="switchPage('properties')">查看更多 ›</button>
+                    <h3>📋 上海最新政策</h3>
+                    <button class="section-more" onclick="showLatestPolicies()">查看详情 ›</button>
                 </div>
-                <div class="recent-properties" id="recentRentProperties"></div>
+                <div class="info-card" id="latestPolicies">
+                    <div class="policy-item">
+                        <span class="policy-date">2026-03-15</span>
+                        <span class="policy-title">房贷利率下调政策</span>
+                    </div>
+                    <div class="policy-item">
+                        <span class="policy-date">2026-02-28</span>
+                        <span class="policy-title">限购政策调整</span>
+                    </div>
+                    <div class="policy-item">
+                        <span class="policy-date">2026-01-10</span>
+                        <span class="policy-title">公积金贷款额度提高</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 贷款计算器 -->
+            <div class="info-section">
+                <div class="section-header">
+                    <h3>💰 贷款计算器</h3>
+                    <button class="section-more" onclick="openLoanCalculator()">使用计算器 ›</button>
+                </div>
+                <div class="info-card" id="loanCalculatorPreview">
+                    <div class="calculator-preview">
+                        <span class="calculator-icon">🧮</span>
+                        <span class="calculator-text">计算房贷月供、首付比例等</span>
+                    </div>
+                </div>
             </div>
 
         </div>
@@ -2737,7 +2892,6 @@
             showToast('数据已同步');
             loadData().then(() => {
                 updateStats();
-                renderRecentProperties();
                 renderPropertyList();
                 renderCustomerList();
             });
@@ -2857,7 +3011,6 @@
                     // 刷新UI
                     updateStats();
                     renderPropertyList();
-                    renderRecentProperties();
                     renderCustomerList();
                     loadOptions();
                     initSelectOptions();
@@ -3464,7 +3617,6 @@
             // 刷新数据
             if (page === 'home') {
                 updateStats();
-                renderRecentProperties();
             } else if (page === 'properties') {
                 // 切换到房源页面时，清空过滤条件，显示全部房源
                 filteredProperties = [];
@@ -3495,90 +3647,7 @@
         }
 
         // 渲染最新房源
-        function renderRecentProperties() {
-            const rentContainer = document.getElementById('recentRentProperties');
-            const saleContainer = document.getElementById('recentSaleProperties');
 
-            // 按创建时间排序，取最新的3条
-            const rentProps = properties
-                .filter(p => p.type === 'rent')
-                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-                .slice(0, 3);
-            const saleProps = properties
-                .filter(p => p.type === 'sale')
-                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-                .slice(0, 3);
-
-            if (rentContainer) {
-                if (rentProps.length === 0) {
-                    rentContainer.innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-icon">🔑</div>
-                            <div class="empty-text">暂无出租房源</div>
-                        </div>
-                    `;
-                } else {
-                    rentContainer.innerHTML = rentProps.map(p => createHomePropertyCard(p)).join('');
-                }
-            }
-
-            if (saleContainer) {
-                if (saleProps.length === 0) {
-                    saleContainer.innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-icon">🏠</div>
-                            <div class="empty-text">暂无出售房源</div>
-                        </div>
-                    `;
-                } else {
-                    saleContainer.innerHTML = saleProps.map(p => createHomePropertyCard(p)).join('');
-                }
-            }
-        }
-
-        // 创建首页房源卡片HTML
-        function createHomePropertyCard(p) {
-            const statusClass = {
-                'pending': 'status-pending',
-                'selling': 'status-selling',
-                'off_shelf': 'status-off-shelf',
-                'on_shelf': 'status-on-shelf'
-            }[p.status] || 'status-pending';
-
-            // 根据房源类型显示不同的状态文本
-            let statusText;
-            if (p.type === 'sale') {
-                statusText = {
-                    'pending': '待发布',
-                    'off_shelf': '已下架'
-                }[p.status] || '待发布';
-            } else {
-                statusText = {
-                    'pending': '待发布',
-                    'off_shelf': '已下架'
-                }[p.status] || '待发布';
-            }
-
-            const priceUnit = p.type === 'sale' ? '万元' : '元/月';
-
-            return `
-                <div class="property-card" style="padding: 16px; cursor: pointer; transition: var(--transition);" onclick="openPropertyDetailModal('${p.id}')">
-                    <div class="property-info">
-                        <div class="property-title">
-                            <span>${p.community || '未知小区'}</span>
-                            <span class="property-status ${statusClass}">${statusText}</span>
-                        </div>
-                        <div class="property-address" style="margin-bottom: 8px;">
-                            ${p.layout || ''} ${p.floor ? p.floor + '楼' : ''} ${p.area ? p.area + '平' : ''}
-                        </div>
-                        <div class="property-meta">
-                            <span class="property-price">${p.price || '面议'}${priceUnit}</span>
-                            <span class="property-specs">${p.decoration || ''}</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
 
         // 创建房源卡片HTML
         function createPropertyCard(property) {
@@ -5018,7 +5087,6 @@
                 closePropertyModal();
                 updateStats();
                 renderPropertyList();
-                renderRecentProperties();
                 
                 // 保存到本地存储
                 saveToLocalStorage();
@@ -5181,7 +5249,6 @@
                 
                 updateStats();
                 renderPropertyList();
-                renderRecentProperties();
                 showToast('✅ 房源删除成功');
                 
                 // 保存到本地存储
@@ -5864,6 +5931,116 @@
             }, 3000);
         }
 
+        // 显示上海房产最新行情详情
+        function showMarketTrends() {
+            showToast('正在加载上海房产最新行情详情...');
+            // 这里可以添加实际的行情数据加载逻辑
+        }
+
+        // 显示上海最新政策详情
+        function showLatestPolicies() {
+            showToast('正在加载上海最新政策详情...');
+            // 这里可以添加实际的政策数据加载逻辑
+        }
+
+        // 打开贷款计算器
+        function openLoanCalculator() {
+            // 创建贷款计算器模态框
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <span class="modal-title">贷款计算器</span>
+                        <button class="modal-close" onclick="this.parentElement.parentElement.parentElement.remove()">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label class="form-label">贷款金额（万元）</label>
+                            <input type="number" class="form-input" id="loanAmount" placeholder="请输入贷款金额" value="100">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">贷款年限（年）</label>
+                            <input type="number" class="form-input" id="loanYears" placeholder="请输入贷款年限" value="30">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">年利率（%）</label>
+                            <input type="number" class="form-input" id="loanRate" placeholder="请输入年利率" value="4.9" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">还款方式</label>
+                            <select class="form-select" id="repaymentType">
+                                <option value="equal-principal-interest">等额本息</option>
+                                <option value="equal-principal">等额本金</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">计算结果</label>
+                            <div class="info-card" id="loanResult">
+                                <div class="info-item">
+                                    <span class="info-label">月供</span>
+                                    <span class="info-value" id="monthlyPayment">计算中...</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">总利息</span>
+                                    <span class="info-value" id="totalInterest">计算中...</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">还款总额</span>
+                                    <span class="info-value" id="totalPayment">计算中...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn-default" onclick="this.parentElement.parentElement.parentElement.remove()">取消</button>
+                        <button class="btn btn-primary" onclick="calculateLoan()">计算</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            // 初始计算
+            calculateLoan();
+        }
+
+        // 计算贷款
+        function calculateLoan() {
+            const amount = parseFloat(document.getElementById('loanAmount').value) * 10000; // 转换为元
+            const years = parseInt(document.getElementById('loanYears').value);
+            const rate = parseFloat(document.getElementById('loanRate').value) / 100 / 12; // 月利率
+            const type = document.getElementById('repaymentType').value;
+
+            if (isNaN(amount) || isNaN(years) || isNaN(rate)) {
+                showToast('请输入有效的贷款信息');
+                return;
+            }
+
+            const months = years * 12;
+            let monthlyPayment, totalInterest, totalPayment;
+
+            if (type === 'equal-principal-interest') {
+                // 等额本息
+                monthlyPayment = amount * rate * Math.pow(1 + rate, months) / (Math.pow(1 + rate, months) - 1);
+                totalPayment = monthlyPayment * months;
+                totalInterest = totalPayment - amount;
+            } else {
+                // 等额本金
+                const principalPayment = amount / months;
+                let totalInterest = 0;
+                for (let i = 0; i < months; i++) {
+                    const interestPayment = (amount - principalPayment * i) * rate;
+                    totalInterest += interestPayment;
+                }
+                totalPayment = amount + totalInterest;
+                // 首月月供
+                monthlyPayment = principalPayment + amount * rate;
+            }
+
+            document.getElementById('monthlyPayment').textContent = '¥' + monthlyPayment.toFixed(2);
+            document.getElementById('totalInterest').textContent = '¥' + totalInterest.toFixed(2);
+            document.getElementById('totalPayment').textContent = '¥' + totalPayment.toFixed(2);
+        }
+
         // 加载数据
         async function loadData() {
             console.log('开始加载数据...');
@@ -5947,7 +6124,6 @@
                         saveToLocalStorage();
                         updateStats();
                         renderPropertyList();
-                        renderRecentProperties();
                         renderCustomerList();
                         showToast('✅ 数据加载成功');
                     }
@@ -6484,7 +6660,6 @@
                 
                 // 6. 刷新列表
                 renderPropertyList();
-                renderRecentProperties();
                 renderCustomerList();
                 
                 console.log('数据同步完成');
@@ -6552,7 +6727,6 @@
                     // 加载最新数据
                     loadData().then(() => {
                         updateStats();
-                        renderRecentProperties();
                         renderPropertyList();
                     });
                 }
@@ -6670,7 +6844,6 @@
             
             // 先渲染本地数据，确保用户立即能看到内容
             updateStats();
-            renderRecentProperties();
             renderPropertyList();
             renderCustomerList();
             initFilterRegions();
