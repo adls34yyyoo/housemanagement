@@ -2371,6 +2371,9 @@
                             <button onclick="generateMomentsContent('wonderful')" style="padding: 8px 16px; background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500; white-space: nowrap;">
                                 精彩文案
                             </button>
+                            <button onclick="generateMomentsContent('professional')" style="padding: 8px 16px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500; white-space: nowrap;">
+                                专业文案
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -6553,7 +6556,7 @@
                 
                 // 末尾可自行设置固定添加
                 content += '合作热线：18019166290';
-            } else {
+            } else if (style === 'wonderful') {
                 // 精彩风格
                 content = '🏠 精选好房推荐 🏠\n\n';
                 
@@ -6584,6 +6587,42 @@
                 });
                 
                 content += '🎯 机会难得，先到先得！\n📞 欢迎来电咨询，随时看房！18019166290';
+            } else if (style === 'professional') {
+                // 专业风格
+                content = '【房产投资分析报告】\n\n';
+                
+                // 检查是否有出售房源
+                const hasSale = selectedProps.some(p => p.type === 'sale');
+                const hasRent = selectedProps.some(p => p.type === 'rent');
+                
+                // 只在第一行显示出售或出租
+                if (hasSale && hasRent) {
+                    content += '【出售/出租房源】\n\n';
+                } else if (hasSale) {
+                    content += '【出售房源】\n\n';
+                } else if (hasRent) {
+                    content += '【出租房源】\n\n';
+                }
+                
+                Object.entries(groupedProps).forEach(([community, group]) => {
+                    content += `【${community}】\n`;
+                    group.properties.forEach(property => {
+                        const priceText = property.price || '面议';
+                        const priceUnit = property.type === 'sale' ? '万元' : '元/月';
+                        const ownershipText = property.ownership ? ` | ${property.ownership}` : '';
+                        
+                        content += `• 楼层：${property.floor || '未知'} | 面积：${property.area || '未知'}㎡ | 户型：${property.layout || '未知'} | 装修：${property.decoration || '普通装修'} | 价格：${priceText}${priceUnit}${ownershipText}\n`;
+                    });
+                    content += '\n';
+                });
+                
+                content += '【投资价值分析】\n';
+                content += '• 地理位置优越，交通便利\n';
+                content += '• 周边配套完善，生活便捷\n';
+                content += '• 房屋品质优良，居住舒适\n\n';
+                content += '【联系方式】\n';
+                content += '咨询热线：18019166290\n';
+                content += '专业顾问：王经理 13761547030 / 韩经理 18019166290 / 苏经理 13917755549';
             }
 
             document.getElementById('shareContent').value = content;
