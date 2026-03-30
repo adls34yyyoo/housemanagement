@@ -2314,32 +2314,32 @@
                         <span class="menu-text">选项管理</span>
                         <span class="menu-arrow">›</span>
                     </div>
-                    <div class="menu-item" onclick="syncLocalData()">
+                    <div class="menu-item menu-item-large" onclick="syncLocalData()">
                         <span class="menu-icon">🔄</span>
                         <span class="menu-text">同步数据</span>
                         <span class="menu-arrow">›</span>
                     </div>
-                    <div class="menu-item" onclick="exportAllData()">
+                    <div class="menu-item menu-item-large" onclick="exportAllData()">
                         <span class="menu-icon">📤</span>
                         <span class="menu-text">全盘数据导出</span>
                         <span class="menu-arrow">›</span>
                     </div>
-                    <div class="menu-item" onclick="exportPropertyData()">
+                    <div class="menu-item menu-item-large" onclick="exportPropertyData()">
                         <span class="menu-icon">🏠</span>
                         <span class="menu-text">房源数据导出</span>
                         <span class="menu-arrow">›</span>
                     </div>
-                    <div class="menu-item" onclick="openTrainModal()">
+                    <div class="menu-item menu-item-large" onclick="openTrainModal()">
                         <span class="menu-icon">🤖</span>
                         <span class="menu-text">AI训练</span>
                         <span class="menu-arrow">›</span>
                     </div>
-                    <div class="menu-item" onclick="openThemeModal()">
+                    <div class="menu-item menu-item-large" onclick="openThemeModal()">
                         <span class="menu-icon">🎨</span>
                         <span class="menu-text">主题颜色</span>
                         <span class="menu-arrow">›</span>
                     </div>
-                    <div class="menu-item" onclick="handleLogout()">
+                    <div class="menu-item menu-item-large" onclick="handleLogout()">
                         <span class="menu-icon">🚪</span>
                         <span class="menu-text" style="color: #ef4444;">退出登录</span>
                         <span class="menu-arrow">›</span>
@@ -6637,6 +6637,31 @@
                 default: return 'application/octet-stream';
             }
         }
+
+        // 永久删除指定小区
+        function deleteCommunities() {
+            const communitiesToDelete = ['阳光小区', '幸福花园', '绿地家园'];
+            
+            // 从房源中删除这些小区的房源
+            properties = properties.filter(p => !communitiesToDelete.includes(p.community));
+            agentProperties = agentProperties.filter(p => !communitiesToDelete.includes(p.community));
+            
+            // 从选项数据中删除这些小区
+            optionsData.community = optionsData.community.filter(c => !communitiesToDelete.includes(c));
+            
+            // 保存到本地存储
+            saveToLocalStorage();
+            
+            // 刷新UI
+            renderPropertyList();
+            renderAgentPropertyList();
+            updateStats();
+            
+            showToast(`✅ 已永久删除 ${communitiesToDelete.join('、')} 小区及其所有房源`);
+        }
+
+        // 执行删除操作
+        deleteCommunities();
 
         // 显示单个政策详情
         function showPolicyDetail(policyId) {
