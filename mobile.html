@@ -2302,11 +2302,39 @@
             </div>
             
             <div class="content-section" style="padding: 20px;">
-                <div class="form-group">
-                    <label class="form-label">转发内容</label>
-                    <textarea id="shareContent" rows="8" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 20px; resize: vertical;">${getSelectedPropertiesShareText()}</textarea>
+                <!-- 筛选功能 -->
+                <div style="padding: 12px 16px; background: var(--surface); border-radius: var(--radius); margin-bottom: 12px;">
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                        <select id="shareFilterType" onchange="applyShareFilters()" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); flex: 1; min-width: 120px;">
+                            <option value="all">全部类型</option>
+                            <option value="sale">出售</option>
+                            <option value="rent">出租</option>
+                        </select>
+                        <select id="shareFilterStatus" onchange="applyShareFilters()" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); flex: 1; min-width: 120px;">
+                            <option value="all">全部状态</option>
+                            <option value="pending">待发布</option>
+                            <option value="off_shelf">已下架</option>
+                        </select>
+                        <button onclick="toggleShareSelectAll()" style="padding: 8px 16px; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500; white-space: nowrap;">
+                            全选
+                        </button>
+                    </div>
                 </div>
                 
+                <!-- 房源列表 -->
+                <div style="background: var(--surface); border-radius: var(--radius); padding: 16px; margin-bottom: 20px; max-height: 400px; overflow-y: auto;">
+                    <div id="sharePropertyList" style="">
+                        <!-- 房源列表将通过JavaScript动态填充 -->
+                    </div>
+                </div>
+                
+                <!-- 转发内容 -->
+                <div class="form-group">
+                    <label class="form-label">转发内容</label>
+                    <textarea id="shareContent" rows="6" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 20px; resize: vertical;">${getSelectedPropertiesShareText()}</textarea>
+                </div>
+                
+                <!-- 操作按钮 -->
                 <div class="form-actions" style="display: flex; gap: 12px;">
                     <button class="btn btn-default" onclick="shareToCopy()">复制文案</button>
                     <button class="btn btn-primary" onclick="confirmShare()">确认转发</button>
@@ -2343,18 +2371,6 @@
                 </div>
                 <div class="nav-label">房源</div>
             </div>
-            <div class="nav-item" onclick="switchPage('customers')">
-                <div class="nav-icon">
-                    <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-                </div>
-                <div class="nav-label">客户</div>
-            </div>
-            <div class="nav-item" onclick="switchPage('profile')">
-                <div class="nav-icon">
-                    <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                </div>
-                <div class="nav-label">我的</div>
-            </div>
             <div class="nav-item" onclick="switchPage('agentProperties')">
                 <div class="nav-icon">
                     <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
@@ -2366,6 +2382,18 @@
                     <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
                 </div>
                 <div class="nav-label">转发</div>
+            </div>
+            <div class="nav-item" onclick="switchPage('customers')">
+                <div class="nav-icon">
+                    <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                </div>
+                <div class="nav-label">客户</div>
+            </div>
+            <div class="nav-item" onclick="switchPage('profile')">
+                <div class="nav-icon">
+                    <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                </div>
+                <div class="nav-label">我的</div>
             </div>
         </div>
     </div>
@@ -6013,8 +6041,120 @@
         // 确认转发
         function confirmShare() {
             showToast('转发功能已触发，请根据提示操作');
-            closeShareModal();
         }
+
+        // 渲染转发页面的房源列表
+        function renderSharePropertyList() {
+            const container = document.getElementById('sharePropertyList');
+            if (!container) return;
+
+            // 获取筛选条件
+            const typeFilter = document.getElementById('shareFilterType').value;
+            const statusFilter = document.getElementById('shareFilterStatus').value;
+
+            // 筛选房源
+            let filteredProps = properties.filter(property => {
+                let match = true;
+                if (typeFilter !== 'all' && match) {
+                    match = property.type === typeFilter;
+                }
+                if (statusFilter !== 'all' && match) {
+                    match = property.status === statusFilter;
+                }
+                return match;
+            });
+
+            if (filteredProps.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: var(--text-tertiary); padding: 40px;">暂无符合条件的房源</div>';
+                return;
+            }
+
+            // 生成房源列表
+            let html = '';
+            filteredProps.forEach(property => {
+                const isSelected = selectedProperties.includes(property.id);
+                const priceUnit = property.type === 'sale' ? '万元' : '元/月';
+                
+                html += `
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border);">
+                        <div style="display: flex; align-items: center; flex: 1;">
+                            <input type="checkbox" style="width: 18px; height: 18px; margin-right: 12px; cursor: pointer;" ${isSelected ? 'checked' : ''} onchange="toggleSharePropertySelection('${property.id}')">
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-weight: 500; color: var(--text); margin-bottom: 4px;">${property.community || '未知小区'}</div>
+                                <div style="font-size: 14px; color: var(--text-secondary);">
+                                    ${property.layout || ''} ${property.area ? property.area + '平' : ''} | ${property.price || '面议'}${priceUnit}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // 切换转发页面的房源选择
+        function toggleSharePropertySelection(propertyId) {
+            const index = selectedProperties.indexOf(propertyId);
+            if (index > -1) {
+                selectedProperties.splice(index, 1);
+            } else {
+                selectedProperties.push(propertyId);
+            }
+            // 更新转发内容
+            document.getElementById('shareContent').value = getSelectedPropertiesShareText();
+        }
+
+        // 全选/取消全选转发页面的房源
+        function toggleShareSelectAll() {
+            const typeFilter = document.getElementById('shareFilterType').value;
+            const statusFilter = document.getElementById('shareFilterStatus').value;
+
+            // 筛选房源
+            let filteredProps = properties.filter(property => {
+                let match = true;
+                if (typeFilter !== 'all' && match) {
+                    match = property.type === typeFilter;
+                }
+                if (statusFilter !== 'all' && match) {
+                    match = property.status === statusFilter;
+                }
+                return match;
+            });
+
+            const allSelected = selectedProperties.length === filteredProps.length && filteredProps.length > 0;
+            
+            if (allSelected) {
+                // 取消全选
+                selectedProperties = selectedProperties.filter(id => !filteredProps.some(p => p.id === id));
+            } else {
+                // 全选
+                const filteredIds = filteredProps.map(p => p.id);
+                selectedProperties = [...new Set([...selectedProperties, ...filteredIds])];
+            }
+            
+            // 重新渲染列表
+            renderSharePropertyList();
+            // 更新转发内容
+            document.getElementById('shareContent').value = getSelectedPropertiesShareText();
+        }
+
+        // 应用转发页面的筛选条件
+        function applyShareFilters() {
+            renderSharePropertyList();
+        }
+
+        // 重写switchPage函数，确保切换到转发页面时渲染房源列表
+        const originalSwitchPage = switchPage;
+        switchPage = function(page) {
+            originalSwitchPage(page);
+            if (page === 'share') {
+                // 延迟渲染，确保页面已经切换
+                setTimeout(() => {
+                    renderSharePropertyList();
+                }, 100);
+            }
+        };
 
         // 显示上海房产最新行情详情
         function showMarketTrends() {
