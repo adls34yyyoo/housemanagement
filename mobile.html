@@ -7378,7 +7378,14 @@
             
             const deleteCount = selectedProperties.length;
             
-            if (confirm(`确定要删除选中的 ${deleteCount} 套房源吗？此操作不可恢复。`)) {
+            // 添加密码验证
+            const password = prompt(`确定要删除选中的 ${deleteCount} 套房源吗？此操作不可恢复。请输入密码：`);
+            if (password !== '123456') {
+                showToast('密码错误，无法删除房源');
+                return;
+            }
+            
+            if (confirm(`密码正确，确定要删除选中的 ${deleteCount} 套房源吗？`)) {
                 // 过滤掉要删除的房源
                 properties = properties.filter(p => !selectedProperties.includes(p.id));
                 
