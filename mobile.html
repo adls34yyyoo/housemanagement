@@ -6177,26 +6177,61 @@
                 return;
             }
 
+            // 按类型和代理状态分组
+            const groups = {
+                '自有出售': [],
+                '自有出租': [],
+                '代理出售': []
+            };
+            
+            filteredProps.forEach(property => {
+                if (property.isAgent) {
+                    if (property.type === 'sale') {
+                        groups['代理出售'].push(property);
+                    }
+                } else {
+                    if (property.type === 'sale') {
+                        groups['自有出售'].push(property);
+                    } else if (property.type === 'rent') {
+                        groups['自有出租'].push(property);
+                    }
+                }
+            });
+
             // 生成房源列表
             let html = '';
-            filteredProps.forEach(property => {
-                const isSelected = selectedProperties.includes(property.id);
-                const priceUnit = property.type === 'sale' ? '万元' : '元/月';
-                
-                html += `
-                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border);">
-                        <div style="display: flex; align-items: center; flex: 1;">
-                            <input type="checkbox" style="width: 18px; height: 18px; margin-right: 12px; cursor: pointer;" ${isSelected ? 'checked' : ''} onchange="toggleSharePropertySelection('${property.id}')">
-                            <div style="flex: 1; min-width: 0;">
-                                <div style="font-weight: 500; color: var(--text); margin-bottom: 4px;">${property.community || '未知小区'}</div>
-                                <div style="font-size: 14px; color: var(--text-secondary);">
-                                    ${property.layout || ''} ${property.area ? property.area + '平' : ''} ${property.floor ? property.floor + '楼' : ''} ${property.decoration || ''} | ${property.price || '面议'}${priceUnit}
-                                </div>
-                            </div>
+            
+            Object.entries(groups).forEach(([groupName, groupProps]) => {
+                if (groupProps.length > 0) {
+                    html += `
+                        <div style="margin-bottom: 20px;">
+                            <div style="font-weight: 600; color: var(--text); margin-bottom: 12px; padding-bottom: 4px; border-bottom: 2px solid var(--primary);">${groupName}</div>
+                            ${groupProps.map(property => {
+                                const isSelected = selectedProperties.includes(property.id);
+                                const priceUnit = property.type === 'sale' ? '万元' : '元/月';
+                                
+                                return `
+                                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border);">
+                                        <div style="display: flex; align-items: center; flex: 1;">
+                                            <input type="checkbox" style="width: 18px; height: 18px; margin-right: 12px; cursor: pointer;" ${isSelected ? 'checked' : ''} onchange="toggleSharePropertySelection('${property.id}')">
+                                            <div style="flex: 1; min-width: 0;">
+                                                <div style="font-weight: 500; color: var(--text); margin-bottom: 4px;">${property.community || '未知小区'}</div>
+                                                <div style="font-size: 14px; color: var(--text-secondary);">
+                                                    ${property.layout || ''} ${property.area ? property.area + '平' : ''} ${property.floor ? property.floor + '楼' : ''} ${property.decoration || ''} | ${property.price || '面议'}${priceUnit}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
                         </div>
-                    </div>
-                `;
+                    `;
+                }
             });
+
+            if (!html) {
+                html = '<div style="text-align: center; color: var(--text-tertiary); padding: 40px;">暂无符合条件的房源</div>';
+            }
 
             container.innerHTML = html;
         }
@@ -6282,38 +6317,92 @@
                 return;
             }
 
-            // 按小区和类型分组
-            const groupedProps = {};
+            // 按类型和小区分组
+            const typeGroups = {
+                'sale': [],
+                'rent': []
+            };
+            
             selectedProps.forEach(property => {
-                const key = `${property.community || '未知小区'}_${property.type}`;
-                if (!groupedProps[key]) {
-                    groupedProps[key] = [];
+                typeGroups[property.type].push(property);
+            });
+
+            // 按小区分组
+            const groupedProps = {};
+            Object.entries(typeGroups).forEach(([type, props]) => {
+                if (props.length > 0) {
+                    props.forEach(property => {
+                        const key = property.community || '未知小区';
+                        if (!groupedProps[key]) {
+                            groupedProps[key] = {
+                                type: property.type,
+                                properties: []
+                            };
+                        }
+                        groupedProps[key].properties.push(property);
+                    });
                 }
-                groupedProps[key].push(property);
             });
 
             let content = '';
             if (style === 'simple') {
                 // 简洁风格
                 content = '【房源推荐】\n\n';
-                Object.values(groupedProps).forEach((props, index) => {
-                    props.forEach((property, propIndex) => {
-                        const typeLabel = property.type === 'rent' ? '出租：' : '出售：';
-                        content += `${index + 1}.${propIndex + 1} ${typeLabel}${property.community || '未知小区'}${property.floor ? property.floor + '楼' : ''} ${property.area || '未知'}平 ${property.layout || '未知'} ${property.decoration || '普通装修'} ${property.price || '面议'}${property.type === 'sale' ? '万' : '元/月'}\n`;
+                
+                // 检查是否有出售房源
+                const hasSale = selectedProps.some(p => p.type === 'sale');
+                const hasRent = selectedProps.some(p => p.type === 'rent');
+                
+                // 只在第一行显示出售或出租
+                if (hasSale && hasRent) {
+                    content += '出售/出租\n\n';
+                } else if (hasSale) {
+                    content += '出售\n\n';
+                } else if (hasRent) {
+                    content += '出租\n\n';
+                }
+                
+                Object.entries(groupedProps).forEach(([community, group]) => {
+                    group.properties.forEach(property => {
+                        const priceText = property.price || '面议';
+                        const priceUnit = property.type === 'sale' ? '万' : '元/月';
+                        const propertyText = `${property.community || '未知小区'}${property.floor ? property.floor + '楼' : ''} ${property.area || '未知'}平 ${property.layout || '未知'} ${property.decoration || '普通装修'} ${priceText}${priceUnit}${property.ownership ? ' ' + property.ownership : ''}`;
+                        content += `${propertyText}\n`;
                     });
                     content += '\n';
                 });
+                
+                // 末尾可自行设置固定添加
+                content += '【联系方式】18019166290\n【备注】可根据需要添加其他信息';
             } else {
                 // 精彩风格
                 content = '🏠 精选好房推荐 🏠\n\n';
-                Object.values(groupedProps).forEach((props, index) => {
-                    props.forEach((property, propIndex) => {
-                        const typeLabel = property.type === 'rent' ? '出租' : '出售';
-                        content += `✨ ${typeLabel} ${property.community || '未知小区'}${property.floor ? property.floor + '楼' : ''}\n`;
-                        content += `🌟 面积：${property.area || '未知'}平 | 户型：${property.layout || '未知'} | 装修：${property.decoration || '普通装修'} | 价格：${property.price || '面议'}${property.type === 'sale' ? '万元' : '元/月'}\n\n`;
+                
+                // 检查是否有出售房源
+                const hasSale = selectedProps.some(p => p.type === 'sale');
+                const hasRent = selectedProps.some(p => p.type === 'rent');
+                
+                // 只在第一行显示出售或出租
+                if (hasSale && hasRent) {
+                    content += '✨ 出售/出租\n\n';
+                } else if (hasSale) {
+                    content += '✨ 出售\n\n';
+                } else if (hasRent) {
+                    content += '✨ 出租\n\n';
+                }
+                
+                Object.entries(groupedProps).forEach(([community, group]) => {
+                    group.properties.forEach(property => {
+                        const priceText = property.price || '面议';
+                        const priceUnit = property.type === 'sale' ? '万元' : '元/月';
+                        const ownershipText = property.ownership ? ' | ' + property.ownership : '';
+                        
+                        content += `✨ ${property.community || '未知小区'}${property.floor ? property.floor + '楼' : ''}\n`;
+                        content += `🌟 面积：${property.area || '未知'}平 | 户型：${property.layout || '未知'} | 装修：${property.decoration || '普通装修'} | 价格：${priceText}${priceUnit}${ownershipText}\n\n`;
                     });
                 });
-                content += '🎯 机会难得，先到先得！\n📞 欢迎来电咨询，随时看房！18019166290';
+                
+                content += '🎯 机会难得，先到先得！\n📞 欢迎来电咨询，随时看房！18019166290\n\n【备注】可根据需要添加其他信息';
             }
 
             document.getElementById('shareContent').value = content;
