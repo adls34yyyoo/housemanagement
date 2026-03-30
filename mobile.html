@@ -2002,36 +2002,6 @@
                             <span style="font-size: 14px; color: #10b981;">↑ 1.2%</span>
                         </div>
                     </div>
-                    <div class="community-price-item" style="padding: 12px 0; border-bottom: 1px solid var(--border);">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                            <span style="font-weight: 500; color: var(--text);">阳光小区</span>
-                            <span style="color: #ef4444; font-weight: 500;">挂牌价: 65,000 元/㎡</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between;">
-                            <span style="font-size: 14px; color: var(--text-secondary);">成交均价: 63,200 元/㎡</span>
-                            <span style="font-size: 14px; color: #10b981;">↑ 0.8%</span>
-                        </div>
-                    </div>
-                    <div class="community-price-item" style="padding: 12px 0; border-bottom: 1px solid var(--border);">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                            <span style="font-weight: 500; color: var(--text);">幸福花园</span>
-                            <span style="color: #ef4444; font-weight: 500;">挂牌价: 68,000 元/㎡</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between;">
-                            <span style="font-size: 14px; color: var(--text-secondary);">成交均价: 66,500 元/㎡</span>
-                            <span style="font-size: 14px; color: #ef4444;">↓ 0.3%</span>
-                        </div>
-                    </div>
-                    <div class="community-price-item" style="padding: 12px 0; border-bottom: 1px solid var(--border);">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                            <span style="font-weight: 500; color: var(--text);">绿地家园</span>
-                            <span style="color: #ef4444; font-weight: 500;">挂牌价: 70,000 元/㎡</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between;">
-                            <span style="font-size: 14px; color: var(--text-secondary);">成交均价: 68,800 元/㎡</span>
-                            <span style="font-size: 14px; color: #10b981;">↑ 1.5%</span>
-                        </div>
-                    </div>
                     <div class="community-price-item" style="padding: 12px 0;">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                             <span style="font-weight: 500; color: var(--text);">一方新城</span>
@@ -2561,7 +2531,7 @@
                         AI识别输入
                     </label>
                     <div class="ai-input-container">
-                        <textarea class="form-textarea" id="aiInput" placeholder="请输入或语音输入房源信息，例如：阳光小区，精装修，3室2厅2卫，120㎡，价格8000元/月，房东张三，电话13800138000，位于北京市朝阳区..."></textarea>
+                        <textarea class="form-textarea" id="aiInput" placeholder="请输入或语音输入房源信息，例如：金地城，精装修，3室2厅2卫，120㎡，价格8000元/月，房东张三，电话13800138000，位于北京市朝阳区..."></textarea>
                         <div class="ai-input-buttons">
                             <div class="ai-voice-button" id="voiceBtn" onclick="voiceInput('aiInput')">
                                 <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>
@@ -3139,7 +3109,7 @@
                     properties = [];
                     customers = [];
                     optionsData = {
-                        community: ['金地城', '阳光小区', '幸福花园', '绿地家园', '一方新城'],
+                        community: ['金地城', '一方新城'],
                         decoration: ['精装修', '简装', '豪装', '毛坯', '中装'],
                         layout: ['3-2-2', '2-1-1', '3-1-1', '2-2-1', '1-1-1'],
                         region: ['惠南镇', '周浦镇', '康桥镇', '祝桥镇', '新场镇', '大团镇', '老港镇', '书院镇', '临港滴水湖', '泥城镇', '芦潮港镇'],
@@ -3164,7 +3134,7 @@
 
         // 选项数据存储
         let optionsData = {
-            community: ['金地城', '阳光小区', '幸福花园', '绿地家园', '一方新城'],
+            community: ['金地城', '一方新城'],
             decoration: ['精装修', '简装', '豪装', '毛坯', '中装'],
             layout: ['3-2-2', '2-1-1', '3-1-1', '2-2-1', '1-1-1'],
             region: ['惠南镇', '周浦镇', '康桥镇', '祝桥镇', '新场镇', '大团镇', '老港镇', '书院镇', '临港滴水湖', '泥城镇', '芦潮港镇'],
@@ -3489,7 +3459,7 @@
             const communityPatterns = [
                 /(?:位于|在|小区|楼盘|花园|家园|新城|公寓|大厦|苑|墅|庭|府|里|坊|郡|城)[\s]*([\u4e00-\u9fa5]{2,10}(?:小区|花园|家园|新城|公寓|大厦|苑|墅|庭|府|里|坊|郡|城))/,
                 /([\u4e00-\u9fa5]{2,8}(?:小区|花园|家园|新城|公寓|大厦))/,
-                /金地城|阳光小区|幸福花园|绿地家园|一方新城|锦绣华都|海曲雅苑|德盈佳园|康达公寓|丽水雅苑|汇锦城|东城花苑|彩虹园|听潮新村|西门新村|北门新村|南门新村|城东新村/,
+                /金地城|一方新城|锦绣华都|海曲雅苑|德盈佳园|康达公寓|丽水雅苑|汇锦城|东城花苑|彩虹园|听潮新村|西门新村|北门新村|南门新村|城东新村/,
                 /([\u4e00-\u9fa5]{2,6}苑)/,
                 /([\u4e00-\u9fa5]{2,6}里)/,
                 /([\u4e00-\u9fa5]{2,6}园)/
