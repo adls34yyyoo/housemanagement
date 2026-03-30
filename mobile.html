@@ -2319,14 +2319,9 @@
                         <span class="menu-text">同步数据</span>
                         <span class="menu-arrow">›</span>
                     </div>
-                    <div class="menu-item menu-item-large" onclick="exportAllData()">
+                    <div class="menu-item menu-item-large" onclick="openExportModal()">
                         <span class="menu-icon">📤</span>
-                        <span class="menu-text">全盘数据导出</span>
-                        <span class="menu-arrow">›</span>
-                    </div>
-                    <div class="menu-item menu-item-large" onclick="exportPropertyData()">
-                        <span class="menu-icon">🏠</span>
-                        <span class="menu-text">房源数据导出</span>
+                        <span class="menu-text">数据导出</span>
                         <span class="menu-arrow">›</span>
                     </div>
                     <div class="menu-item menu-item-large" onclick="openTrainModal()">
@@ -6658,6 +6653,202 @@
 
         // 执行删除操作
         deleteCommunities();
+
+        // 打开数据导出模态框
+        function openExportModal() {
+            // 创建导出选项模态框
+            const modalHTML = `
+                <div class="modal" id="exportModal" style="display: flex; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000;">
+                    <div class="modal-content" style="background: white; border-radius: var(--radius); padding: 20px; width: 90%; max-width: 400px;">
+                        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin: 0; color: var(--text);">数据导出</h3>
+                            <button onclick="document.getElementById('exportModal').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);">&times;</button>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <button onclick="exportAllData()" style="padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); text-align: left; cursor: pointer; transition: var(--transition);">
+                                    <span style="margin-right: 10px;">📊</span> 全盘数据导出
+                                </button>
+                                <button onclick="exportPropertyData()" style="padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); text-align: left; cursor: pointer; transition: var(--transition);">
+                                    <span style="margin-right: 10px;">🏠</span> 房源数据导出
+                                </button>
+                                <button onclick="exportCommunityData()" style="padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); text-align: left; cursor: pointer; transition: var(--transition);">
+                                    <span style="margin-right: 10px;">🏘️</span> 小区导出
+                                </button>
+                                <button onclick="exportCustomerData()" style="padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); text-align: left; cursor: pointer; transition: var(--transition);">
+                                    <span style="margin-right: 10px;">👥</span> 客户导出
+                                </button>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <button class="btn btn-default" onclick="document.getElementById('exportModal').remove()">取消</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 插入模态框到页面
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        // 小区导出
+        function exportCommunityData() {
+            // 创建导出格式选择模态框
+            const modalHTML = `
+                <div class="modal" id="communityExportModal" style="display: flex; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000;">
+                    <div class="modal-content" style="background: white; border-radius: var(--radius); padding: 20px; width: 90%; max-width: 400px;">
+                        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin: 0; color: var(--text);">小区导出</h3>
+                            <button onclick="document.getElementById('communityExportModal').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);">&times;</button>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <p style="margin-bottom: 12px; color: var(--text-secondary);">请选择导出格式：</p>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <button onclick="exportCommunityDataAs('txt')" style="padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); text-align: left; cursor: pointer; transition: var(--transition);">
+                                    <span style="margin-right: 10px;">📄</span> TXT 格式
+                                </button>
+                                <button onclick="exportCommunityDataAs('json')" style="padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); text-align: left; cursor: pointer; transition: var(--transition);">
+                                    <span style="margin-right: 10px;">📋</span> JSON 格式
+                                </button>
+                                <button onclick="exportCommunityDataAs('csv')" style="padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); text-align: left; cursor: pointer; transition: var(--transition);">
+                                    <span style="margin-right: 10px;">📊</span> CSV 格式
+                                </button>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <button class="btn btn-default" onclick="document.getElementById('communityExportModal').remove()">取消</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 插入模态框到页面
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        // 按格式导出小区数据
+        function exportCommunityDataAs(format) {
+            const communities = optionsData.community || [];
+            
+            let content = '';
+            let filename = `小区数据导出_${new Date().toISOString().slice(0, 10)}`;
+
+            if (format === 'txt') {
+                filename += '.txt';
+                content = `小区数据导出报告\n`;
+                content += `导出时间: ${new Date().toLocaleString()}\n\n`;
+                content += `=== 小区列表 (${communities.length} 个) ===\n`;
+                communities.forEach((community, index) => {
+                    content += `${index + 1}. ${community}\n`;
+                });
+
+            } else if (format === 'json') {
+                filename += '.json';
+                content = JSON.stringify({ communities, exportDate: new Date().toISOString() }, null, 2);
+            } else if (format === 'csv') {
+                filename += '.csv';
+                content = '小区名称\n';
+                communities.forEach(community => {
+                    content += `${community}\n`;
+                });
+            }
+
+            // 创建并下载文件
+            const blob = new Blob([content], { type: getMimeType(format) });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            // 关闭模态框
+            document.getElementById('communityExportModal').remove();
+            showToast(`✅ 小区数据已导出为 ${format.toUpperCase()} 格式`);
+        }
+
+        // 客户导出
+        function exportCustomerData() {
+            // 创建导出格式选择模态框
+            const modalHTML = `
+                <div class="modal" id="customerExportModal" style="display: flex; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000;">
+                    <div class="modal-content" style="background: white; border-radius: var(--radius); padding: 20px; width: 90%; max-width: 400px;">
+                        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin: 0; color: var(--text);">客户导出</h3>
+                            <button onclick="document.getElementById('customerExportModal').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);">&times;</button>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <p style="margin-bottom: 12px; color: var(--text-secondary);">请选择导出格式：</p>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <button onclick="exportCustomerDataAs('txt')" style="padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); text-align: left; cursor: pointer; transition: var(--transition);">
+                                    <span style="margin-right: 10px;">📄</span> TXT 格式
+                                </button>
+                                <button onclick="exportCustomerDataAs('json')" style="padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); text-align: left; cursor: pointer; transition: var(--transition);">
+                                    <span style="margin-right: 10px;">📋</span> JSON 格式
+                                </button>
+                                <button onclick="exportCustomerDataAs('csv')" style="padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); text-align: left; cursor: pointer; transition: var(--transition);">
+                                    <span style="margin-right: 10px;">📊</span> CSV 格式
+                                </button>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <button class="btn btn-default" onclick="document.getElementById('customerExportModal').remove()">取消</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 插入模态框到页面
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        // 按格式导出客户数据
+        function exportCustomerDataAs(format) {
+            const customersData = customers || [];
+            
+            let content = '';
+            let filename = `客户数据导出_${new Date().toISOString().slice(0, 10)}`;
+
+            if (format === 'txt') {
+                filename += '.txt';
+                content = `客户数据导出报告\n`;
+                content += `导出时间: ${new Date().toLocaleString()}\n\n`;
+                content += `=== 客户列表 (${customersData.length} 个) ===\n`;
+                customersData.forEach((customer, index) => {
+                    content += `${index + 1}. ${customer.name || '未知姓名'}\n`;
+                    content += `   电话: ${customer.phone || '未知'}\n`;
+                    content += `   微信: ${customer.wechat || '未知'}\n`;
+                    content += `   备注: ${customer.remark || '无'}\n\n`;
+                });
+
+            } else if (format === 'json') {
+                filename += '.json';
+                content = JSON.stringify({ customers: customersData, exportDate: new Date().toISOString() }, null, 2);
+            } else if (format === 'csv') {
+                filename += '.csv';
+                content = '姓名,电话,微信,备注\n';
+                customersData.forEach(customer => {
+                    content += `${customer.name || ''},${customer.phone || ''},${customer.wechat || ''},${customer.remark || ''}\n`;
+                });
+            }
+
+            // 创建并下载文件
+            const blob = new Blob([content], { type: getMimeType(format) });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            // 关闭模态框
+            document.getElementById('customerExportModal').remove();
+            showToast(`✅ 客户数据已导出为 ${format.toUpperCase()} 格式`);
+        }
 
         // 显示单个政策详情
         function showPolicyDetail(policyId) {
