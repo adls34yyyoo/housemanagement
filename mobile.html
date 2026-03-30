@@ -1870,12 +1870,22 @@
                 </div>
             </div>
             
+            <!-- 最近出售房源 -->
             <div class="recent-properties-section">
                 <div class="section-header">
-                    <h3>最近房源</h3>
+                    <h3>🏠 最近出售</h3>
                     <button class="section-more" onclick="switchPage('properties')">查看更多 ›</button>
                 </div>
-                <div class="recent-properties" id="recentProperties"></div>
+                <div class="recent-properties" id="recentSaleProperties"></div>
+            </div>
+
+            <!-- 最近出租房源 -->
+            <div class="recent-properties-section">
+                <div class="section-header">
+                    <h3>🔑 最近出租</h3>
+                    <button class="section-more" onclick="switchPage('properties')">查看更多 ›</button>
+                </div>
+                <div class="recent-properties" id="recentRentProperties"></div>
             </div>
 
         </div>
@@ -1995,6 +2005,82 @@
             </div>
         </div>
 
+        <!-- 可代理房源页面 -->
+        <div class="page" id="pageAgentProperties">
+            <div class="app-header">
+                <div class="header-content">
+                    <span class="header-title">可代理房源</span>
+                    <span class="header-user" id="headerUserAgent">admin</span>
+                </div>
+            </div>
+            
+            <div class="search-bar">
+                <input type="text" class="search-input" id="agentPropertySearch" placeholder="搜索可代理房源..." oninput="searchAgentProperties()">
+            </div>
+            
+            <div class="action-buttons">
+                <div class="action-button" onclick="openAgentPropertyModal('sale')">💰 新增代理售房</div>
+                <div class="action-button" onclick="openAgentPropertyModal('rent')">🏠 新增代理租房</div>
+                <div class="action-button" onclick="toggleAgentFilterMenu()">🔍 筛选</div>
+            </div>
+            
+            <div class="content-section" id="agentPropertyList"></div>
+            
+            <!-- 筛选菜单 -->
+            <div class="filter-menu" id="agentFilterMenu">
+                <div class="filter-header">
+                    <span class="filter-title">筛选条件</span>
+                    <button class="filter-close" onclick="toggleAgentFilterMenu()">×</button>
+                </div>
+                <div class="filter-body">
+                    <div class="filter-section">
+                        <div class="filter-label">类型</div>
+                        <div class="filter-checkbox-group">
+                            <label class="filter-checkbox-item">
+                                <input type="checkbox" value="rent" class="agent-filter-type" onchange="applyAgentFilters()"> 租房
+                            </label>
+                            <label class="filter-checkbox-item">
+                                <input type="checkbox" value="sale" class="agent-filter-type" onchange="applyAgentFilters()"> 卖房
+                            </label>
+                        </div>
+                    </div>
+                    <div class="filter-section">
+                        <div class="filter-label">状态</div>
+                        <div class="filter-checkbox-group">
+                            <label class="filter-checkbox-item">
+                                <input type="checkbox" value="pending" class="agent-filter-status" onchange="applyAgentFilters()"> 待发布
+                            </label>
+                            <label class="filter-checkbox-item">
+                                <input type="checkbox" value="selling" class="agent-filter-status" onchange="applyAgentFilters()"> 出售中
+                            </label>
+                            <label class="filter-checkbox-item">
+                                <input type="checkbox" value="off_shelf" class="agent-filter-status" onchange="applyAgentFilters()"> 已下架
+                            </label>
+                            <label class="filter-checkbox-item">
+                                <input type="checkbox" value="on_shelf" class="agent-filter-status" onchange="applyAgentFilters()"> 已上架
+                            </label>
+                        </div>
+                    </div>
+                    <div class="filter-section">
+                        <div class="filter-label">区域</div>
+                        <select class="filter-select" id="agentFilterRegion" onchange="applyAgentFilters()">
+                            <option value="">全部</option>
+                        </select>
+                    </div>
+                    <div class="filter-section">
+                        <div class="filter-label">小区</div>
+                        <select class="filter-select" id="agentFilterCommunity" onchange="applyAgentFilters()">
+                            <option value="">全部</option>
+                        </select>
+                    </div>
+                    <div class="filter-actions">
+                        <button class="filter-btn filter-btn-clear" onclick="clearAgentFilters()">清除筛选</button>
+                        <button class="filter-btn filter-btn-confirm" onclick="toggleAgentFilterMenu()">确定</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- 客户页面 -->
         <div class="page" id="pageCustomers">
             <div class="app-header">
@@ -2091,6 +2177,12 @@
                     <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
                 </div>
                 <div class="nav-label">房源</div>
+            </div>
+            <div class="nav-item" onclick="switchPage('agentProperties')">
+                <div class="nav-icon">
+                    <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                </div>
+                <div class="nav-label">可代理</div>
             </div>
             <div class="nav-item" onclick="switchPage('customers')">
                 <div class="nav-icon">
@@ -3357,6 +3449,7 @@
             const pageMap = {
                 'home': 'pageHome',
                 'properties': 'pageProperties',
+                'agentProperties': 'pageAgentProperties',
                 'customers': 'pageCustomers',
                 'profile': 'pageProfile'
             };
@@ -3364,8 +3457,9 @@
             const navMap = {
                 'home': 0,
                 'properties': 1,
-                'customers': 2,
-                'profile': 3
+                'agentProperties': 2,
+                'customers': 3,
+                'profile': 4
             };
 
             const targetPage = document.getElementById(pageMap[page]);
@@ -3386,6 +3480,10 @@
                 // 切换到房源页面时，清空过滤条件，显示全部房源
                 filteredProperties = [];
                 renderPropertyList();
+            } else if (page === 'agentProperties') {
+                // 切换到可代理房源页面时，清空过滤条件，显示全部可代理房源
+                filteredAgentProperties = [];
+                renderAgentPropertyList();
             } else if (page === 'customers') {
                 renderCustomerList();
             }
@@ -3415,81 +3513,90 @@
         function renderRecentProperties() {
             const rentContainer = document.getElementById('recentRentProperties');
             const saleContainer = document.getElementById('recentSaleProperties');
-            const homeContainer = document.getElementById('recentProperties');
 
-            const rentProps = properties.filter(p => p.type === 'rent').slice(0, 3);
-            const saleProps = properties.filter(p => p.type === 'sale').slice(0, 3);
-            const recentProps = properties
+            // 按创建时间排序，取最新的3条
+            const rentProps = properties
+                .filter(p => p.type === 'rent')
                 .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-                .slice(0, 5);
+                .slice(0, 3);
+            const saleProps = properties
+                .filter(p => p.type === 'sale')
+                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                .slice(0, 3);
 
             if (rentContainer) {
-                rentContainer.innerHTML = rentProps.length ? rentProps.map(p => createPropertyCard(p)).join('') : '<div class="empty-state">暂无租房信息</div>';
-            }
-
-            if (saleContainer) {
-                saleContainer.innerHTML = saleProps.length ? saleProps.map(p => createPropertyCard(p)).join('') : '<div class="empty-state">暂无售房信息</div>';
-            }
-
-            if (homeContainer) {
-                if (recentProps.length === 0) {
-                    homeContainer.innerHTML = `
+                if (rentProps.length === 0) {
+                    rentContainer.innerHTML = `
                         <div class="empty-state">
-                            <div class="empty-icon">🏠</div>
-                            <div class="empty-text">暂无房源信息</div>
+                            <div class="empty-icon">🔑</div>
+                            <div class="empty-text">暂无出租房源</div>
                         </div>
                     `;
                 } else {
-                    homeContainer.innerHTML = recentProps.map(p => {
-                        const statusClass = {
-                            'pending': 'status-pending',
-                            'selling': 'status-selling',
-                            'off_shelf': 'status-off-shelf',
-                            'on_shelf': 'status-on-shelf'
-                        }[p.status] || 'status-pending';
-
-                        // 根据房源类型显示不同的状态文本
-                        let statusText;
-                        if (p.type === 'sale') {
-                            // 卖房房源状态，取消待发布和出售中
-                            statusText = {
-                                'pending': '已上架',
-                                'selling': '已上架',
-                                'off_shelf': '已下架',
-                                'on_shelf': '已上架'
-                            }[p.status] || '已上架';
-                        } else {
-                            // 租房房源状态
-                            statusText = {
-                                'pending': '待发布',
-                                'selling': '出租中',
-                                'off_shelf': '已下架',
-                                'on_shelf': '已上架'
-                            }[p.status] || '待发布';
-                        }
-
-                        const priceUnit = p.type === 'sale' ? '万元' : '元/月';
-
-                        return `
-                            <div class="property-card" style="padding: 16px; cursor: pointer; transition: var(--transition);" onclick="openPropertyDetailModal('${p.id}')">
-                                <div class="property-info">
-                                    <div class="property-title">
-                                        <span>${p.community || '未知小区'}</span>
-                                        <span class="property-status ${statusClass}">${statusText}</span>
-                                    </div>
-                                    <div class="property-address" style="margin-bottom: 8px;">
-                                        ${p.layout || ''} ${p.floor ? p.floor + '楼' : ''} ${p.area ? p.area + '平' : ''}
-                                    </div>
-                                    <div class="property-meta">
-                                        <span class="property-price">${p.price || '面议'}${priceUnit}</span>
-                                        <span class="property-specs">${p.decoration || ''}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
+                    rentContainer.innerHTML = rentProps.map(p => createHomePropertyCard(p)).join('');
                 }
             }
+
+            if (saleContainer) {
+                if (saleProps.length === 0) {
+                    saleContainer.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">🏠</div>
+                            <div class="empty-text">暂无出售房源</div>
+                        </div>
+                    `;
+                } else {
+                    saleContainer.innerHTML = saleProps.map(p => createHomePropertyCard(p)).join('');
+                }
+            }
+        }
+
+        // 创建首页房源卡片HTML
+        function createHomePropertyCard(p) {
+            const statusClass = {
+                'pending': 'status-pending',
+                'selling': 'status-selling',
+                'off_shelf': 'status-off-shelf',
+                'on_shelf': 'status-on-shelf'
+            }[p.status] || 'status-pending';
+
+            // 根据房源类型显示不同的状态文本
+            let statusText;
+            if (p.type === 'sale') {
+                statusText = {
+                    'pending': '已上架',
+                    'selling': '已上架',
+                    'off_shelf': '已下架',
+                    'on_shelf': '已上架'
+                }[p.status] || '已上架';
+            } else {
+                statusText = {
+                    'pending': '待发布',
+                    'selling': '出租中',
+                    'off_shelf': '已下架',
+                    'on_shelf': '已上架'
+                }[p.status] || '待发布';
+            }
+
+            const priceUnit = p.type === 'sale' ? '万元' : '元/月';
+
+            return `
+                <div class="property-card" style="padding: 16px; cursor: pointer; transition: var(--transition);" onclick="openPropertyDetailModal('${p.id}')">
+                    <div class="property-info">
+                        <div class="property-title">
+                            <span>${p.community || '未知小区'}</span>
+                            <span class="property-status ${statusClass}">${statusText}</span>
+                        </div>
+                        <div class="property-address" style="margin-bottom: 8px;">
+                            ${p.layout || ''} ${p.floor ? p.floor + '楼' : ''} ${p.area ? p.area + '平' : ''}
+                        </div>
+                        <div class="property-meta">
+                            <span class="property-price">${p.price || '面议'}${priceUnit}</span>
+                            <span class="property-specs">${p.decoration || ''}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
         // 创建房源卡片HTML
@@ -3899,6 +4006,231 @@
             `).join('');
         }
 
+        // 可代理房源数据
+        let agentProperties = JSON.parse(localStorage.getItem('agentProperties') || '[]');
+        let filteredAgentProperties = [];
+
+        // 渲染可代理房源列表
+        function renderAgentPropertyList() {
+            const container = document.getElementById('agentPropertyList');
+            if (!container) return;
+
+            let propsToRender = filteredAgentProperties.length ? filteredAgentProperties : agentProperties;
+
+            if (propsToRender.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🤝</div>
+                        <div class="empty-text">暂无可代理房源</div>
+                        <div style="margin-top: 12px; font-size: 14px; color: var(--text-tertiary);">点击上方按钮添加可代理房源</div>
+                    </div>
+                `;
+                return;
+            }
+
+            // 分开出租和出售房源
+            const saleProps = propsToRender.filter(p => p.type === 'sale');
+            const rentProps = propsToRender.filter(p => p.type === 'rent');
+            
+            let html = '';
+            
+            // 添加出售房源标题和卡片
+            if (saleProps.length > 0) {
+                html += `
+                    <div style="padding: 12px 16px; background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%); border-left: 4px solid #ef4444; margin-bottom: 12px; border-radius: 0 var(--radius) var(--radius) 0;">
+                        <h3 style="margin: 0; color: #ef4444; font-size: 16px; font-weight: 700;">🏠 出售</h3>
+                        <p style="margin: 4px 0 0 0; color: var(--text-secondary); font-size: 13px;">共 ${saleProps.length} 套可代理房源</p>
+                    </div>
+                `;
+                html += saleProps.map(p => createAgentPropertyCard(p)).join('');
+            }
+            
+            // 添加出租房源标题和卡片
+            if (rentProps.length > 0) {
+                html += `
+                    <div style="padding: 12px 16px; background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(22, 163, 74, 0.1) 100%); border-left: 4px solid #22c55e; margin-bottom: 12px; border-radius: 0 var(--radius) var(--radius) 0; ${saleProps.length > 0 ? 'margin-top: 20px;' : ''}">
+                        <h3 style="margin: 0; color: #22c55e; font-size: 16px; font-weight: 700;">🏘️ 出租</h3>
+                        <p style="margin: 4px 0 0 0; color: var(--text-secondary); font-size: 13px;">共 ${rentProps.length} 套可代理房源</p>
+                    </div>
+                `;
+                html += rentProps.map(p => createAgentPropertyCard(p)).join('');
+            }
+
+            container.innerHTML = html;
+        }
+
+        // 创建可代理房源卡片HTML
+        function createAgentPropertyCard(property) {
+            const statusClass = {
+                'pending': 'status-pending',
+                'selling': 'status-selling',
+                'off_shelf': 'status-off-shelf',
+                'on_shelf': 'status-on-shelf'
+            }[property.status] || 'status-pending';
+
+            let statusText;
+            if (property.type === 'sale') {
+                statusText = {
+                    'pending': '已上架',
+                    'selling': '已上架',
+                    'off_shelf': '已下架',
+                    'on_shelf': '已上架'
+                }[property.status] || '已上架';
+            } else {
+                statusText = {
+                    'pending': '待发布',
+                    'selling': '出租中',
+                    'off_shelf': '已下架',
+                    'on_shelf': '已上架'
+                }[property.status] || '待发布';
+            }
+
+            const priceUnit = property.type === 'sale' ? '万元' : '元/月';
+
+            return `
+                <div class="property-card" style="margin-bottom: 12px;">
+                    <div class="property-info">
+                        <div class="property-title">
+                            <span>${property.community || '未知小区'}</span>
+                            <span class="property-status ${statusClass}">${statusText}</span>
+                        </div>
+                        <div class="property-address" style="margin-bottom: 8px;">
+                            ${property.region || ''} ${property.layout || ''} ${property.floor ? property.floor + '楼' : ''} ${property.area ? property.area + '平' : ''}
+                        </div>
+                        <div class="property-meta" style="margin-bottom: 8px;">
+                            <span class="property-price">${property.price || '面议'}${priceUnit}</span>
+                            <span class="property-specs">${property.decoration || ''}</span>
+                        </div>
+                        ${property.agentName ? `<div style="font-size: 13px; color: var(--text-secondary);">👤 代理人：${property.agentName}</div>` : ''}
+                        ${property.agentPhone ? `<div style="font-size: 13px; color: var(--text-secondary);">📞 联系电话：${property.agentPhone}</div>` : ''}
+                    </div>
+                    <div class="property-actions">
+                        <button class="action-btn" onclick="event.stopPropagation(); editAgentProperty('${property.id}')">编辑</button>
+                        <button class="action-btn share" onclick="event.stopPropagation(); deleteAgentProperty('${property.id}')">删除</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 搜索可代理房源
+        function searchAgentProperties() {
+            const keyword = document.getElementById('agentPropertySearch').value.toLowerCase();
+            if (!keyword) {
+                filteredAgentProperties = [];
+                renderAgentPropertyList();
+                return;
+            }
+
+            filteredAgentProperties = agentProperties.filter(p =>
+                (p.community && p.community.toLowerCase().includes(keyword)) ||
+                (p.region && p.region.toLowerCase().includes(keyword)) ||
+                (p.layout && p.layout.toLowerCase().includes(keyword)) ||
+                (p.agentName && p.agentName.toLowerCase().includes(keyword))
+            );
+            renderAgentPropertyList();
+        }
+
+        // 切换可代理房源筛选菜单
+        function toggleAgentFilterMenu() {
+            const menu = document.getElementById('agentFilterMenu');
+            if (menu) {
+                menu.classList.toggle('active');
+            }
+        }
+
+        // 应用可代理房源筛选
+        function applyAgentFilters() {
+            const typeCheckboxes = document.querySelectorAll('.agent-filter-type:checked');
+            const statusCheckboxes = document.querySelectorAll('.agent-filter-status:checked');
+            const regionSelect = document.getElementById('agentFilterRegion');
+            const communitySelect = document.getElementById('agentFilterCommunity');
+
+            const selectedTypes = Array.from(typeCheckboxes).map(cb => cb.value);
+            const selectedStatuses = Array.from(statusCheckboxes).map(cb => cb.value);
+            const selectedRegion = regionSelect ? regionSelect.value : '';
+            const selectedCommunity = communitySelect ? communitySelect.value : '';
+
+            filteredAgentProperties = agentProperties.filter(p => {
+                const matchType = selectedTypes.length === 0 || selectedTypes.includes(p.type);
+                const matchStatus = selectedStatuses.length === 0 || selectedStatuses.includes(p.status);
+                const matchRegion = !selectedRegion || p.region === selectedRegion;
+                const matchCommunity = !selectedCommunity || p.community === selectedCommunity;
+
+                return matchType && matchStatus && matchRegion && matchCommunity;
+            });
+
+            renderAgentPropertyList();
+        }
+
+        // 清除可代理房源筛选
+        function clearAgentFilters() {
+            document.querySelectorAll('.agent-filter-type').forEach(cb => cb.checked = false);
+            document.querySelectorAll('.agent-filter-status').forEach(cb => cb.checked = false);
+            const regionSelect = document.getElementById('agentFilterRegion');
+            const communitySelect = document.getElementById('agentFilterCommunity');
+            if (regionSelect) regionSelect.value = '';
+            if (communitySelect) communitySelect.value = '';
+            filteredAgentProperties = [];
+            renderAgentPropertyList();
+        }
+
+        // 打开可代理房源编辑模态框
+        function openAgentPropertyModal(type = 'sale') {
+            // 复用房源模态框，但添加isAgent标记
+            openPropertyModal(type, true);
+        }
+
+        // 编辑可代理房源
+        function editAgentProperty(propertyId) {
+            const property = agentProperties.find(p => p.id === propertyId);
+            if (!property) return;
+            
+            // 将可代理房源数据设置到编辑表单
+            editingPropertyId = propertyId;
+            editingPropertyType = property.type;
+            
+            // 填充表单数据
+            setTimeout(() => {
+                const communityInput = document.getElementById('propCommunity');
+                const regionInput = document.getElementById('propRegion');
+                const layoutInput = document.getElementById('propLayout');
+                const floorInput = document.getElementById('propFloor');
+                const areaInput = document.getElementById('propArea');
+                const priceInput = document.getElementById('propPrice');
+                const decorationInput = document.getElementById('propDecoration');
+                const landlordNameInput = document.getElementById('propLandlordName');
+                const landlordPhoneInput = document.getElementById('propLandlordPhone');
+                
+                if (communityInput) communityInput.value = property.community || '';
+                if (regionInput) regionInput.value = property.region || '';
+                if (layoutInput) layoutInput.value = property.layout || '';
+                if (floorInput) floorInput.value = property.floor || '';
+                if (areaInput) areaInput.value = property.area || '';
+                if (priceInput) priceInput.value = property.price || '';
+                if (decorationInput) decorationInput.value = property.decoration || '';
+                if (landlordNameInput) landlordNameInput.value = property.agentName || '';
+                if (landlordPhoneInput) landlordPhoneInput.value = property.agentPhone || '';
+            }, 100);
+            
+            // 打开模态框
+            const modal = document.getElementById('propertyModal');
+            const title = document.getElementById('propertyModalTitle');
+            if (modal && title) {
+                modal.style.display = 'block';
+                title.textContent = property.type === 'sale' ? '编辑代理售房' : '编辑代理租房';
+            }
+        }
+
+        // 删除可代理房源
+        function deleteAgentProperty(propertyId) {
+            if (!confirm('确定要删除这套可代理房源吗？')) return;
+            
+            agentProperties = agentProperties.filter(p => p.id !== propertyId);
+            localStorage.setItem('agentProperties', JSON.stringify(agentProperties));
+            renderAgentPropertyList();
+            showToast('可代理房源已删除');
+        }
+
         // 搜索房源
         function searchProperties() {
             const keyword = document.getElementById('propertySearch').value.toLowerCase();
@@ -4260,12 +4592,29 @@
         }
 
         // 打开房源模态框
-        function openPropertyModal(type = 'rent') {
+        // 当前是否为可代理房源模式
+        let isAgentPropertyMode = false;
+
+        function openPropertyModal(type = 'rent', isAgent = false) {
             editingPropertyId = null;
+            isAgentPropertyMode = isAgent;
             
             const priceLabel = document.getElementById('priceLabel');
+            const landlordNameLabel = document.querySelector('label[for="propLandlordName"]');
+            const landlordPhoneLabel = document.querySelector('label[for="propLandlordPhone"]');
+            
+            if (isAgent) {
+                // 可代理房源模式
+                if (landlordNameLabel) landlordNameLabel.textContent = '代理人姓名';
+                if (landlordPhoneLabel) landlordPhoneLabel.textContent = '代理人电话';
+            } else {
+                // 自有房源模式
+                if (landlordNameLabel) landlordNameLabel.textContent = '房东姓名';
+                if (landlordPhoneLabel) landlordPhoneLabel.textContent = '房东电话';
+            }
+            
             if (type === 'rent') {
-                document.getElementById('propertyModalTitle').textContent = '新增租房';
+                document.getElementById('propertyModalTitle').textContent = isAgent ? '新增代理租房' : '新增租房';
                 // 租房房源状态选项
                 const statusSelect = document.getElementById('propStatus');
                 statusSelect.innerHTML = `
@@ -4277,7 +4626,7 @@
                 // 价格标签显示为元/月
                 priceLabel.textContent = '价格（元/月）';
             } else {
-                document.getElementById('propertyModalTitle').textContent = '新增卖房';
+                document.getElementById('propertyModalTitle').textContent = isAgent ? '新增代理售房' : '新增卖房';
                 // 卖房房源状态选项，取消待发布和出售中
                 const statusSelect = document.getElementById('propStatus');
                 statusSelect.innerHTML = `
@@ -4347,10 +4696,14 @@
             let propertyType = 'rent';
             let propertyPrice = price ? parseFloat(price) : null;
             
+            // 获取原始房源数据（用于编辑时比较）
+            let originalProperty = null;
+            let changeDetails = [];
+            
             // 判断是新增还是编辑
             if (editingPropertyId) {
                 // 编辑模式：根据原房源类型判断
-                const originalProperty = properties.find(p => p.id === editingPropertyId);
+                originalProperty = properties.find(p => p.id === editingPropertyId);
                 if (originalProperty && originalProperty.type === 'sale') {
                     propertyType = 'sale';
                     // 确保价格单位为万元
@@ -4358,6 +4711,38 @@
                 } else {
                     // 编辑租房房源
                     propertyType = 'rent';
+                }
+                
+                // 比较字段变化
+                if (originalProperty) {
+                    if (originalProperty.community !== community) {
+                        changeDetails.push(`小区：${originalProperty.community || '无'} → ${community || '无'}`);
+                    }
+                    if (originalProperty.layout !== layout) {
+                        changeDetails.push(`户型：${originalProperty.layout || '无'} → ${layout || '无'}`);
+                    }
+                    if (originalProperty.price != propertyPrice) {
+                        const priceUnit = propertyType === 'sale' ? '万元' : '元/月';
+                        changeDetails.push(`价格：${originalProperty.price || '面议'}${priceUnit} → ${propertyPrice || '面议'}${priceUnit}`);
+                    }
+                    if (originalProperty.status !== status) {
+                        changeDetails.push(`状态变更`);
+                    }
+                    if (originalProperty.floor !== floor) {
+                        changeDetails.push(`楼层：${originalProperty.floor || '无'} → ${floor || '无'}`);
+                    }
+                    if (originalProperty.area != area) {
+                        changeDetails.push(`面积：${originalProperty.area || '无'} → ${area || '无'}`);
+                    }
+                    if (originalProperty.decoration !== decoration) {
+                        changeDetails.push(`装修：${originalProperty.decoration || '无'} → ${decoration || '无'}`);
+                    }
+                    if (originalProperty.landlordName !== landlordName) {
+                        changeDetails.push(`房东：${originalProperty.landlordName || '无'} → ${landlordName || '无'}`);
+                    }
+                    if (originalProperty.landlordPhone !== landlordPhone) {
+                        changeDetails.push(`电话变更`);
+                    }
                 }
             } else {
                 // 新增模式：根据模态框标题判断是新增卖房还是租房
@@ -4372,6 +4757,26 @@
                     propertyPrice = propertyPrice / 10000;
                 }
             }
+            
+            // 构建更新记录
+            let changeHistoryRecord;
+            if (editingPropertyId) {
+                const originalChangeHistory = originalProperty?.changeHistory || [];
+                changeHistoryRecord = originalChangeHistory.concat({
+                    timestamp: new Date().toISOString(),
+                    action: changeDetails.length > 0 ? `更新：${changeDetails.join('、')}` : '更新',
+                    user: currentUser || 'admin'
+                });
+            } else {
+                changeHistoryRecord = [{
+                    timestamp: new Date().toISOString(),
+                    action: '创建',
+                    user: currentUser || 'admin'
+                }];
+            }
+            
+            // 判断是否为可代理房源模式
+            const isAgentMode = isAgentPropertyMode;
             
             const property = {
                 id: editingPropertyId || Date.now().toString(),
@@ -4389,22 +4794,45 @@
                 type: propertyType,
                 description: desc,
                 remark,
-                created_at: new Date().toISOString(),
+                created_at: originalProperty?.created_at || new Date().toISOString(),
                 updated_at: new Date().toISOString(),
                 synced: false, // 添加同步状态标记
-                changeHistory: editingPropertyId ? (properties.find(p => p.id === editingPropertyId)?.changeHistory || []).concat({
-                    timestamp: new Date().toISOString(),
-                    action: '更新',
-                    user: currentUser || 'admin'
-                }) : [{ // 首次创建时添加记录
-                    timestamp: new Date().toISOString(),
-                    action: '创建',
-                    user: currentUser || 'admin'
-                }]
+                changeHistory: changeHistoryRecord
             };
 
+            // 如果是可代理房源，添加标记和代理人信息
+            if (isAgentMode) {
+                property.isAgent = true;
+                property.agentName = landlordName;
+                property.agentPhone = landlordPhone;
+            }
+
             try {
-                // 检查网络状态
+                // 可代理房源只保存到本地，不同步到云端
+                if (isAgentMode) {
+                    if (editingPropertyId) {
+                        // 查找是可代理房源列表还是普通房源列表
+                        const agentIndex = agentProperties.findIndex(p => p.id === editingPropertyId);
+                        if (agentIndex !== -1) {
+                            agentProperties[agentIndex] = property;
+                        } else {
+                            // 可能在普通房源列表中，也检查
+                            const propIndex = properties.findIndex(p => p.id === editingPropertyId);
+                            if (propIndex !== -1) {
+                                properties[propIndex] = property;
+                            }
+                        }
+                    } else {
+                        agentProperties.push(property);
+                    }
+                    localStorage.setItem('agentProperties', JSON.stringify(agentProperties));
+                    showToast('✅ 可代理房源保存成功');
+                    closePropertyModal();
+                    renderAgentPropertyList();
+                    return;
+                }
+
+                // 检查网络状态（仅自有房源同步到云端）
                 const isOnline = navigator.onLine && supabaseClient;
                 
                 if (isOnline) {
@@ -5169,7 +5597,7 @@
                         </div>
                         <div class="form-actions" style="display: flex; gap: 10px; justify-content: flex-end;">
                             <button class="btn btn-default" onclick="closeRentSaleToggleModal()">取消</button>
-                            <button class="btn btn-primary" onclick="toggleRentSale('${property.id}')">确认转换</button>
+                            <button class="btn btn-primary" onclick="toggleRentSale('${property.id}')" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">确认转换</button>
                         </div>
                     </div>
                 </div>
