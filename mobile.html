@@ -3031,6 +3031,7 @@
                 let savedProperties = localStorage.getItem('properties');
                 let savedCustomers = localStorage.getItem('customers');
                 let savedOptions = localStorage.getItem('optionsData');
+                let savedAgentProperties = localStorage.getItem('agentProperties');
                 
                 // 如果localStorage加载失败，尝试从sessionStorage加载
                 if (!savedProperties) {
@@ -3041,6 +3042,9 @@
                 }
                 if (!savedOptions) {
                     savedOptions = sessionStorage.getItem('optionsData');
+                }
+                if (!savedAgentProperties) {
+                    savedAgentProperties = sessionStorage.getItem('agentProperties');
                 }
                 
                 if (savedProperties) {
@@ -3057,6 +3061,11 @@
                     optionsData = JSON.parse(savedOptions);
                     console.log('从本地存储加载了选项数据');
                 }
+                
+                if (savedAgentProperties) {
+                    agentProperties = JSON.parse(savedAgentProperties);
+                    console.log('从本地存储加载了', agentProperties.length, '条代理房源数据');
+                }
             } catch (e) {
                 console.error('加载本地存储失败:', e);
             }
@@ -3069,11 +3078,17 @@
                 localStorage.setItem('properties', JSON.stringify(properties));
                 localStorage.setItem('customers', JSON.stringify(customers));
                 localStorage.setItem('optionsData', JSON.stringify(optionsData));
+                localStorage.setItem('agentProperties', JSON.stringify(agentProperties));
                 
                 // 同时保存到sessionStorage作为备份
                 sessionStorage.setItem('properties', JSON.stringify(properties));
                 sessionStorage.setItem('customers', JSON.stringify(customers));
                 sessionStorage.setItem('optionsData', JSON.stringify(optionsData));
+                sessionStorage.setItem('agentProperties', JSON.stringify(agentProperties));
+                
+                // 添加数据版本标记，用于版本升级时的数据兼容性
+                localStorage.setItem('dataVersion', '1.0');
+                sessionStorage.setItem('dataVersion', '1.0');
                 
                 console.log('数据已保存到本地存储');
             } catch (e) {
@@ -3083,6 +3098,7 @@
                     sessionStorage.setItem('properties', JSON.stringify(properties));
                     sessionStorage.setItem('customers', JSON.stringify(customers));
                     sessionStorage.setItem('optionsData', JSON.stringify(optionsData));
+                    sessionStorage.setItem('agentProperties', JSON.stringify(agentProperties));
                     console.log('数据已保存到会话存储');
                 } catch (e2) {
                     console.error('保存到会话存储也失败:', e2);
@@ -3098,15 +3114,20 @@
                     localStorage.removeItem('properties');
                     localStorage.removeItem('customers');
                     localStorage.removeItem('optionsData');
+                    localStorage.removeItem('agentProperties');
+                    localStorage.removeItem('dataVersion');
                     
                     // 同时清除sessionStorage
                     sessionStorage.removeItem('properties');
                     sessionStorage.removeItem('customers');
                     sessionStorage.removeItem('optionsData');
+                    sessionStorage.removeItem('agentProperties');
+                    sessionStorage.removeItem('dataVersion');
                     
                     // 重置内存中的数据
                     properties = [];
                     customers = [];
+                    agentProperties = [];
                     optionsData = {
                         community: ['金地城', '一方新城'],
                         decoration: ['精装修', '简装', '豪装', '毛坯', '中装'],
@@ -3122,6 +3143,7 @@
                     updateStats();
                     renderPropertyList();
                     renderCustomerList();
+                    renderAgentPropertyList();
                     loadOptions();
                     initSelectOptions();
                 } catch (e) {
@@ -4387,7 +4409,7 @@
             }
             
             agentProperties = agentProperties.filter(p => p.id !== propertyId);
-            localStorage.setItem('agentProperties', JSON.stringify(agentProperties));
+            saveToLocalStorage();
             renderAgentPropertyList();
             showToast('可代理房源已删除');
         }
@@ -4949,7 +4971,7 @@
             partyDiv.style.cssText = 'display: flex; gap: 8px; margin-bottom: 8px; align-items: center;';
             partyDiv.innerHTML = `
                 <input type="text" class="form-input agent-party-name" placeholder="被代理方" style="flex: 1;" value="${name}">
-                <input type="tel" class="form-input agent-party-phone" placeholder="电话" style="flex: 1;" value="${phone}">
+                <input type="tel" class="form-input agent-party-phone" placeholder="被代理方电话" style="flex: 1;" value="${phone}">
                 <button type="button" onclick="removeAgentParty(this)" style="padding: 8px 12px; background: #ef4444; color: white; border: none; border-radius: var(--radius); cursor: pointer;">删除</button>
             `;
             list.appendChild(partyDiv);
@@ -5203,7 +5225,7 @@
                     } else {
                         agentProperties.push(property);
                     }
-                    localStorage.setItem('agentProperties', JSON.stringify(agentProperties));
+                    saveToLocalStorage();
                     showToast('✅ 可代理房源保存成功');
                     closePropertyModal();
                     renderAgentPropertyList();
@@ -6135,7 +6157,20 @@
             // 合并所有房源（普通房源和代理房源）
             const allProperties = [...properties, ...agentProperties];
             const selectedProps = allProperties.filter(p => selectedProperties.includes(p.id));
-            let shareText = '【房源推荐】\n\n';
+            let shareText = '';
+
+            // 检查是否有出售房源
+            const hasSale = selectedProps.some(p => p.type === 'sale');
+            const hasRent = selectedProps.some(p => p.type === 'rent');
+            
+            // 只在第一行显示出售或出租
+            if (hasSale && hasRent) {
+                shareText += '出售/出租\n\n';
+            } else if (hasSale) {
+                shareText += '出售\n\n';
+            } else if (hasRent) {
+                shareText += '出租\n\n';
+            }
 
             selectedProps.forEach((property, index) => {
                 shareText += `房源 ${index + 1}:\n`;
@@ -6150,14 +6185,16 @@
                     // 代理房源显示被代理方信息
                     if (property.agentParties && property.agentParties.length > 0) {
                         const firstAgent = property.agentParties[0];
-                        shareText += `被代理方：${firstAgent.name || '未知'} ${firstAgent.phone || ''}\n\n`;
+                        shareText += `被代理方：${firstAgent.name || '未知'} ${firstAgent.phone || ''}\n`;
                     } else {
-                        shareText += `被代理方：未知\n\n`;
+                        shareText += `被代理方：未知\n`;
                     }
                 } else {
                     // 普通房源显示房东信息
-                    shareText += `联系人：${property.landlordName || '未知'} ${property.landlordPhone || ''}\n\n`;
+                    shareText += `联系人：${property.landlordName || '未知'} ${property.landlordPhone || ''}\n`;
                 }
+                // 每个房源后面增加合作热线
+                shareText += `合作热线（微信同号）：13761547030 王 18019166290 韩 13917755549 苏\n\n`;
             });
 
             return shareText;
@@ -6433,7 +6470,6 @@
             let content = '';
             if (style === 'simple') {
                 // 简洁风格
-                content = '【房源推荐】\n\n';
                 
                 // 检查是否有出售房源
                 const hasSale = selectedProps.some(p => p.type === 'sale');
@@ -6455,11 +6491,12 @@
                         const propertyText = `${property.community || '未知小区'}${property.floor ? property.floor + '楼' : ''} ${property.area || '未知'}平 ${property.layout || '未知'} ${property.decoration || '普通装修'} ${priceText}${priceUnit}${property.ownership ? ' ' + property.ownership : ''}`;
                         content += `${propertyText}\n`;
                     });
-                    content += '\n';
+                    // 每个小区后面增加合作热线
+                    content += '合作热线（微信同号）：13761547030 王 18019166290 韩 13917755549 苏\n\n';
                 });
                 
                 // 末尾可自行设置固定添加
-                content += '【联系方式】18019166290\n【备注】可根据需要添加其他信息';
+                content += '合作热线：18019166290';
             } else {
                 // 精彩风格
                 content = '🏠 精选好房推荐 🏠\n\n';
@@ -6486,9 +6523,11 @@
                         content += `✨ ${property.community || '未知小区'}${property.floor ? property.floor + '楼' : ''}\n`;
                         content += `🌟 面积：${property.area || '未知'}平 | 户型：${property.layout || '未知'} | 装修：${property.decoration || '普通装修'} | 价格：${priceText}${priceUnit}${ownershipText}\n\n`;
                     });
+                    // 每个小区后面增加合作热线
+                    content += '合作热线（微信同号）：13761547030 王 18019166290 韩 13917755549 苏\n\n';
                 });
                 
-                content += '🎯 机会难得，先到先得！\n📞 欢迎来电咨询，随时看房！18019166290\n\n【备注】可根据需要添加其他信息';
+                content += '🎯 机会难得，先到先得！\n📞 欢迎来电咨询，随时看房！18019166290';
             }
 
             document.getElementById('shareContent').value = content;
