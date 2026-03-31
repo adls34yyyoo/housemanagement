@@ -4321,21 +4321,14 @@
         // 创建可代理房源卡片HTML
         function createAgentPropertyCard(property) {
             const statusClass = {
-                'pending': 'status-pending',
                 'off_shelf': 'status-off-shelf'
-            }[property.status] || 'status-pending';
+            }[property.status] || '';
 
             let statusText;
-            if (property.type === 'sale') {
-                statusText = {
-                    'pending': '待发布',
-                    'off_shelf': '已下架'
-                }[property.status] || '待发布';
+            if (property.status === 'off_shelf') {
+                statusText = '已下架';
             } else {
-                statusText = {
-                    'pending': '待发布',
-                    'off_shelf': '已下架'
-                }[property.status] || '待发布';
+                statusText = ''; // 取消待发布字样
             }
 
             const priceUnit = property.type === 'sale' ? '万元' : '元/月';
@@ -4350,7 +4343,7 @@
                         <div style="flex: 1; min-width: 0;">
                             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
                                 <span style="font-weight: 500; color: var(--text);">${property.community || '未知小区'}</span>
-                                <span class="property-status ${statusClass}" style="font-size: 12px;">${statusText}</span>
+                                ${statusText ? `<span class="property-status ${statusClass}" style="font-size: 12px;">${statusText}</span>` : ''}
                             </div>
                             <div style="font-size: 14px; color: var(--text-secondary); display: flex; justify-content: space-between;">
                                 <span>${property.layout || ''} ${property.area ? property.area + '平' : ''} ${property.floor ? property.floor + '楼' : ''} ${property.decoration || ''}</span>
