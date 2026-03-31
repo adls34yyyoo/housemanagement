@@ -4204,11 +4204,27 @@
                 return;
             }
 
+            // 添加全选和批量操作按钮
+            const allSelected = selectedProperties.length === propsToRender.length && propsToRender.length > 0;
+            let html = `
+                <div style="padding: 12px 16px; background: var(--surface); border-radius: var(--radius); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                    <span style="font-weight: 600; color: var(--text);">已选择 ${selectedProperties.length} 套房源</span>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="toggleAgentSelectAll()" style="padding: 8px 16px; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
+                            ${allSelected ? '取消全选' : '全选'}
+                        </button>
+                        ${selectedProperties.length > 0 ? `
+                            <button onclick="batchDeleteAgentProperties()" style="padding: 8px 16px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
+                                删除 (${selectedProperties.length})
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+
             // 分开出租和出售房源
             const saleProps = propsToRender.filter(p => p.type === 'sale');
             const rentProps = propsToRender.filter(p => p.type === 'rent');
-            
-            let html = '';
             
             // 添加出售房源标题和卡片
             if (saleProps.length > 0) {
@@ -4235,6 +4251,54 @@
             container.innerHTML = html;
         }
 
+        // 全选/取消全选可代理房源
+        function toggleAgentSelectAll() {
+            const propsToRender = filteredAgentProperties.length ? filteredAgentProperties : agentProperties;
+            const allSelected = selectedProperties.length === propsToRender.length && propsToRender.length > 0;
+            
+            if (allSelected) {
+                // 取消全选
+                selectedProperties = selectedProperties.filter(id => !propsToRender.some(p => p.id === id));
+            } else {
+                // 全选
+                const filteredIds = propsToRender.map(p => p.id);
+                selectedProperties = [...new Set([...selectedProperties, ...filteredIds])];
+            }
+            
+            renderAgentPropertyList();
+        }
+
+        // 批量删除可代理房源
+        function batchDeleteAgentProperties() {
+            if (selectedProperties.length === 0) return;
+            
+            const deleteCount = selectedProperties.length;
+            
+            // 添加密码验证
+            const password = prompt(`确定要删除选中的 ${deleteCount} 套可代理房源吗？此操作不可恢复。请输入密码：`);
+            if (password !== '123456') {
+                showToast('密码错误，无法删除房源');
+                return;
+            }
+            
+            if (confirm(`密码正确，确定要删除选中的 ${deleteCount} 套可代理房源吗？`)) {
+                // 过滤掉要删除的可代理房源
+                agentProperties = agentProperties.filter(p => !selectedProperties.includes(p.id));
+                
+                // 清空选中列表
+                selectedProperties = [];
+                
+                // 保存到本地存储
+                saveToLocalStorage();
+                
+                // 刷新UI
+                renderAgentPropertyList();
+                updateStats();
+                
+                showToast(`✅ 已删除 ${deleteCount} 套可代理房源`);
+            }
+        }
+
         // 创建可代理房源卡片HTML
         function createAgentPropertyCard(property) {
             const statusClass = {
@@ -4256,26 +4320,33 @@
             }
 
             const priceUnit = property.type === 'sale' ? '万元' : '元/月';
+            const isSelected = selectedProperties.includes(property.id);
 
             return `
-                <div class="property-card" style="margin-bottom: 12px;">
-                    <div class="property-info">
-                        <div class="property-title">
-                            <span>${property.community || '未知小区'}</span>
-                            <span class="property-status ${statusClass}">${statusText}</span>
+                <div class="property-card" style="padding: 12px 16px; cursor: pointer; transition: var(--transition); position: relative; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid var(--border);" onclick="openPropertyDetailModal('${property.id}')">
+                    <div style="display: flex; align-items: center; flex: 1;">
+                        <div style="margin-right: 12px; z-index: 10;" onclick="event.stopPropagation(); togglePropertySelection('${property.id}')">
+                            <input type="checkbox" style="width: 18px; height: 18px; cursor: pointer;" ${isSelected ? 'checked' : ''} onchange="event.stopPropagation(); togglePropertySelection('${property.id}')">
                         </div>
-                        <div class="property-address" style="margin-bottom: 8px;">
-                            ${property.region || ''} ${property.layout || ''} ${property.floor ? property.floor + '楼' : ''} ${property.area ? property.area + '平' : ''}
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                                <span style="font-weight: 500; color: var(--text);">${property.community || '未知小区'}</span>
+                                <span class="property-status ${statusClass}" style="font-size: 12px;">${statusText}</span>
+                            </div>
+                            <div style="font-size: 14px; color: var(--text-secondary); display: flex; justify-content: space-between;">
+                                <span>${property.layout || ''} ${property.area ? property.area + '平' : ''} ${property.floor ? property.floor + '楼' : ''} ${property.decoration || ''}</span>
+                                <span style="font-weight: 500; color: ${property.type === 'sale' ? '#ef4444' : '#22c55e'};">${property.price || '面议'}${priceUnit}</span>
+                            </div>
+                            ${renderAgentParties(property)}
                         </div>
-                        <div class="property-meta" style="margin-bottom: 8px;">
-                            <span class="property-price">${property.price || '面议'}${priceUnit}</span>
-                            <span class="property-specs">${property.decoration || ''}</span>
-                        </div>
-                        ${renderAgentParties(property)}
                     </div>
-                    <div class="property-actions">
-                        <button class="action-btn" onclick="event.stopPropagation(); editAgentProperty('${property.id}')">编辑</button>
-                        <button class="action-btn share" onclick="event.stopPropagation(); deleteAgentProperty('${property.id}')">删除</button>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-left: 12px;">
+                        <button class="action-btn" onclick="event.stopPropagation(); editAgentProperty('${property.id}')" style="background: none; color: #2196F3; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: none;">
+                            ✏️
+                        </button>
+                        <button class="action-btn share" onclick="event.stopPropagation(); deleteAgentProperty('${property.id}')" style="background: none; color: #ef4444; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: none;">
+                            🗑️
+                        </button>
                     </div>
                 </div>
             `;
