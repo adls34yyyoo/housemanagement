@@ -2079,8 +2079,8 @@
             </div>
             
             <div class="action-buttons">
-                <div class="action-button" onclick="openPropertyModal('sale')">增 🆕 💰 房</div>
-                <div class="action-button" onclick="openPropertyModal('rent')">增 🆕 🏠 房</div>
+                <div class="action-button" onclick="openPropertyModal('sale')" style="color: red;">🆕 卖 房</div>
+                <div class="action-button" onclick="openPropertyModal('rent')" style="color: red;">🆕 租 房</div>
                 <div class="action-button" onclick="toggleFilterMenu()">🔍 筛选</div>
             </div>
             
@@ -2183,7 +2183,7 @@
             </div>
             
             <div class="action-buttons">
-                <div class="action-button" onclick="openAgentPropertyModal('sale')">💰 新增代理房源</div>
+                <div class="action-button" onclick="openAgentPropertyModal()">💰 新增代理卖房</div>
                 <div class="action-button" onclick="toggleAgentFilterMenu()">🔍 筛选</div>
             </div>
             
@@ -4355,8 +4355,8 @@
         }
 
         // 打开可代理房源编辑模态框
-        function openAgentPropertyModal(type = 'sale') {
-            // 复用房源模态框，但添加isAgent标记
+        function openAgentPropertyModal() {
+            // 复用房源模态框，但添加isAgent标记，只支持卖房功能
             openPropertyModal('sale', true);
         }
 
@@ -4952,25 +4952,9 @@
                     initAgentPartiesList();
                 }
                 if (certificateSection) certificateSection.style.display = 'none';
-            } else {
-                // 自有房源模式 - 显示房东区域和产证，隐藏房源方区域
-                if (landlordSection) landlordSection.style.display = 'block';
-                if (agentPartiesSection) agentPartiesSection.style.display = 'none';
-                if (certificateSection) certificateSection.style.display = 'block';
-            }
-            
-            if (type === 'rent') {
-                document.getElementById('propertyModalTitle').textContent = isAgent ? '新增代理房源' : '新增租房';
-                // 租房房源状态选项
-                const statusSelect = document.getElementById('propStatus');
-                statusSelect.innerHTML = `
-                    <option value="pending">待发布</option>
-                    <option value="off_shelf">已下架</option>
-                `;
-                // 价格标签显示为元/月
-                priceLabel.textContent = '价格（元/月）';
-            } else {
-                document.getElementById('propertyModalTitle').textContent = isAgent ? '新增代理房源' : '新增卖房';
+                // 可代理房源强制使用卖房类型
+                type = 'sale';
+                document.getElementById('propertyModalTitle').textContent = '新增代理卖房';
                 // 卖房房源状态选项
                 const statusSelect = document.getElementById('propStatus');
                 statusSelect.innerHTML = `
@@ -4979,6 +4963,33 @@
                 `;
                 // 价格标签显示为万元
                 priceLabel.textContent = '价格（万元）';
+            } else {
+                // 自有房源模式 - 显示房东区域和产证，隐藏房源方区域
+                if (landlordSection) landlordSection.style.display = 'block';
+                if (agentPartiesSection) agentPartiesSection.style.display = 'none';
+                if (certificateSection) certificateSection.style.display = 'block';
+                
+                if (type === 'rent') {
+                    document.getElementById('propertyModalTitle').textContent = '新增租房';
+                    // 租房房源状态选项
+                    const statusSelect = document.getElementById('propStatus');
+                    statusSelect.innerHTML = `
+                        <option value="pending">待发布</option>
+                        <option value="off_shelf">已下架</option>
+                    `;
+                    // 价格标签显示为元/月
+                    priceLabel.textContent = '价格（元/月）';
+                } else {
+                    document.getElementById('propertyModalTitle').textContent = '新增卖房';
+                    // 卖房房源状态选项
+                    const statusSelect = document.getElementById('propStatus');
+                    statusSelect.innerHTML = `
+                        <option value="pending">待发布</option>
+                        <option value="off_shelf">已下架</option>
+                    `;
+                    // 价格标签显示为万元
+                    priceLabel.textContent = '价格（万元）';
+                }
             }
             
             clearPropertyForm();
