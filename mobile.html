@@ -3033,167 +3033,13 @@
         let editingCustomerId = null;
 
         // 从本地存储加载数据
-        function loadFromLocalStorage() {
-            try {
-                // 尝试从localStorage加载
-                let savedProperties = localStorage.getItem('properties');
-                let savedCustomers = localStorage.getItem('customers');
-                let savedOptions = localStorage.getItem('optionsData');
-                let savedAgentProperties = localStorage.getItem('agentProperties');
-                let savedAgentParties = localStorage.getItem('agentParties');
-                
-                // 如果localStorage加载失败，尝试从sessionStorage加载
-                if (!savedProperties) {
-                    savedProperties = sessionStorage.getItem('properties');
-                }
-                if (!savedCustomers) {
-                    savedCustomers = sessionStorage.getItem('customers');
-                }
-                if (!savedOptions) {
-                    savedOptions = sessionStorage.getItem('optionsData');
-                }
-                if (!savedAgentProperties) {
-                    savedAgentProperties = sessionStorage.getItem('agentProperties');
-                }
-                if (!savedAgentParties) {
-                    savedAgentParties = sessionStorage.getItem('agentParties');
-                }
-                
-                if (savedProperties) {
-                    properties = JSON.parse(savedProperties);
-                    console.log('从本地存储加载了', properties.length, '条房源数据');
-                }
-                
-                if (savedCustomers) {
-                    customers = JSON.parse(savedCustomers);
-                    console.log('从本地存储加载了', customers.length, '条客户数据');
-                }
-                
-                if (savedOptions) {
-                    optionsData = JSON.parse(savedOptions);
-                    console.log('从本地存储加载了选项数据');
-                }
-                
-                if (savedAgentProperties) {
-                    agentProperties = JSON.parse(savedAgentProperties);
-                    // 为代理房源添加isAgent属性
-                    agentProperties.forEach(property => {
-                        property.isAgent = true;
-                    });
-                    console.log('从本地存储加载了', agentProperties.length, '条代理房源数据');
-                }
-                
-                if (savedAgentParties) {
-                    agentParties = JSON.parse(savedAgentParties);
-                    console.log('从本地存储加载了', agentParties.length, '条被代理方数据');
-                }
-            } catch (e) {
-                console.error('加载本地存储失败:', e);
-            }
-        }
 
-        // 保存数据到本地存储
-        function saveToLocalStorage() {
-            try {
-                // 保存到localStorage
-                localStorage.setItem('properties', JSON.stringify(properties));
-                localStorage.setItem('customers', JSON.stringify(customers));
-                localStorage.setItem('optionsData', JSON.stringify(optionsData));
-                localStorage.setItem('agentProperties', JSON.stringify(agentProperties));
-                localStorage.setItem('agentParties', JSON.stringify(agentParties));
-                
-                // 同时保存到sessionStorage作为备份
-                sessionStorage.setItem('properties', JSON.stringify(properties));
-                sessionStorage.setItem('customers', JSON.stringify(customers));
-                sessionStorage.setItem('optionsData', JSON.stringify(optionsData));
-                sessionStorage.setItem('agentProperties', JSON.stringify(agentProperties));
-                sessionStorage.setItem('agentParties', JSON.stringify(agentParties));
-                
-                // 添加数据版本标记，用于版本升级时的数据兼容性
-                localStorage.setItem('dataVersion', '1.1');
-                sessionStorage.setItem('dataVersion', '1.1');
-                
-                // 添加时间戳，用于检查数据新鲜度
-                const timestamp = new Date().toISOString();
-                localStorage.setItem('lastSaved', timestamp);
-                sessionStorage.setItem('lastSaved', timestamp);
-                
-                console.log('数据已保存到本地存储');
-            } catch (e) {
-                console.error('保存到本地存储失败:', e);
-                // 如果localStorage失败，尝试只保存到sessionStorage
-                try {
-                    sessionStorage.setItem('properties', JSON.stringify(properties));
-                    sessionStorage.setItem('customers', JSON.stringify(customers));
-                    sessionStorage.setItem('optionsData', JSON.stringify(optionsData));
-                    sessionStorage.setItem('agentProperties', JSON.stringify(agentProperties));
-                    sessionStorage.setItem('agentParties', JSON.stringify(agentParties));
-                    const timestamp = new Date().toISOString();
-                    sessionStorage.setItem('lastSaved', timestamp);
-                    console.log('数据已保存到会话存储');
-                } catch (e2) {
-                    console.error('保存到会话存储也失败:', e2);
-                }
-            }
-        }
-        
-        // 定期自动保存数据
-        let autoSaveInterval = setInterval(saveToLocalStorage, 30000); // 每30秒自动保存一次
-        
-        // 页面卸载前保存数据
-        window.addEventListener('beforeunload', function() {
-            saveToLocalStorage();
-        });
 
-        // 清除本地数据
-        function clearLocalData() {
-            if (confirm('确定要清除所有本地数据吗？此操作不可恢复。')) {
-                try {
-                    // 清除localStorage
-                    localStorage.removeItem('properties');
-                    localStorage.removeItem('customers');
-                    localStorage.removeItem('optionsData');
-                    localStorage.removeItem('agentProperties');
-                    localStorage.removeItem('agentParties');
-                    localStorage.removeItem('dataVersion');
-                    
-                    // 同时清除sessionStorage
-                    sessionStorage.removeItem('properties');
-                    sessionStorage.removeItem('customers');
-                    sessionStorage.removeItem('optionsData');
-                    sessionStorage.removeItem('agentProperties');
-                    sessionStorage.removeItem('agentParties');
-                    sessionStorage.removeItem('dataVersion');
-                    
-                    // 重置内存中的数据
-                    properties = [];
-                    customers = [];
-                    agentProperties = [];
-                    agentParties = [];
-                    optionsData = {
-                        community: ['金地城', '一方新城'],
-                        decoration: ['精装修', '简装', '豪装', '毛坯', '中装'],
-                        layout: ['3-2-2', '2-1-1', '3-1-1', '2-2-1', '1-1-1'],
-                        region: ['惠南镇', '周浦镇', '康桥镇', '祝桥镇', '新场镇', '大团镇', '老港镇', '书院镇', '临港滴水湖', '泥城镇', '芦潮港镇'],
-                        propertyCertificate: ['满5唯一', '满5年', '满两年', '不满两年']
-                    };
-                    
-                    console.log('本地数据已清除');
-                    showToast('✅ 本地数据已清除');
-                    
-                    // 刷新UI
-                    updateStats();
-                    renderPropertyList();
-                    renderCustomerList();
-                    renderAgentPropertyList();
-                    loadOptions();
-                    initSelectOptions();
-                } catch (e) {
-                    console.error('清除本地数据失败:', e);
-                    showToast('❌ 清除本地数据失败');
-                }
-            }
-        }
+
+        
+
+
+
 
         // 选项数据存储
         let optionsData = {
@@ -3911,7 +3757,7 @@
             properties.push(newProperty);
             
             // 保存到本地存储
-            saveToLocalStorage();
+
             
             // 刷新列表
             renderPropertyList();
@@ -4178,11 +4024,11 @@
         }
 
         // 可代理房源数据
-        let agentProperties = JSON.parse(localStorage.getItem('agentProperties') || '[]');
+        let agentProperties = [];
         let filteredAgentProperties = [];
         
         // 全局被代理方列表
-        let agentParties = JSON.parse(localStorage.getItem('agentParties') || '[]');
+        let agentParties = [];
 
         // 渲染可代理房源列表
         function renderAgentPropertyList() {
@@ -4287,7 +4133,7 @@
                 selectedProperties = [];
                 
                 // 保存到本地存储
-                saveToLocalStorage();
+    
                 
                 // 刷新UI
                 renderAgentPropertyList();
@@ -4521,7 +4367,7 @@
             }
             
             agentProperties = agentProperties.filter(p => p.id !== propertyId);
-            saveToLocalStorage();
+
             renderAgentPropertyList();
             showToast('可代理房源已删除');
         }
@@ -5189,7 +5035,7 @@
             });
             
             // 保存全局被代理方列表
-            saveToLocalStorage();
+
             
             return parties;
         }
@@ -5362,7 +5208,6 @@
                 remark,
                 created_at: originalProperty?.created_at || new Date().toISOString(),
                 updated_at: new Date().toISOString(),
-                synced: false, // 添加同步状态标记
                 changeHistory: changeHistoryRecord
             };
 
@@ -5378,108 +5223,56 @@
             }
 
             try {
-                // 可代理房源只保存到本地，不同步到云端
-                if (isAgentMode) {
-                    if (editingPropertyId) {
-                        // 查找是可代理房源列表还是普通房源列表
-                        const agentIndex = agentProperties.findIndex(p => p.id === editingPropertyId);
-                        if (agentIndex !== -1) {
-                            agentProperties[agentIndex] = property;
-                        } else {
-                            // 可能在普通房源列表中，也检查
-                            const propIndex = properties.findIndex(p => p.id === editingPropertyId);
-                            if (propIndex !== -1) {
-                                properties[propIndex] = property;
-                            }
-                        }
-                    } else {
-                        agentProperties.push(property);
+                // 初始化Supabase客户端
+                if (!supabaseClient) {
+                    const initialized = initSupabase();
+                    if (!initialized) {
+                        showToast('❌ 数据库连接失败，请检查网络');
+                        return;
                     }
-                    saveToLocalStorage();
-                    showToast('✅ 可代理房源保存成功');
-                    closePropertyModal();
-                    renderAgentPropertyList();
-                    return;
                 }
 
-                // 检查网络状态（仅自有房源同步到云端）
-                const isOnline = navigator.onLine && supabaseClient;
-                
-                if (isOnline) {
-                    try {
-                        if (editingPropertyId) {
-                            const { error } = await supabaseClient
-                                .from('properties')
-                                .update(property)
-                                .eq('id', editingPropertyId);
-                            
-                            if (error) {
-                                console.error('更新房源失败:', error);
-                                // 如果是网络错误，保存到本地
-                                if (error.message && error.message.includes('fetch')) {
-                                    throw new Error('network');
-                                }
-                                throw error;
-                            }
-
-                            const index = properties.findIndex(p => p.id === editingPropertyId);
-                            if (index !== -1) {
-                                property.synced = true; // 标记为已同步
-                                properties[index] = property;
-                            }
-                        } else {
-                            const { error } = await supabaseClient
-                                .from('properties')
-                                .insert([property]);
-                            
-                            if (error) {
-                                console.error('保存房源失败:', error);
-                                // 如果是网络错误，保存到本地
-                                if (error.message && error.message.includes('fetch')) {
-                                    throw new Error('network');
-                                }
-                                throw error;
-                            }
-
-                            property.synced = true; // 标记为已同步
-                            properties.push(property);
-                        }
-                        showToast('✅ 房源保存成功');
-                    } catch (dbError) {
-                        // 数据库操作失败，保存到本地
-                        console.warn('数据库操作失败，保存到本地:', dbError);
-                        if (editingPropertyId) {
-                            const index = properties.findIndex(p => p.id === editingPropertyId);
-                            if (index !== -1) {
-                                properties[index] = property;
-                            }
-                        } else {
-                            properties.push(property);
-                        }
-                        showToast('⚠️ 网络不稳定，已保存到本地');
+                // 所有房源都同步到云端
+                if (editingPropertyId) {
+                    const { error } = await supabaseClient
+                        .from('properties')
+                        .update(property)
+                        .eq('id', editingPropertyId);
+                    
+                    if (error) {
+                        console.error('更新房源失败:', error);
+                        showToast('❌ 更新房源失败，请重试');
+                        return;
                     }
                 } else {
-                    // 离线模式，保存到本地
-                    if (editingPropertyId) {
-                        const index = properties.findIndex(p => p.id === editingPropertyId);
-                        if (index !== -1) {
-                            properties[index] = property;
-                        }
-                    } else {
-                        properties.push(property);
+                    const { error } = await supabaseClient
+                        .from('properties')
+                        .insert([property]);
+                    
+                    if (error) {
+                        console.error('保存房源失败:', error);
+                        showToast('❌ 保存房源失败，请重试');
+                        return;
                     }
-                    showToast('⚠️ 离线模式，已保存到本地');
                 }
 
-                closePropertyModal();
-                updateStats();
-                renderPropertyList();
+                // 重新加载数据
+                await loadData();
                 
-                // 保存到本地存储
-                saveToLocalStorage();
+                showToast('✅ 房源保存成功');
+                closePropertyModal();
+                
+                // 刷新列表
+                if (isAgentMode) {
+                    renderAgentPropertyList();
+                } else {
+                    renderPropertyList();
+                }
+                
+                updateStats();
             } catch (error) {
-                console.error('保存房源出错:', error);
-                showToast('❌ 保存失败: ' + (error.message || '未知错误'));
+                console.error('保存房源时出错:', error);
+                showToast('❌ 保存失败，请检查网络连接');
             }
         }
 
@@ -5610,30 +5403,36 @@
             }
 
             try {
-                if (supabaseClient) {
-                    const { error } = await supabaseClient
-                        .from('properties')
-                        .delete()
-                        .eq('id', id);
-                    
-                    if (error) {
-                        console.error('删除房源失败:', error);
-                        throw error;
+                // 初始化Supabase客户端
+                if (!supabaseClient) {
+                    const initialized = initSupabase();
+                    if (!initialized) {
+                        showToast('❌ 数据库连接失败，请检查网络');
+                        return;
                     }
                 }
 
-                // 从本地数组中删除
-                properties = properties.filter(p => p.id !== id);
+                // 从云数据库删除
+                const { error } = await supabaseClient
+                    .from('properties')
+                    .delete()
+                    .eq('id', id);
+                
+                if (error) {
+                    console.error('删除房源失败:', error);
+                    showToast('❌ 删除房源失败，请重试');
+                    return;
+                }
+
+                // 重新加载数据
+                await loadData();
                 
                 updateStats();
                 renderPropertyList();
                 showToast('✅ 房源删除成功');
-                
-                // 保存到本地存储
-                saveToLocalStorage();
             } catch (error) {
                 console.error('删除房源出错:', error);
-                showToast('❌ 删除失败: ' + (error.message || '未知错误'));
+                showToast('❌ 删除失败，请检查网络连接');
             }
         }
 
@@ -5676,43 +5475,36 @@
         // 删除客户
         async function deleteCustomer(customerId) {
             try {
-                // 检查网络状态
-                const isOnline = navigator.onLine && supabaseClient;
-                
-                if (isOnline) {
-                    try {
-                        const { error } = await supabaseClient
-                            .from('customers')
-                            .delete()
-                            .eq('id', customerId);
-                        
-                        if (error) {
-                            console.error('删除客户失败:', error);
-                            // 如果是网络错误，保存到本地
-                            if (error.message && error.message.includes('fetch')) {
-                                throw new Error('network');
-                            }
-                            throw error;
-                        }
-                    } catch (error) {
-                        console.error('删除客户失败:', error);
-                        // 网络错误时，仅从本地删除
+                // 初始化Supabase客户端
+                if (!supabaseClient) {
+                    const initialized = initSupabase();
+                    if (!initialized) {
+                        showToast('❌ 数据库连接失败，请检查网络');
+                        return;
                     }
                 }
+
+                // 从云数据库删除
+                const { error } = await supabaseClient
+                    .from('customers')
+                    .delete()
+                    .eq('id', customerId);
                 
-                // 从本地删除
-                const index = customers.findIndex(c => c.id === customerId);
-                if (index !== -1) {
-                    customers.splice(index, 1);
-                    saveCustomersToLocal();
+                if (error) {
+                    console.error('删除客户失败:', error);
+                    showToast('❌ 删除客户失败，请重试');
+                    return;
                 }
+
+                // 重新加载数据
+                await loadData();
                 
                 renderCustomerList();
-                showToast('客户删除成功');
-                
+                updateStats();
+                showToast('✅ 客户删除成功');
             } catch (error) {
-                console.error('删除客户失败:', error);
-                showToast('删除客户失败');
+                console.error('删除客户出错:', error);
+                showToast('❌ 删除失败，请检查网络连接');
             }
         }
 
@@ -5740,7 +5532,6 @@
                 status,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
-                synced: false, // 添加同步状态标记
                 changeHistory: editingCustomerId ? (customers.find(c => c.id === editingCustomerId)?.changeHistory || []).concat({
                     timestamp: new Date().toISOString(),
                     action: '更新',
@@ -5754,84 +5545,49 @@
             };
 
             try {
-                // 检查网络状态
-                const isOnline = navigator.onLine && supabaseClient;
-                
-                if (isOnline) {
-                    try {
-                        if (editingCustomerId) {
-                            const { error } = await supabaseClient
-                                .from('customers')
-                                .update(customer)
-                                .eq('id', editingCustomerId);
-                            
-                            if (error) {
-                                console.error('更新客户失败:', error);
-                                // 如果是网络错误，保存到本地
-                                if (error.message && error.message.includes('fetch')) {
-                                    throw new Error('network');
-                                }
-                                throw error;
-                            }
-
-                            const index = customers.findIndex(c => c.id === editingCustomerId);
-                            if (index !== -1) {
-                                customer.synced = true; // 标记为已同步
-                                customers[index] = customer;
-                            }
-                        } else {
-                            const { error } = await supabaseClient
-                                .from('customers')
-                                .insert([customer]);
-                            
-                            if (error) {
-                                console.error('保存客户失败:', error);
-                                // 如果是网络错误，保存到本地
-                                if (error.message && error.message.includes('fetch')) {
-                                    throw new Error('network');
-                                }
-                                throw error;
-                            }
-
-                            customer.synced = true; // 标记为已同步
-                            customers.push(customer);
-                        }
-                        showToast('✅ 客户保存成功');
-                    } catch (dbError) {
-                        // 数据库操作失败，保存到本地
-                        console.warn('数据库操作失败，保存到本地:', dbError);
-                        if (editingCustomerId) {
-                            const index = customers.findIndex(c => c.id === editingCustomerId);
-                            if (index !== -1) {
-                                customers[index] = customer;
-                            }
-                        } else {
-                            customers.push(customer);
-                        }
-                        showToast('⚠️ 网络不稳定，已保存到本地');
+                // 初始化Supabase客户端
+                if (!supabaseClient) {
+                    const initialized = initSupabase();
+                    if (!initialized) {
+                        showToast('❌ 数据库连接失败，请检查网络');
+                        return;
                     }
-                } else {
-                    // 离线模式，保存到本地
-                    if (editingCustomerId) {
-                        const index = customers.findIndex(c => c.id === editingCustomerId);
-                        if (index !== -1) {
-                            customers[index] = customer;
-                        }
-                    } else {
-                        customers.push(customer);
-                    }
-                    showToast('⚠️ 离线模式，已保存到本地');
                 }
 
-                closeCustomerModal();
-                updateStats();
-                renderCustomerList();
+                // 所有客户都同步到云端
+                if (editingCustomerId) {
+                    const { error } = await supabaseClient
+                        .from('customers')
+                        .update(customer)
+                        .eq('id', editingCustomerId);
+                    
+                    if (error) {
+                        console.error('更新客户失败:', error);
+                        showToast('❌ 更新客户失败，请重试');
+                        return;
+                    }
+                } else {
+                    const { error } = await supabaseClient
+                        .from('customers')
+                        .insert([customer]);
+                    
+                    if (error) {
+                        console.error('保存客户失败:', error);
+                        showToast('❌ 保存客户失败，请重试');
+                        return;
+                    }
+                }
+
+                // 重新加载数据
+                await loadData();
                 
-                // 保存到本地存储
-                saveToLocalStorage();
+                showToast('✅ 客户保存成功');
+                closeCustomerModal();
+                renderCustomerList();
+                updateStats();
             } catch (error) {
-                console.error('保存客户出错:', error);
-                showToast('❌ 保存失败: ' + (error.message || '未知错误'));
+                console.error('保存客户时出错:', error);
+                showToast('❌ 保存失败，请检查网络连接');
             }
         }
 
@@ -5927,7 +5683,7 @@
                 });
                 document.getElementById('newOptionValue').value = '';
                 loadOptions();
-                saveToLocalStorage();
+    
                 showToast('添加成功');
                 return;
             }
@@ -5946,7 +5702,7 @@
             document.getElementById('newOptionValue').value = '';
             loadOptions();
             initSelectOptions();
-            saveToLocalStorage();
+
             showToast('添加成功');
         }
 
@@ -5976,7 +5732,7 @@
                 if (index > -1) {
                     agentParties.splice(index, 1);
                     loadOptions();
-                    saveToLocalStorage();
+        
                     showToast('删除成功');
                 }
                 return;
@@ -6000,7 +5756,7 @@
                 optionsData[type].splice(index, 1);
                 loadOptions();
                 initSelectOptions();
-                saveToLocalStorage();
+    
                 showToast('删除成功');
             }
         }
@@ -6350,7 +6106,7 @@
             });
 
             // 保存到本地存储
-            saveToLocalStorage();
+
 
             // 关闭模态框
             closeRentSaleToggleModal();
@@ -6392,6 +6148,52 @@
             setTimeout(() => {
                 toast.classList.remove('show');
             }, 3000);
+        }
+
+        // 推送通知功能
+        function requestNotificationPermission() {
+            if ('Notification' in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        console.log('通知权限已授予');
+                        showToast('✅ 推送通知权限已开启');
+                    } else if (permission === 'denied') {
+                        console.log('通知权限已拒绝');
+                        showToast('⚠️ 推送通知权限已被拒绝');
+                    }
+                });
+            } else {
+                showToast('⚠️ 您的浏览器不支持推送通知');
+            }
+        }
+
+        // 发送推送通知
+        function sendNotification(title, body, icon = '📱') {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(title, {
+                    body: body,
+                    icon: icon,
+                    badge: '📱'
+                });
+                return true;
+            } else if ('Notification' in window && Notification.permission !== 'denied') {
+                requestNotificationPermission();
+                return false;
+            } else {
+                return false;
+            }
+        }
+
+        // 自动检查通知权限
+        function checkNotificationPermission() {
+            if ('Notification' in window) {
+                if (Notification.permission === 'granted') {
+                    console.log('通知权限已授予');
+                } else if (Notification.permission === 'default') {
+                    console.log('通知权限未设置');
+                    // 可以在这里提示用户开启通知权限
+                }
+            }
         }
 
         // 打开一键转发页面
@@ -7104,7 +6906,7 @@
             optionsData.community = optionsData.community.filter(c => !communitiesToDelete.includes(c));
             
             // 保存到本地存储
-            saveToLocalStorage();
+
             
             // 刷新UI
             renderPropertyList();
@@ -7489,35 +7291,17 @@
 
         // 加载数据
         async function loadData() {
-            console.log('开始加载数据...');
+            console.log('开始从云数据库加载数据...');
             
             try {
-                // 确保本地数据已加载
-                if (properties.length === 0 && customers.length === 0) {
-                    loadFromLocalStorage();
-                }
-                
-                // 检查网络状态和Supabase连接
-                if (!navigator.onLine) {
-                    console.warn('网络离线，使用本地数据');
-                    updateConnectionStatus(false);
-                    showToast('⚠️ 网络离线，使用本地数据');
-                    return;
-                }
-                
+                // 初始化Supabase客户端
                 if (!supabaseClient) {
-                    console.warn('未连接到Supabase，使用本地数据');
-                    showToast('⚠️ 数据库未连接，使用本地数据');
-                    return;
-                }
-
-                // 检查本地是否有数据，如果有就优先使用本地数据
-                const hasLocalData = properties.length > 0 || customers.length > 0;
-                
-                if (hasLocalData) {
-                    console.log('本地已有数据，优先使用本地数据');
-                    // 不显示toast，避免频繁提示
-                    return;
+                    const initialized = initSupabase();
+                    if (!initialized) {
+                        console.error('未连接到Supabase');
+                        showToast('❌ 数据库连接失败，请检查网络');
+                        return;
+                    }
                 }
 
                 console.log('开始从服务器加载数据...');
@@ -7565,30 +7349,22 @@
                         console.warn('加载客户数据失败:', customersError);
                     }
 
-                    // 保存到本地存储
-                    if (properties.length > 0 || customers.length > 0) {
-                        saveToLocalStorage();
-                        updateStats();
-                        renderPropertyList();
-                        renderCustomerList();
-                        showToast('✅ 数据加载成功');
-                    }
+                    // 刷新UI
+                    updateStats();
+                    renderPropertyList();
+                    renderCustomerList();
+                    renderAgentPropertyList();
+                    showToast('✅ 数据加载成功');
 
                 } catch (fetchError) {
-                    console.warn('服务器请求失败:', fetchError);
+                    console.error('服务器请求失败:', fetchError);
                     updateConnectionStatus(false);
-                    // 如果本地已有数据，就不显示错误提示
-                    if (properties.length === 0 && customers.length === 0) {
-                        showToast('⚠️ 网络不稳定，使用本地数据');
-                    }
+                    showToast('❌ 网络连接失败，请检查网络');
                 }
 
             } catch (error) {
                 console.error('加载数据出错:', error);
-                // 确保使用本地数据
-                if (properties.length === 0 && customers.length === 0) {
-                    loadFromLocalStorage();
-                }
+                showToast('❌ 加载数据失败，请检查网络连接');
             }
         }
 
@@ -7804,7 +7580,7 @@
             property.synced = false;
 
             // 保存到本地存储
-            saveToLocalStorage();
+
 
             // 关闭模态框
             closeCallRecordModal();
@@ -7908,7 +7684,7 @@
             customer.synced = false;
 
             // 保存到本地存储
-            saveToLocalStorage();
+
 
             // 关闭模态框
             closeCommunicationModal();
@@ -8116,7 +7892,7 @@
                 }
                 
                 // 保存同步状态
-                saveToLocalStorage();
+    
                 
                 // 3. 获取同步后的本地和云数据库数据数量
                 const localPropertyCount = properties.length;
@@ -8319,7 +8095,7 @@
         }
 
         // 批量删除房源
-        function batchDeleteProperties() {
+        async function batchDeleteProperties() {
             if (selectedProperties.length === 0) return;
             
             const deleteCount = selectedProperties.length;
@@ -8332,20 +8108,45 @@
             }
             
             if (confirm(`密码正确，确定要删除选中的 ${deleteCount} 套房源吗？`)) {
-                // 过滤掉要删除的房源
-                properties = properties.filter(p => !selectedProperties.includes(p.id));
-                
-                // 清空选中列表
-                selectedProperties = [];
-                
-                // 保存到本地存储
-                saveToLocalStorage();
-                
-                // 刷新UI
-                renderPropertyList();
-                updateStats();
-                
-                showToast(`✅ 已删除 ${deleteCount} 套房源`);
+                try {
+                    // 初始化Supabase客户端
+                    if (!supabaseClient) {
+                        const initialized = initSupabase();
+                        if (!initialized) {
+                            showToast('❌ 数据库连接失败，请检查网络');
+                            return;
+                        }
+                    }
+
+                    // 批量删除房源
+                    for (const id of selectedProperties) {
+                        const { error } = await supabaseClient
+                            .from('properties')
+                            .delete()
+                            .eq('id', id);
+                        
+                        if (error) {
+                            console.error('删除房源失败:', error);
+                            showToast('❌ 删除房源失败，请重试');
+                            return;
+                        }
+                    }
+
+                    // 清空选中列表
+                    selectedProperties = [];
+
+                    // 重新加载数据
+                    await loadData();
+                    
+                    // 刷新UI
+                    renderPropertyList();
+                    updateStats();
+                    
+                    showToast(`✅ 已删除 ${deleteCount} 套房源`);
+                } catch (error) {
+                    console.error('批量删除房源出错:', error);
+                    showToast('❌ 删除失败，请检查网络连接');
+                }
             }
         }
 
@@ -8366,7 +8167,7 @@
             console.log('页面加载完成，开始初始化...');
             
             // 优先从本地存储加载数据
-            loadFromLocalStorage();
+
             console.log('本地数据已加载:', properties.length, '条房源,', customers.length, '条客户');
             
             // 初始化主题
