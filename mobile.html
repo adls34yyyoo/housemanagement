@@ -2368,9 +2368,6 @@
                             <button onclick="generateMomentsContent('simple')" style="padding: 8px 16px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500; white-space: nowrap;">
                                 简洁文案
                             </button>
-                            <button onclick="generateMomentsContent('wonderful')" style="padding: 8px 16px; background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500; white-space: nowrap;">
-                                精彩文案
-                            </button>
                             <button onclick="generateMomentsContent('professional')" style="padding: 8px 16px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500; white-space: nowrap;">
                                 专业文案
                             </button>
@@ -3101,8 +3098,13 @@
                 sessionStorage.setItem('agentParties', JSON.stringify(agentParties));
                 
                 // 添加数据版本标记，用于版本升级时的数据兼容性
-                localStorage.setItem('dataVersion', '1.0');
-                sessionStorage.setItem('dataVersion', '1.0');
+                localStorage.setItem('dataVersion', '1.1');
+                sessionStorage.setItem('dataVersion', '1.1');
+                
+                // 添加时间戳，用于检查数据新鲜度
+                const timestamp = new Date().toISOString();
+                localStorage.setItem('lastSaved', timestamp);
+                sessionStorage.setItem('lastSaved', timestamp);
                 
                 console.log('数据已保存到本地存储');
             } catch (e) {
@@ -3114,12 +3116,22 @@
                     sessionStorage.setItem('optionsData', JSON.stringify(optionsData));
                     sessionStorage.setItem('agentProperties', JSON.stringify(agentProperties));
                     sessionStorage.setItem('agentParties', JSON.stringify(agentParties));
+                    const timestamp = new Date().toISOString();
+                    sessionStorage.setItem('lastSaved', timestamp);
                     console.log('数据已保存到会话存储');
                 } catch (e2) {
                     console.error('保存到会话存储也失败:', e2);
                 }
             }
         }
+        
+        // 定期自动保存数据
+        let autoSaveInterval = setInterval(saveToLocalStorage, 30000); // 每30秒自动保存一次
+        
+        // 页面卸载前保存数据
+        window.addEventListener('beforeunload', function() {
+            saveToLocalStorage();
+        });
 
         // 清除本地数据
         function clearLocalData() {
@@ -6556,37 +6568,6 @@
                 
                 // 末尾可自行设置固定添加
                 content += '合作热线：18019166290';
-            } else if (style === 'wonderful') {
-                // 精彩风格
-                content = '🏠 精选好房推荐 🏠\n\n';
-                
-                // 检查是否有出售房源
-                const hasSale = selectedProps.some(p => p.type === 'sale');
-                const hasRent = selectedProps.some(p => p.type === 'rent');
-                
-                // 只在第一行显示出售或出租
-                if (hasSale && hasRent) {
-                    content += '✨ 出售/出租\n\n';
-                } else if (hasSale) {
-                    content += '✨ 出售\n\n';
-                } else if (hasRent) {
-                    content += '✨ 出租\n\n';
-                }
-                
-                Object.entries(groupedProps).forEach(([community, group]) => {
-                    group.properties.forEach(property => {
-                        const priceText = property.price || '面议';
-                        const priceUnit = property.type === 'sale' ? '万元' : '元/月';
-                        const ownershipText = property.ownership ? ' | ' + property.ownership : '';
-                        
-                        content += `✨ ${property.community || '未知小区'}${property.floor ? property.floor + '楼' : ''}\n`;
-                        content += `🌟 面积：${property.area || '未知'}平 | 户型：${property.layout || '未知'} | 装修：${property.decoration || '普通装修'} | 价格：${priceText}${priceUnit}${ownershipText}\n\n`;
-                    });
-                    // 每个小区后面增加合作热线
-                    content += '合作热线（微信同号）：13761547030 王 18019166290 韩 13917755549 苏\n\n';
-                });
-                
-                content += '🎯 机会难得，先到先得！\n📞 欢迎来电咨询，随时看房！18019166290';
             } else if (style === 'professional') {
                 // 专业风格
                 content = '【房产投资分析报告】\n\n';
