@@ -2654,6 +2654,14 @@
                     <label class="form-label">房东电话</label>
                     <input type="tel" class="form-input" id="propLandlordPhone" placeholder="请输入房东电话">
                 </div>
+                <!-- 被代理方区域 -->
+                <div id="agentPartiesSection" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">被代理方</label>
+                        <div id="agentPartiesList" style="margin-bottom: 12px;"></div>
+                        <button type="button" class="btn btn-primary" onclick="addAgentParty()" style="width: 100%;">添加被代理方</button>
+                    </div>
+                </div>
                 <div class="form-group">
                     <label class="form-label">产证情况</label>
                     <select class="form-select" id="propCertificate">
