@@ -2391,7 +2391,17 @@
                 <!-- 后缀选项 -->
                 <div class="form-group">
                     <label class="form-label">后缀选项</label>
+                    <div style="margin-bottom: 10px;">
+                        <select id="suffixSelect" onchange="updateSuffixInput()" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 10px;">
+                            <option value="合作热线：18019166290">合作热线：18019166290</option>
+                            <option value="合作热线（微信同号）：13761547030 王 18019166290 韩 13917755549 苏">合作热线（微信同号）：13761547030 王 18019166290 韩 13917755549 苏</option>
+                        </select>
+                    </div>
                     <input type="text" id="suffixOption" placeholder="请输入后缀内容" value="合作热线：18019166290" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 10px;">
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <button class="btn btn-default" onclick="addSuffixOption()" style="flex: 1;">添加后缀</button>
+                        <button class="btn btn-default" onclick="removeSuffixOption()" style="flex: 1;">删除后缀</button>
+                    </div>
                     <div style="display: flex; gap: 10px;">
                         <button class="btn btn-default" onclick="applySuffix()" style="flex: 1;">应用后缀</button>
                         <button class="btn btn-default" onclick="resetSuffix()" style="flex: 1;">重置后缀</button>
@@ -6757,8 +6767,82 @@
         // 重置后缀
         function resetSuffix() {
             document.getElementById('suffixOption').value = '合作热线：18019166290';
+            // 更新下拉选择框
+            const suffixSelect = document.getElementById('suffixSelect');
+            for (let i = 0; i < suffixSelect.options.length; i++) {
+                if (suffixSelect.options[i].value === '合作热线：18019166290') {
+                    suffixSelect.selectedIndex = i;
+                    break;
+                }
+            }
             // 重新生成简洁文案
             generateMomentsContent('simple');
+        }
+        
+        // 更新后缀输入框
+        function updateSuffixInput() {
+            const suffixSelect = document.getElementById('suffixSelect');
+            const suffixOption = document.getElementById('suffixOption');
+            suffixOption.value = suffixSelect.value;
+        }
+        
+        // 添加后缀选项
+        function addSuffixOption() {
+            const suffixOption = document.getElementById('suffixOption');
+            const suffixSelect = document.getElementById('suffixSelect');
+            const suffixValue = suffixOption.value.trim();
+            
+            if (!suffixValue) {
+                showToast('请先输入后缀内容');
+                return;
+            }
+            
+            // 检查是否已存在
+            for (let i = 0; i < suffixSelect.options.length; i++) {
+                if (suffixSelect.options[i].value === suffixValue) {
+                    showToast('该后缀已存在');
+                    return;
+                }
+            }
+            
+            // 添加新选项
+            const newOption = document.createElement('option');
+            newOption.value = suffixValue;
+            newOption.textContent = suffixValue;
+            suffixSelect.appendChild(newOption);
+            
+            // 选中新选项
+            suffixSelect.selectedIndex = suffixSelect.options.length - 1;
+            
+            showToast('✅ 后缀添加成功');
+        }
+        
+        // 删除后缀选项
+        function removeSuffixOption() {
+            const suffixSelect = document.getElementById('suffixSelect');
+            const selectedIndex = suffixSelect.selectedIndex;
+            
+            if (selectedIndex === -1) {
+                showToast('请先选择要删除的后缀');
+                return;
+            }
+            
+            // 不能删除最后一个选项
+            if (suffixSelect.options.length <= 1) {
+                showToast('至少保留一个后缀选项');
+                return;
+            }
+            
+            // 删除选中的选项
+            suffixSelect.remove(selectedIndex);
+            
+            // 选择第一个选项
+            suffixSelect.selectedIndex = 0;
+            
+            // 更新输入框
+            updateSuffixInput();
+            
+            showToast('✅ 后缀删除成功');
         }
 
         // 显示上海房产最新行情详情
