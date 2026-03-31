@@ -2388,30 +2388,9 @@
                     <textarea id="shareContent" rows="6" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 20px; resize: vertical;">${getSelectedPropertiesShareText()}</textarea>
                 </div>
                 
-                <!-- 后缀选项 -->
-                <div class="form-group">
-                    <label class="form-label">后缀选项</label>
-                    <div style="margin-bottom: 10px;">
-                        <select id="suffixSelect" onchange="updateSuffixInput()" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 10px;">
-                            <option value="合作热线：18019166290">合作热线：18019166290</option>
-                            <option value="合作热线（微信同号）：13761547030 王 18019166290 韩 13917755549 苏">合作热线（微信同号）：13761547030 王 18019166290 韩 13917755549 苏</option>
-                        </select>
-                    </div>
-                    <input type="text" id="suffixOption" placeholder="请输入后缀内容" value="合作热线：18019166290" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 10px;">
-                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                        <button class="btn btn-default" onclick="addSuffixOption()" style="flex: 1;">添加后缀</button>
-                        <button class="btn btn-default" onclick="removeSuffixOption()" style="flex: 1;">删除后缀</button>
-                    </div>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-default" onclick="applySuffix()" style="flex: 1;">应用后缀</button>
-                        <button class="btn btn-default" onclick="resetSuffix()" style="flex: 1;">重置后缀</button>
-                    </div>
-                </div>
-                
                 <!-- 操作按钮 -->
                 <div class="form-actions" style="display: flex; gap: 12px;">
                     <button class="btn btn-default" onclick="shareToCopy()">复制文案</button>
-                    <button class="btn btn-primary" onclick="generateTxtFile()">生成TXT文件</button>
                 </div>
             </div>
         </div>
@@ -5568,13 +5547,13 @@
             // 生成不同风格的朋友圈文案
             const copyOptions = [
                 // 简洁风格
-                `【${property.community || '精品房源'}】\n${property.layout || '优质'}户型，${property.area || '宽敞'}㎡\n${property.type === 'sale' ? '售价' : '月租'}：${property.price || '面议'}${property.type === 'sale' ? '万' : '元/月'}\n${property.decoration || '精美'}装修，${property.floor || '黄金'}楼层\n随时看房，手慢无！\n\n📞 联系电话：${property.landlordPhone || '请咨询'}`,
+                `【${property.community || '精品房源'}】\n${property.layout || '优质'}户型，${property.area || '宽敞'}㎡\n${property.type === 'sale' ? '售价' : '月租'}：${property.price || '面议'}${property.type === 'sale' ? '万' : '元/月'}\n${property.decoration || '精美'}装修，${property.floor || '黄金'}楼层\n${property.type === 'sale' ? '出售\n\n房源直接在下面一行显示' : ''}\n随时看房，手慢无！\n\n📞 联系电话：${property.landlordPhone || '请咨询'}`,
                 
                 // 温馨风格
-                `✨ 好房推荐 ✨\n\n🏠 ${property.community || '理想家园'}\n🏡 ${property.layout || '舒适'}户型\n📏 ${property.area || '宽敞'}平方米\n💰 ${property.type === 'sale' ? '总价' : '月租'}：${property.price || '面议'}${property.type === 'sale' ? '万元' : '元/月'}\n🎨 ${property.decoration || '精致'}装修\n🏢 ${property.floor || '优选'}楼层\n\n📍 位置优越，周边配套齐全\n👀 机会难得，欢迎随时看房\n\n📞 ${property.landlordPhone || '联系电话'}`,
+                `✨ 好房推荐 ✨\n\n🏠 ${property.community || '理想家园'}\n🏡 ${property.layout || '舒适'}户型\n📏 ${property.area || '宽敞'}平方米\n💰 ${property.type === 'sale' ? '总价' : '月租'}：${property.price || '面议'}${property.type === 'sale' ? '万' : '元/月'}\n🎨 ${property.decoration || '精致'}装修\n🏢 ${property.floor || '优选'}楼层\n\n📍 位置优越，周边配套齐全\n👀 机会难得，欢迎随时看房\n\n📞 ${property.landlordPhone || '联系电话'}`,
                 
                 // 专业风格
-                `【房产经纪人推荐】\n\n项目：${property.community || '优质小区'}\n户型：${property.layout || '标准'}格局\n面积：${property.area || '合理'}㎡\n价格：${property.price || '市场价格'}${property.type === 'sale' ? '万元' : '元/月'}\n装修：${property.decoration || '良好'}标准\n楼层：${property.floor || '适宜'}层\n\n核心卖点：位置优越、交通便利、配套完善\n\n预约看房：${property.landlordPhone || '请致电'}`
+                `【房产经纪人推荐】\n\n项目：${property.community || '优质小区'}\n户型：${property.layout || '标准'}格局\n面积：${property.area || '合理'}㎡\n价格：${property.price || '市场价格'}${property.type === 'sale' ? '万' : '元/月'}\n装修：${property.decoration || '良好'}标准\n楼层：${property.floor || '适宜'}层\n\n核心卖点：位置优越、交通便利、配套完善\n\n合作热线(微信同号）:13764547030 王 18019166290 韩 13917755549 苏`
             ];
 
             // 创建文案选择模态框
@@ -6694,27 +6673,7 @@
             renderSharePropertyList();
         }
 
-        // 生成TXT文件
-        function generateTxtFile() {
-            const shareContent = document.getElementById('shareContent').value;
-            if (!shareContent) {
-                showToast('请先选择房源或生成文案');
-                return;
-            }
 
-            // 创建Blob对象
-            const blob = new Blob([shareContent], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `房源转发_${new Date().toISOString().slice(0, 10)}.txt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            showToast('✅ TXT文件已生成');
-        }
 
         // 生成朋友圈文案
         function generateMomentsContent(style) {
@@ -6837,107 +6796,7 @@
             }
         };
         
-        // 应用后缀
-        function applySuffix() {
-            const suffix = document.getElementById('suffixOption').value;
-            const content = document.getElementById('shareContent').value;
-            if (!content) {
-                showToast('请先生成文案');
-                return;
-            }
-            // 移除原有的后缀
-            let newContent = content;
-            if (newContent.includes('合作热线：')) {
-                newContent = newContent.substring(0, newContent.indexOf('合作热线：'));
-            }
-            // 添加新的后缀
-            if (suffix) {
-                newContent = newContent.trim() + '\n' + suffix;
-            }
-            document.getElementById('shareContent').value = newContent;
-            showToast('✅ 后缀已应用');
-        }
-        
-        // 重置后缀
-        function resetSuffix() {
-            document.getElementById('suffixOption').value = '合作热线：18019166290';
-            // 更新下拉选择框
-            const suffixSelect = document.getElementById('suffixSelect');
-            for (let i = 0; i < suffixSelect.options.length; i++) {
-                if (suffixSelect.options[i].value === '合作热线：18019166290') {
-                    suffixSelect.selectedIndex = i;
-                    break;
-                }
-            }
-            // 重新生成简洁文案
-            generateMomentsContent('simple');
-        }
-        
-        // 更新后缀输入框
-        function updateSuffixInput() {
-            const suffixSelect = document.getElementById('suffixSelect');
-            const suffixOption = document.getElementById('suffixOption');
-            suffixOption.value = suffixSelect.value;
-        }
-        
-        // 添加后缀选项
-        function addSuffixOption() {
-            const suffixOption = document.getElementById('suffixOption');
-            const suffixSelect = document.getElementById('suffixSelect');
-            const suffixValue = suffixOption.value.trim();
-            
-            if (!suffixValue) {
-                showToast('请先输入后缀内容');
-                return;
-            }
-            
-            // 检查是否已存在
-            for (let i = 0; i < suffixSelect.options.length; i++) {
-                if (suffixSelect.options[i].value === suffixValue) {
-                    showToast('该后缀已存在');
-                    return;
-                }
-            }
-            
-            // 添加新选项
-            const newOption = document.createElement('option');
-            newOption.value = suffixValue;
-            newOption.textContent = suffixValue;
-            suffixSelect.appendChild(newOption);
-            
-            // 选中新选项
-            suffixSelect.selectedIndex = suffixSelect.options.length - 1;
-            
-            showToast('✅ 后缀添加成功');
-        }
-        
-        // 删除后缀选项
-        function removeSuffixOption() {
-            const suffixSelect = document.getElementById('suffixSelect');
-            const selectedIndex = suffixSelect.selectedIndex;
-            
-            if (selectedIndex === -1) {
-                showToast('请先选择要删除的后缀');
-                return;
-            }
-            
-            // 不能删除最后一个选项
-            if (suffixSelect.options.length <= 1) {
-                showToast('至少保留一个后缀选项');
-                return;
-            }
-            
-            // 删除选中的选项
-            suffixSelect.remove(selectedIndex);
-            
-            // 选择第一个选项
-            suffixSelect.selectedIndex = 0;
-            
-            // 更新输入框
-            updateSuffixInput();
-            
-            showToast('✅ 后缀删除成功');
-        }
+
 
         // 显示上海房产最新行情详情
         function showMarketTrends() {
