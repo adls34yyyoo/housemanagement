@@ -2353,11 +2353,11 @@
                         </select>
                         <select id="shareFilterPrice" onchange="applyShareFilters()" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius);">
                             <option value="all">全部价格</option>
-                            <option value="0-100">100以下</option>
-                            <option value="100-200">100-200</option>
-                            <option value="200-300">200-300</option>
-                            <option value="300-500">300-500</option>
-                            <option value="500+">500以上</option>
+                            <option value="0-100">100万以下/1万以下</option>
+                            <option value="100-200">100-200万/1-2万</option>
+                            <option value="200-300">200-300万/2-3万</option>
+                            <option value="300-500">300-500万/3-5万</option>
+                            <option value="500+">500万以上/5万以上</option>
                         </select>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -3068,6 +3068,10 @@
                 
                 if (savedAgentProperties) {
                     agentProperties = JSON.parse(savedAgentProperties);
+                    // 为代理房源添加isAgent属性
+                    agentProperties.forEach(property => {
+                        property.isAgent = true;
+                    });
                     console.log('从本地存储加载了', agentProperties.length, '条代理房源数据');
                 }
                 
@@ -6354,11 +6358,21 @@
                 }
                 if (priceFilter !== 'all' && match && property.price) {
                     const price = parseFloat(property.price);
-                    if (priceFilter === '0-100') match = price < 100;
-                    else if (priceFilter === '100-200') match = price >= 100 && price < 200;
-                    else if (priceFilter === '200-300') match = price >= 200 && price < 300;
-                    else if (priceFilter === '300-500') match = price >= 300 && price < 500;
-                    else if (priceFilter === '500+') match = price >= 500;
+                    if (property.type === 'sale') {
+                        // 出售房源价格筛选（万元）
+                        if (priceFilter === '0-100') match = price < 100;
+                        else if (priceFilter === '100-200') match = price >= 100 && price < 200;
+                        else if (priceFilter === '200-300') match = price >= 200 && price < 300;
+                        else if (priceFilter === '300-500') match = price >= 300 && price < 500;
+                        else if (priceFilter === '500+') match = price >= 500;
+                    } else {
+                        // 出租房源价格筛选（元/月）
+                        if (priceFilter === '0-100') match = price < 10000;
+                        else if (priceFilter === '100-200') match = price >= 10000 && price < 20000;
+                        else if (priceFilter === '200-300') match = price >= 20000 && price < 30000;
+                        else if (priceFilter === '300-500') match = price >= 30000 && price < 50000;
+                        else if (priceFilter === '500+') match = price >= 50000;
+                    }
                 }
                 return match;
             });
@@ -6372,13 +6386,16 @@
             const groups = {
                 '自有出售': [],
                 '自有出租': [],
-                '代理出售': []
+                '代理出售': [],
+                '代理出租': []
             };
             
             filteredProps.forEach(property => {
                 if (property.isAgent) {
                     if (property.type === 'sale') {
                         groups['代理出售'].push(property);
+                    } else if (property.type === 'rent') {
+                        groups['代理出租'].push(property);
                     }
                 } else {
                     if (property.type === 'sale') {
