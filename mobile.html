@@ -2388,6 +2388,16 @@
                     <textarea id="shareContent" rows="6" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 20px; resize: vertical;">${getSelectedPropertiesShareText()}</textarea>
                 </div>
                 
+                <!-- 后缀选项 -->
+                <div class="form-group">
+                    <label class="form-label">后缀选项</label>
+                    <input type="text" id="suffixOption" placeholder="请输入后缀内容" value="合作热线：18019166290" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 10px;">
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-default" onclick="applySuffix()" style="flex: 1;">应用后缀</button>
+                        <button class="btn btn-default" onclick="resetSuffix()" style="flex: 1;">重置后缀</button>
+                    </div>
+                </div>
+                
                 <!-- 操作按钮 -->
                 <div class="form-actions" style="display: flex; gap: 12px;">
                     <button class="btn btn-default" onclick="shareToCopy()">复制文案</button>
@@ -6638,7 +6648,7 @@
             showToast('✅ 文案已生成');
         }
 
-        // 重写switchPage函数，确保切换到转发页面时渲染房源列表
+        // 重写switchPage函数，确保切换到转发页面时渲染房源列表并默认生成简洁文案
         const originalSwitchPage = switchPage;
         switchPage = function(page) {
             originalSwitchPage(page);
@@ -6646,9 +6656,39 @@
                 // 延迟渲染，确保页面已经切换
                 setTimeout(() => {
                     renderSharePropertyList();
+                    // 默认生成简洁文案
+                    generateMomentsContent('simple');
                 }, 100);
             }
         };
+        
+        // 应用后缀
+        function applySuffix() {
+            const suffix = document.getElementById('suffixOption').value;
+            const content = document.getElementById('shareContent').value;
+            if (!content) {
+                showToast('请先生成文案');
+                return;
+            }
+            // 移除原有的后缀
+            let newContent = content;
+            if (newContent.includes('合作热线：')) {
+                newContent = newContent.substring(0, newContent.indexOf('合作热线：'));
+            }
+            // 添加新的后缀
+            if (suffix) {
+                newContent = newContent.trim() + '\n' + suffix;
+            }
+            document.getElementById('shareContent').value = newContent;
+            showToast('✅ 后缀已应用');
+        }
+        
+        // 重置后缀
+        function resetSuffix() {
+            document.getElementById('suffixOption').value = '合作热线：18019166290';
+            // 重新生成简洁文案
+            generateMomentsContent('simple');
+        }
 
         // 显示上海房产最新行情详情
         function showMarketTrends() {
