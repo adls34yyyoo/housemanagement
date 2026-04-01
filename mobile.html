@@ -5242,7 +5242,6 @@
                 area: area ? parseFloat(area) : null,
                 floor,
                 landlord_name: isAgentMode ? '' : landlordName,
-                landlord_wechat: isAgentMode ? '' : landlordWechat,
                 landlord_phone: isAgentMode ? '' : landlordPhone,
                 status,
                 type: propertyType,
@@ -5251,6 +5250,7 @@
                 created_at: originalProperty?.created_at || new Date().toISOString(),
                 updated_at: new Date().toISOString()
                 // 移除change_history字段，因为数据库中没有这个列
+                // 移除landlord_wechat字段，因为数据库中没有这个列
             };
 
             // 如果是可代理房源，添加标记和房源方信息
