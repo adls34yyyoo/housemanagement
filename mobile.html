@@ -2856,6 +2856,9 @@
         function initSupabase() {
             try {
                 console.log('正在初始化Supabase...');
+                console.log('Supabase URL:', supabaseUrl);
+                console.log('Supabase Key长度:', supabaseKey.length);
+                console.log('Supabase Key前缀:', supabaseKey.substring(0, 10) + '...');
                 
                 // 检查网络连接
                 if (!navigator.onLine) {
@@ -2868,18 +2871,33 @@
                 // 检查是否在全局作用域中可用
                 if (typeof createClient !== 'undefined') {
                     // 直接使用全局的createClient
+                    console.log('使用全局createClient');
                     supabaseClient = createClient(supabaseUrl, supabaseKey);
                     console.log('✅ Supabase初始化成功 (使用全局createClient)');
+                    
+                    // 测试连接
+                    testSupabaseConnection();
+                    
                     return true;
                 } else if (typeof window.Supabase !== 'undefined') {
                     const { createClient } = window.Supabase;
+                    console.log('使用window.Supabase');
                     supabaseClient = createClient(supabaseUrl, supabaseKey);
                     console.log('✅ Supabase初始化成功 (使用window.Supabase)');
+                    
+                    // 测试连接
+                    testSupabaseConnection();
+                    
                     return true;
                 } else if (typeof window.supabase !== 'undefined') {
                     const { createClient } = window.supabase;
+                    console.log('使用window.supabase');
                     supabaseClient = createClient(supabaseUrl, supabaseKey);
                     console.log('✅ Supabase初始化成功 (使用window.supabase)');
+                    
+                    // 测试连接
+                    testSupabaseConnection();
+                    
                     return true;
                 } else {
                     console.error('❌ Supabase库未加载');
@@ -2888,13 +2906,38 @@
                 }
             } catch (e) {
                 console.error('❌ Supabase初始化失败:', e);
+                console.error('错误详情:', e.message);
                 // 检查是否是网络错误
                 if (e.message && (e.message.includes('fetch') || e.message.includes('network') || e.message.includes('timeout'))) {
                     showToast('⚠️ 网络连接失败，使用本地数据');
+                } else if (e.message && e.message.includes('invalid api key')) {
+                    showToast('⚠️ API密钥无效，请检查配置');
                 } else {
                     showToast('⚠️ 数据库初始化失败，使用本地数据');
                 }
                 return false;
+            }
+        }
+        
+        // 测试Supabase连接
+        async function testSupabaseConnection() {
+            if (!supabaseClient) return;
+            
+            try {
+                console.log('测试Supabase连接...');
+                const { data, error } = await supabaseClient
+                    .from('properties')
+                    .select('*')
+                    .limit(1);
+                
+                if (error) {
+                    console.error('❌ 连接测试失败:', error);
+                    showToast(`⚠️ 数据库连接测试失败: ${error.message}`);
+                } else {
+                    console.log('✅ 连接测试成功');
+                }
+            } catch (e) {
+                console.error('❌ 连接测试异常:', e);
             }
         }
         
