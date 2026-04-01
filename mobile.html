@@ -2840,7 +2840,8 @@
     <script>
         // Supabase配置
         const supabaseUrl = 'https://ewjmzcqvmiokddizuidt.supabase.co';
-        const supabaseKey = 'sb_publishable_UmzMoohghwZUgRIW7cuSUg_0lqDzBV6';
+        // 使用service key获取完整权限
+        const supabaseKey = '**************************************************************************************************************************************************************************************************************************';
         
         let supabaseClient = null;
         let realtimeChannel = null;
@@ -5249,7 +5250,7 @@
                     
                     if (error) {
                         console.error('保存房源失败:', error);
-                        showToast('❌ 保存房源失败，请重试');
+                        showToast(`❌ 保存房源失败: ${error.message || '未知错误'}`);
                         return;
                     }
                 }
