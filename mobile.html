@@ -5083,7 +5083,6 @@
             const landlordName = document.getElementById('propLandlordName').value;
             const landlordWechat = document.getElementById('propLandlordWechat').value;
             const landlordPhone = document.getElementById('propLandlordPhone').value;
-            const certificate = document.getElementById('propCertificate').value;
             const status = document.getElementById('propStatus').value;
             const desc = document.getElementById('propDesc').value;
             const remark = document.getElementById('propRemark').value;
@@ -5201,7 +5200,6 @@
                 landlord_name: isAgentMode ? '' : landlordName,
                 landlord_wechat: isAgentMode ? '' : landlordWechat,
                 landlord_phone: isAgentMode ? '' : landlordPhone,
-                certificate: isAgentMode ? '' : certificate,
                 status,
                 type: propertyType,
                 description: desc,
@@ -5315,7 +5313,6 @@
             document.getElementById('propLandlordName').value = property.landlord_name || property.landlordName || '';
             document.getElementById('propLandlordWechat').value = property.landlord_wechat || property.landlordWechat || '';
             document.getElementById('propLandlordPhone').value = property.landlord_phone || property.landlordPhone || '';
-            document.getElementById('propCertificate').value = property.certificate || '';
             document.getElementById('propStatus').value = property.status || 'pending';
 
             document.getElementById('propertyModal').style.display = 'flex';
