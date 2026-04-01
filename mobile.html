@@ -5215,7 +5215,7 @@
                 }
             }
             
-            // 构建更新记录
+            // 构建更新记录 - 暂时存储在内存中，因为数据库中没有change_history列
             let changeHistoryRecord;
             if (editingPropertyId) {
                 const originalChangeHistory = originalProperty?.change_history || originalProperty?.changeHistory || [];
@@ -5249,8 +5249,8 @@
                 description: desc,
                 remark,
                 created_at: originalProperty?.created_at || new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-                change_history: changeHistoryRecord
+                updated_at: new Date().toISOString()
+                // 移除change_history字段，因为数据库中没有这个列
             };
 
             // 如果是可代理房源，添加标记和房源方信息
@@ -5573,15 +5573,6 @@
                 status,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
-                changeHistory: editingCustomerId ? (customers.find(c => c.id === editingCustomerId)?.changeHistory || []).concat({
-                    timestamp: new Date().toISOString(),
-                    action: '更新',
-                    user: currentUser || 'admin'
-                }) : [{ // 首次创建时添加记录
-                    timestamp: new Date().toISOString(),
-                    action: '创建',
-                    user: currentUser || 'admin'
-                }],
                 communicationRecords: editingCustomerId ? (customers.find(c => c.id === editingCustomerId)?.communicationRecords || []) : []
             };
 
