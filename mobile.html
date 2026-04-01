@@ -5151,10 +5151,10 @@
                     if (originalProperty.decoration !== decoration) {
                         changeDetails.push(`装修：${originalProperty.decoration || '无'} → ${decoration || '无'}`);
                     }
-                    if (!isAgentMode && originalProperty.landlordName !== landlordName) {
-                        changeDetails.push(`房东：${originalProperty.landlordName || '无'} → ${landlordName || '无'}`);
+                    if (!isAgentMode && (originalProperty.landlord_name || originalProperty.landlordName) !== landlordName) {
+                        changeDetails.push(`房东：${(originalProperty.landlord_name || originalProperty.landlordName) || '无'} → ${landlordName || '无'}`);
                     }
-                    if (!isAgentMode && originalProperty.landlordPhone !== landlordPhone) {
+                    if (!isAgentMode && (originalProperty.landlord_phone || originalProperty.landlordPhone) !== landlordPhone) {
                         changeDetails.push(`电话变更`);
                     }
                 }
@@ -5175,7 +5175,7 @@
             // 构建更新记录
             let changeHistoryRecord;
             if (editingPropertyId) {
-                const originalChangeHistory = originalProperty?.changeHistory || [];
+                const originalChangeHistory = originalProperty?.change_history || originalProperty?.changeHistory || [];
                 changeHistoryRecord = originalChangeHistory.concat({
                     timestamp: new Date().toISOString(),
                     action: changeDetails.length > 0 ? `更新：${changeDetails.join('、')}` : '更新',
@@ -5198,9 +5198,9 @@
                 layout,
                 area: area ? parseFloat(area) : null,
                 floor,
-                landlordName: isAgentMode ? '' : landlordName,
-                landlordWechat: isAgentMode ? '' : landlordWechat,
-                landlordPhone: isAgentMode ? '' : landlordPhone,
+                landlord_name: isAgentMode ? '' : landlordName,
+                landlord_wechat: isAgentMode ? '' : landlordWechat,
+                landlord_phone: isAgentMode ? '' : landlordPhone,
                 certificate: isAgentMode ? '' : certificate,
                 status,
                 type: propertyType,
@@ -5208,17 +5208,17 @@
                 remark,
                 created_at: originalProperty?.created_at || new Date().toISOString(),
                 updated_at: new Date().toISOString(),
-                changeHistory: changeHistoryRecord
+                change_history: changeHistoryRecord
             };
 
             // 如果是可代理房源，添加标记和房源方信息
             if (isAgentMode) {
-                property.isAgent = true;
-                property.agentParties = agentParties;
+                property.is_agent = true;
+                property.agent_parties = agentParties;
                 // 兼容旧数据，保留第一个房源方作为agentName/agentPhone
                 if (agentParties.length > 0) {
-                    property.agentName = agentParties[0].name;
-                    property.agentPhone = agentParties[0].phone;
+                    property.agent_name = agentParties[0].name;
+                    property.agent_phone = agentParties[0].phone;
                 }
             }
 
@@ -5312,9 +5312,9 @@
             document.getElementById('propLayout').value = property.layout || '';
             document.getElementById('propArea').value = property.area || '';
             document.getElementById('propFloor').value = property.floor || '';
-            document.getElementById('propLandlordName').value = property.landlordName || '';
-            document.getElementById('propLandlordWechat').value = property.landlordWechat || '';
-            document.getElementById('propLandlordPhone').value = property.landlordPhone || '';
+            document.getElementById('propLandlordName').value = property.landlord_name || property.landlordName || '';
+            document.getElementById('propLandlordWechat').value = property.landlord_wechat || property.landlordWechat || '';
+            document.getElementById('propLandlordPhone').value = property.landlord_phone || property.landlordPhone || '';
             document.getElementById('propCertificate').value = property.certificate || '';
             document.getElementById('propStatus').value = property.status || 'pending';
 
