@@ -2622,6 +2622,10 @@
                     </div>
                 </div>
                 <div class="form-group">
+                    <label class="form-label">门牌号</label>
+                    <input type="text" class="form-input" id="propDoorNumber" placeholder="请输入门牌号">
+                </div>
+                <div class="form-group">
                     <label class="form-label">房东姓名</label>
                     <input type="text" class="form-input" id="propLandlordName" placeholder="请输入房东姓名">
                 </div>
@@ -5106,6 +5110,7 @@
             document.getElementById('propArea').value = '';
             document.getElementById('propFloor').value = '';
             document.getElementById('propFloorCustom').value = '';
+            document.getElementById('propDoorNumber').value = '';
             document.getElementById('propLandlordName').value = '';
             document.getElementById('propLandlordWechat').value = '';
             document.getElementById('propLandlordPhone').value = '';
@@ -5124,6 +5129,7 @@
             const layout = document.getElementById('propLayout').value || document.getElementById('propLayoutCustom').value;
             const area = document.getElementById('propArea').value;
             const floor = document.getElementById('propFloor').value || document.getElementById('propFloorCustom').value;
+            const doorNumber = document.getElementById('propDoorNumber').value;
             const landlordName = document.getElementById('propLandlordName').value;
             const landlordWechat = document.getElementById('propLandlordWechat').value;
             const landlordPhone = document.getElementById('propLandlordPhone').value;
@@ -5241,6 +5247,7 @@
                 layout,
                 area: area ? parseFloat(area) : null,
                 floor,
+                door_number: doorNumber,
                 landlord_name: isAgentMode ? '' : landlordName,
                 landlord_phone: isAgentMode ? '' : landlordPhone,
                 status,
@@ -5354,6 +5361,7 @@
             document.getElementById('propLayout').value = property.layout || '';
             document.getElementById('propArea').value = property.area || '';
             document.getElementById('propFloor').value = property.floor || '';
+            document.getElementById('propDoorNumber').value = property.door_number || property.doorNumber || '';
             document.getElementById('propLandlordName').value = property.landlord_name || property.landlordName || '';
             document.getElementById('propLandlordWechat').value = property.landlord_wechat || property.landlordWechat || '';
             document.getElementById('propLandlordPhone').value = property.landlord_phone || property.landlordPhone || '';
@@ -5941,6 +5949,10 @@
                         <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                             <span style="color: var(--text-secondary);">楼层</span>
                             <span>${property.floor || '未知楼层'}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                            <span style="color: var(--text-secondary);">门牌号</span>
+                            <span>${property.door_number || property.doorNumber || '未知门牌号'}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                             <span style="color: var(--text-secondary);">产证情况</span>

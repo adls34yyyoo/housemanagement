@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS properties (
     layout TEXT,
     area NUMERIC,
     floor TEXT,
+    door_number TEXT,
     landlord_name TEXT,
     landlord_phone TEXT,
     status TEXT,
