@@ -17,10 +17,68 @@ BEGIN
     END IF;
 END $$;
 
--- 2. 创建门牌号索引（如果不存在）
-CREATE INDEX IF NOT EXISTS idx_properties_door_number ON properties(door_number);
+-- 2. 为已存在的properties表添加可代理房源相关列（如果不存在）
+DO $$
+BEGIN
+    -- 添加is_agent列
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'properties'
+        AND column_name = 'is_agent'
+    ) THEN
+        ALTER TABLE properties ADD COLUMN is_agent BOOLEAN DEFAULT FALSE;
+        RAISE NOTICE '已添加is_agent列到properties表';
+    ELSE
+        RAISE NOTICE 'is_agent列已存在，跳过添加';
+    END IF;
 
--- 3. 验证更新
+    -- 添加agent_parties列（JSON格式存储多个房源方信息）
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'properties'
+        AND column_name = 'agent_parties'
+    ) THEN
+        ALTER TABLE properties ADD COLUMN agent_parties JSONB DEFAULT '[]'::jsonb;
+        RAISE NOTICE '已添加agent_parties列到properties表';
+    ELSE
+        RAISE NOTICE 'agent_parties列已存在，跳过添加';
+    END IF;
+
+    -- 添加agent_name列（兼容旧数据，保留第一个房源方名称）
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'properties'
+        AND column_name = 'agent_name'
+    ) THEN
+        ALTER TABLE properties ADD COLUMN agent_name TEXT;
+        RAISE NOTICE '已添加agent_name列到properties表';
+    ELSE
+        RAISE NOTICE 'agent_name列已存在，跳过添加';
+    END IF;
+
+    -- 添加agent_phone列（兼容旧数据，保留第一个房源方电话）
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'properties'
+        AND column_name = 'agent_phone'
+    ) THEN
+        ALTER TABLE properties ADD COLUMN agent_phone TEXT;
+        RAISE NOTICE '已添加agent_phone列到properties表';
+    ELSE
+        RAISE NOTICE 'agent_phone列已存在，跳过添加';
+    END IF;
+END $$;
+
+-- 3. 创建索引（如果不存在）
+CREATE INDEX IF NOT EXISTS idx_properties_door_number ON properties(door_number);
+CREATE INDEX IF NOT EXISTS idx_properties_is_agent ON properties(is_agent);
+CREATE INDEX IF NOT EXISTS idx_properties_agent_name ON properties(agent_name);
+
+-- 4. 验证更新
 SELECT 
     column_name, 
     data_type,
