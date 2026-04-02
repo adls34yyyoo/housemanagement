@@ -5643,6 +5643,183 @@
         }
 
         // 加载选项列表
+        // 从数据库加载选项
+        async function loadOptionsFromDatabase() {
+            if (!supabase) {
+                console.log('Supabase未连接，使用默认选项');
+                return;
+            }
+
+            try {
+                // 加载普通选项
+                const { data: optionsDataFromDB, error: optionsError } = await supabase
+                    .from('options')
+                    .select('*');
+
+                if (optionsError) {
+                    console.error('加载选项失败:', optionsError);
+                } else if (optionsDataFromDB && optionsDataFromDB.length > 0) {
+                    // 清空默认选项
+                    optionsData = {
+                        community: [],
+                        decoration: [],
+                        layout: [],
+                        region: [],
+                        propertyCertificate: []
+                    };
+
+                    // 填充选项数据
+                    optionsDataFromDB.forEach(option => {
+                        if (optionsData[option.type]) {
+                            optionsData[option.type].push(option.value);
+                        }
+                    });
+
+                    console.log('从数据库加载选项成功:', optionsData);
+                }
+
+                // 加载被代理方
+                const { data: agentPartiesFromDB, error: agentError } = await supabase
+                    .from('agent_parties')
+                    .select('*');
+
+                if (agentError) {
+                    console.error('加载被代理方失败:', agentError);
+                } else if (agentPartiesFromDB) {
+                    agentParties = agentPartiesFromDB.map(party => ({
+                        id: party.id,
+                        name: party.name,
+                        phone: party.phone
+                    }));
+
+                    console.log('从数据库加载被代理方成功:', agentParties);
+                }
+
+                // 更新下拉框选项
+                initSelectOptions();
+            } catch (error) {
+                console.error('加载选项时发生错误:', error);
+            }
+        }
+
+        // 保存选项到数据库
+        async function saveOptionToDatabase(type, value) {
+            if (!supabase) {
+                console.log('Supabase未连接，无法保存选项');
+                return false;
+            }
+
+            try {
+                const id = `${type}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                const { error } = await supabase
+                    .from('options')
+                    .insert([{
+                        id: id,
+                        type: type,
+                        value: value
+                    }]);
+
+                if (error) {
+                    console.error('保存选项失败:', error);
+                    showToast('保存选项失败: ' + error.message);
+                    return false;
+                }
+
+                console.log('选项保存成功:', type, value);
+                return true;
+            } catch (error) {
+                console.error('保存选项时发生错误:', error);
+                return false;
+            }
+        }
+
+        // 从数据库删除选项
+        async function deleteOptionFromDatabase(type, value) {
+            if (!supabase) {
+                console.log('Supabase未连接，无法删除选项');
+                return false;
+            }
+
+            try {
+                const { error } = await supabase
+                    .from('options')
+                    .delete()
+                    .eq('type', type)
+                    .eq('value', value);
+
+                if (error) {
+                    console.error('删除选项失败:', error);
+                    showToast('删除选项失败: ' + error.message);
+                    return false;
+                }
+
+                console.log('选项删除成功:', type, value);
+                return true;
+            } catch (error) {
+                console.error('删除选项时发生错误:', error);
+                return false;
+            }
+        }
+
+        // 保存被代理方到数据库
+        async function saveAgentPartyToDatabase(name, phone) {
+            if (!supabase) {
+                console.log('Supabase未连接，无法保存被代理方');
+                return false;
+            }
+
+            try {
+                const id = `agent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                const { error } = await supabase
+                    .from('agent_parties')
+                    .insert([{
+                        id: id,
+                        name: name,
+                        phone: phone
+                    }]);
+
+                if (error) {
+                    console.error('保存被代理方失败:', error);
+                    showToast('保存被代理方失败: ' + error.message);
+                    return false;
+                }
+
+                console.log('被代理方保存成功:', name, phone);
+                return true;
+            } catch (error) {
+                console.error('保存被代理方时发生错误:', error);
+                return false;
+            }
+        }
+
+        // 从数据库删除被代理方
+        async function deleteAgentPartyFromDatabase(name, phone) {
+            if (!supabase) {
+                console.log('Supabase未连接，无法删除被代理方');
+                return false;
+            }
+
+            try {
+                const { error } = await supabase
+                    .from('agent_parties')
+                    .delete()
+                    .eq('name', name)
+                    .eq('phone', phone);
+
+                if (error) {
+                    console.error('删除被代理方失败:', error);
+                    showToast('删除被代理方失败: ' + error.message);
+                    return false;
+                }
+
+                console.log('被代理方删除成功:', name, phone);
+                return true;
+            } catch (error) {
+                console.error('删除被代理方时发生错误:', error);
+                return false;
+            }
+        }
+
         function loadOptions() {
             const type = document.getElementById('optionType').value;
             const container = document.getElementById('optionsList');
@@ -5686,7 +5863,7 @@
         }
 
         // 添加选项
-        function addOption() {
+        async function addOption() {
             const type = document.getElementById('optionType').value;
             const value = document.getElementById('newOptionValue').value.trim();
 
@@ -5716,15 +5893,20 @@
                     return;
                 }
                 
-                // 添加新被代理方
-                agentParties.push({ 
-                    name: name.trim(), 
-                    phone: phone.trim() 
-                });
-                document.getElementById('newOptionValue').value = '';
-                loadOptions();
-    
-                showToast('添加成功');
+                // 保存到数据库
+                const saved = await saveAgentPartyToDatabase(name.trim(), phone.trim());
+                if (saved) {
+                    // 添加到内存
+                    agentParties.push({ 
+                        name: name.trim(), 
+                        phone: phone.trim() 
+                    });
+                    document.getElementById('newOptionValue').value = '';
+                    loadOptions();
+                    showToast('添加成功');
+                } else {
+                    showToast('添加失败，请重试');
+                }
                 return;
             }
 
@@ -5738,16 +5920,22 @@
                 return;
             }
 
-            optionsData[type].push(value);
-            document.getElementById('newOptionValue').value = '';
-            loadOptions();
-            initSelectOptions();
-
-            showToast('添加成功');
+            // 保存到数据库
+            const saved = await saveOptionToDatabase(type, value);
+            if (saved) {
+                // 添加到内存
+                optionsData[type].push(value);
+                document.getElementById('newOptionValue').value = '';
+                loadOptions();
+                initSelectOptions();
+                showToast('添加成功');
+            } else {
+                showToast('添加失败，请重试');
+            }
         }
 
         // 删除选项
-        function removeOption(type, value, phone) {
+        async function removeOption(type, value, phone) {
             if (type === 'agentParties') {
                 // 检查被代理方是否被使用
                 const isInUse = agentProperties.some(property => {
@@ -5767,13 +5955,18 @@
                     return;
                 }
 
-                // 从被代理方列表中删除
-                const index = agentParties.findIndex(p => p.name === value && p.phone === phone);
-                if (index > -1) {
-                    agentParties.splice(index, 1);
-                    loadOptions();
-        
-                    showToast('删除成功');
+                // 从数据库删除
+                const deleted = await deleteAgentPartyFromDatabase(value, phone);
+                if (deleted) {
+                    // 从内存中删除
+                    const index = agentParties.findIndex(p => p.name === value && p.phone === phone);
+                    if (index > -1) {
+                        agentParties.splice(index, 1);
+                        loadOptions();
+                        showToast('删除成功');
+                    }
+                } else {
+                    showToast('删除失败，请重试');
                 }
                 return;
             }
@@ -5791,13 +5984,19 @@
                 return;
             }
 
-            const index = optionsData[type].indexOf(value);
-            if (index > -1) {
-                optionsData[type].splice(index, 1);
-                loadOptions();
-                initSelectOptions();
-    
-                showToast('删除成功');
+            // 从数据库删除
+            const deleted = await deleteOptionFromDatabase(type, value);
+            if (deleted) {
+                // 从内存中删除
+                const index = optionsData[type].indexOf(value);
+                if (index > -1) {
+                    optionsData[type].splice(index, 1);
+                    loadOptions();
+                    initSelectOptions();
+                    showToast('删除成功');
+                }
+            } else {
+                showToast('删除失败，请重试');
             }
         }
 
@@ -8244,6 +8443,9 @@
             
             // 尝试从服务器加载数据（不会覆盖已有本地数据）
             await loadData();
+            
+            // 从数据库加载选项
+            await loadOptionsFromDatabase();
             
             // 初始化实时连接
             if (supabaseInitialized) {

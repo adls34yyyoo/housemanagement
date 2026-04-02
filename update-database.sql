@@ -78,7 +78,52 @@ CREATE INDEX IF NOT EXISTS idx_properties_door_number ON properties(door_number)
 CREATE INDEX IF NOT EXISTS idx_properties_is_agent ON properties(is_agent);
 CREATE INDEX IF NOT EXISTS idx_properties_agent_name ON properties(agent_name);
 
--- 4. 验证更新
+-- 4. 创建options表（如果不存在）
+CREATE TABLE IF NOT EXISTS options (
+    id TEXT PRIMARY KEY,
+    type TEXT NOT NULL,
+    value TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(type, value)
+);
+
+-- 创建索引
+CREATE INDEX IF NOT EXISTS idx_options_type ON options(type);
+
+-- 5. 创建agent_parties表（如果不存在）
+CREATE TABLE IF NOT EXISTS agent_parties (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(name, phone)
+);
+
+-- 创建索引
+CREATE INDEX IF NOT EXISTS idx_agent_parties_name ON agent_parties(name);
+
+-- 6. 创建更新触发器
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_options_updated_at
+BEFORE UPDATE ON options
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_agent_parties_updated_at
+BEFORE UPDATE ON agent_parties
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+-- 7. 验证更新
 SELECT 
     column_name, 
     data_type,
