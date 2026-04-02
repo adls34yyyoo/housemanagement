@@ -6101,7 +6101,12 @@
 
         // 打开房源详情
         function openPropertyDetailModal(propertyId) {
-            const property = properties.find(p => p.id === propertyId);
+            // 先在普通房源中查找
+            let property = properties.find(p => p.id === propertyId);
+            // 如果没找到，在代理房源中查找
+            if (!property) {
+                property = agentProperties.find(p => p.id === propertyId);
+            }
             if (!property) return;
 
             const priceUnit = property.type === 'sale' ? '万元' : '元/月';
