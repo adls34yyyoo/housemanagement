@@ -5327,7 +5327,12 @@
 
         // 编辑房源
         function editProperty(id) {
-            const property = properties.find(p => p.id === id);
+            // 先在普通房源中查找
+            let property = properties.find(p => p.id === id);
+            // 如果没找到，在代理房源中查找
+            if (!property) {
+                property = agentProperties.find(p => p.id === id);
+            }
             if (!property) return;
 
             editingPropertyId = id;
@@ -5571,6 +5576,12 @@
                 return;
             }
 
+            // 获取原始客户数据（用于编辑时使用原始created_at）
+            let originalCustomer = null;
+            if (editingCustomerId) {
+                originalCustomer = customers.find(c => c.id === editingCustomerId);
+            }
+
             const customer = {
                 id: editingCustomerId || Date.now().toString(),
                 name,
@@ -5579,9 +5590,9 @@
                 budget,
                 demand,
                 status,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-                communicationRecords: editingCustomerId ? (customers.find(c => c.id === editingCustomerId)?.communicationRecords || []) : []
+                created_at: originalCustomer?.created_at || new Date().toISOString(),
+                updated_at: new Date().toISOString()
+                // 移除communicationRecords字段，因为数据库中可能没有这个列
             };
 
             try {
