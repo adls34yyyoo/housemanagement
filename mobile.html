@@ -7569,7 +7569,10 @@
 
                     if (!propertiesError && propertiesData) {
                         properties = propertiesData;
+                        // 更新agentProperties数组，包含所有is_agent: true的房源
+                        agentProperties = properties.filter(p => p.is_agent === true);
                         console.log(`成功加载 ${properties.length} 条房源数据`);
+                        console.log(`成功加载 ${agentProperties.length} 条代理房源数据`);
                     } else if (propertiesError) {
                         console.warn('加载房源数据失败:', propertiesError);
                     }
