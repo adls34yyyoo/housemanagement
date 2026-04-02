@@ -5645,14 +5645,14 @@
         // 加载选项列表
         // 从数据库加载选项
         async function loadOptionsFromDatabase() {
-            if (!supabase) {
+            if (!supabaseClient) {
                 console.log('Supabase未连接，使用默认选项');
                 return;
             }
 
             try {
                 // 加载普通选项
-                const { data: optionsDataFromDB, error: optionsError } = await supabase
+                const { data: optionsDataFromDB, error: optionsError } = await supabaseClient
                     .from('options')
                     .select('*');
 
@@ -5679,7 +5679,7 @@
                 }
 
                 // 加载被代理方
-                const { data: agentPartiesFromDB, error: agentError } = await supabase
+                const { data: agentPartiesFromDB, error: agentError } = await supabaseClient
                     .from('agent_parties')
                     .select('*');
 
@@ -5704,14 +5704,15 @@
 
         // 保存选项到数据库
         async function saveOptionToDatabase(type, value) {
-            if (!supabase) {
+            if (!supabaseClient) {
                 console.log('Supabase未连接，无法保存选项');
+                showToast('Supabase未连接，无法保存选项');
                 return false;
             }
 
             try {
                 const id = `${type}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('options')
                     .insert([{
                         id: id,
@@ -5729,19 +5730,21 @@
                 return true;
             } catch (error) {
                 console.error('保存选项时发生错误:', error);
+                showToast('保存选项时发生错误: ' + error.message);
                 return false;
             }
         }
 
         // 从数据库删除选项
         async function deleteOptionFromDatabase(type, value) {
-            if (!supabase) {
+            if (!supabaseClient) {
                 console.log('Supabase未连接，无法删除选项');
+                showToast('Supabase未连接，无法删除选项');
                 return false;
             }
 
             try {
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('options')
                     .delete()
                     .eq('type', type)
@@ -5757,20 +5760,22 @@
                 return true;
             } catch (error) {
                 console.error('删除选项时发生错误:', error);
+                showToast('删除选项时发生错误: ' + error.message);
                 return false;
             }
         }
 
         // 保存被代理方到数据库
         async function saveAgentPartyToDatabase(name, phone) {
-            if (!supabase) {
+            if (!supabaseClient) {
                 console.log('Supabase未连接，无法保存被代理方');
+                showToast('Supabase未连接，无法保存被代理方');
                 return false;
             }
 
             try {
                 const id = `agent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('agent_parties')
                     .insert([{
                         id: id,
@@ -5788,19 +5793,21 @@
                 return true;
             } catch (error) {
                 console.error('保存被代理方时发生错误:', error);
+                showToast('保存被代理方时发生错误: ' + error.message);
                 return false;
             }
         }
 
         // 从数据库删除被代理方
         async function deleteAgentPartyFromDatabase(name, phone) {
-            if (!supabase) {
+            if (!supabaseClient) {
                 console.log('Supabase未连接，无法删除被代理方');
+                showToast('Supabase未连接，无法删除被代理方');
                 return false;
             }
 
             try {
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('agent_parties')
                     .delete()
                     .eq('name', name)
@@ -5816,6 +5823,7 @@
                 return true;
             } catch (error) {
                 console.error('删除被代理方时发生错误:', error);
+                showToast('删除被代理方时发生错误: ' + error.message);
                 return false;
             }
         }
