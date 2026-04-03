@@ -5390,7 +5390,7 @@
         }
 
         // 编辑房源
-        function editProperty(id) {
+        window.editProperty = function(id) {
             // 先在普通房源中查找
             let property = properties.find(p => p.id === id);
             // 如果没找到，在代理房源中查找
@@ -6175,7 +6175,7 @@
         }
 
         // 打开房源详情
-        function openPropertyDetailModal(propertyId) {
+        window.openPropertyDetailModal = function(propertyId) {
             // 先在普通房源中查找
             let property = properties.find(p => p.id === propertyId);
             // 如果没找到，在代理房源中查找
@@ -6324,12 +6324,12 @@
         }
 
         // 关闭房源详情模态框
-        function closePropertyDetailModal() {
+        window.closePropertyDetailModal = function() {
             document.getElementById('propertyDetailModal').classList.remove('active');
         }
 
         // 显示租售互转模态框
-        function showRentSaleToggleModal(propertyId) {
+        window.showRentSaleToggleModal = function(propertyId) {
             const property = properties.find(p => p.id === propertyId);
             if (!property) return;
 
@@ -6397,7 +6397,7 @@
         }
 
         // 关闭租售互转模态框
-        function closeRentSaleToggleModal() {
+        window.closeRentSaleToggleModal = function() {
             const modal = document.getElementById('rentSaleToggleModal');
             if (modal) {
                 modal.remove();
@@ -6405,7 +6405,7 @@
         }
 
         // 执行租售互转
-        function toggleRentSale(propertyId) {
+        window.toggleRentSale = function(propertyId) {
             const property = properties.find(p => p.id === propertyId);
             if (!property) return;
 
