@@ -3775,7 +3775,7 @@
         }
 
         // 切换房源选择
-        function togglePropertySelection(propertyId) {
+        window.togglePropertySelection = function(propertyId) {
             const index = selectedProperties.indexOf(propertyId);
             if (index > -1) {
                 selectedProperties.splice(index, 1);
@@ -3783,6 +3783,8 @@
                 selectedProperties.push(propertyId);
             }
             renderPropertyList();
+            renderAgentPropertyList();
+            updateShareButton();
         }
 
         // 添加可代理房源卖房
@@ -4156,7 +4158,7 @@
         }
 
         // 全选/取消全选可代理房源
-        function toggleAgentSelectAll() {
+        window.toggleAgentSelectAll = function() {
             const propsToRender = filteredAgentProperties.length ? filteredAgentProperties : agentProperties;
             const allSelected = selectedProperties.length === propsToRender.length && propsToRender.length > 0;
             
@@ -4170,10 +4172,12 @@
             }
             
             renderAgentPropertyList();
+            renderPropertyList();
+            updateShareButton();
         }
 
         // 批量删除可代理房源
-        async function batchDeleteAgentProperties() {
+        window.batchDeleteAgentProperties = async function() {
             if (selectedProperties.length === 0) return;
             
             const deleteCount = selectedProperties.length;
