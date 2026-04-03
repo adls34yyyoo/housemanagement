@@ -2850,6 +2850,10 @@
         let supabaseClient = null;
         let realtimeChannel = null;
         
+        // 房源数据变量 - 提前定义以确保函数可访问
+        let properties = [];
+        let agentProperties = [];
+        
         // 暴露全局createClient以便控制台测试
         window.createClient = window.createClient || window.Supabase?.createClient || window.supabase?.createClient;
         console.log('全局createClient状态:', typeof window.createClient);
@@ -3200,7 +3204,6 @@
         });
 
         // 全局数据存储
-        let properties = [];
         let customers = [];
         let filteredProperties = [];
         let filteredCustomers = [];
@@ -4215,7 +4218,6 @@
         }
 
         // 可代理房源数据
-        let agentProperties = [];
         let filteredAgentProperties = [];
         
         // 全局被代理方列表
