@@ -4662,7 +4662,7 @@
         }
 
         // 确认删除客户
-        function confirmDeleteCustomer(customerId) {
+        window.confirmDeleteCustomer = function(customerId) {
             const password = prompt('请输入删除密码：');
             if (password === '123456') {
                 deleteCustomer(customerId);
@@ -5632,7 +5632,7 @@
         }
 
         // 删除客户
-        async function deleteCustomer(customerId) {
+        window.deleteCustomer = async function(customerId) {
             try {
                 // 初始化Supabase客户端
                 if (!supabaseClient) {
@@ -5668,7 +5668,7 @@
         }
 
         // 保存客户
-        async function saveCustomer() {
+        window.saveCustomer = async function() {
             const name = document.getElementById('customerName').value;
             const phone = document.getElementById('customerPhone').value;
             const wechat = document.getElementById('customerWechat').value;
