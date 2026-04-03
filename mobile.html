@@ -4712,8 +4712,8 @@
                     <div style="margin-bottom: 16px;">
                         <h3 style="margin: 0 0 8px 0; color: var(--text); font-size: 16px;">时间信息</h3>
                         <div style="background: var(--background); border-radius: var(--radius); padding: 12px;">
-                            <div style="margin-bottom: 4px;"><strong>创建时间：</strong>${new Date(customer.created_at).toLocaleString()}</div>
-                            <div><strong>更新时间：</strong>${new Date(customer.updated_at).toLocaleString()}</div>
+                            <div style="margin-bottom: 4px;"><strong>创建时间：</strong>${new Date(customer.createdat).toLocaleString()}</div>
+                            <div><strong>更新时间：</strong>${new Date(customer.updatedat).toLocaleString()}</div>
                         </div>
                     </div>
                     
@@ -5654,8 +5654,8 @@
                 budget,
                 demand,
                 status,
-                created_at: originalCustomer?.created_at || new Date().toISOString(),
-                updated_at: new Date().toISOString()
+                createdat: originalCustomer?.createdat || new Date().toISOString(),
+                updatedat: new Date().toISOString()
                 // 移除communicationRecords字段，因为数据库中可能没有这个列
             };
 
@@ -7669,7 +7669,7 @@
                     const customersPromise = supabaseClient
                         .from('customers')
                         .select('*')
-                        .order('created_at', { ascending: false });
+                        .order('createdat', { ascending: false });
 
                     const { data: customersData, error: customersError } = await Promise.race([
                         customersPromise,
