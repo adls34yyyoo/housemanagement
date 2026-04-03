@@ -4048,8 +4048,8 @@
                             ${allSelected ? '取消全选' : '全选'}
                         </button>
                         ${selectedProperties.length > 0 ? `
-                            <button onclick="batchDeleteProperties()" style="padding: 8px 16px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
-                                删除 (${selectedProperties.length})
+                            <button onclick="batchPrintProperties()" style="padding: 8px 16px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
+                                🖨️ 打印 (${selectedProperties.length})
                             </button>
                         ` : ''}
                     </div>
@@ -4120,8 +4120,8 @@
                             ${allSelected ? '取消全选' : '全选'}
                         </button>
                         ${selectedProperties.length > 0 ? `
-                            <button onclick="batchDeleteAgentProperties()" style="padding: 8px 16px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
-                                删除 (${selectedProperties.length})
+                            <button onclick="batchPrintProperties()" style="padding: 8px 16px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
+                                🖨️ 打印 (${selectedProperties.length})
                             </button>
                         ` : ''}
                     </div>
@@ -4267,15 +4267,7 @@
                         </div>
                     </div>
                     <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px; margin-left: 12px;">
-                        <span class="property-status ${statusClass}" style="font-size: 12px; margin-bottom: 4px;">${statusText}</span>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <button class="action-btn" onclick="event.stopPropagation(); editAgentProperty('${property.id}')" style="background: none; color: #2196F3; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: none;">
-                                ✏️
-                            </button>
-                            <button class="action-btn share" onclick="event.stopPropagation(); deleteAgentProperty('${property.id}')" style="background: none; color: #ef4444; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: none;">
-                                🗑️
-                            </button>
-                        </div>
+                        <span class="property-status ${statusClass}" style="font-size: 12px;">${statusText}</span>
                     </div>
                 </div>
             `;
@@ -6377,6 +6369,7 @@
                     
                     <div style="display: flex; gap: 12px;">
                         <button class="btn btn-primary" onclick="editProperty('${property.id}'); closePropertyDetailModal()">编辑</button>
+                        <button class="btn btn-danger" onclick="deletePropertyFromDetail('${property.id}')" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none;">删除</button>
                     </div>
                 </div>
             `;
@@ -8701,6 +8694,174 @@
                     console.error('批量删除房源出错:', error);
                     showToast('❌ 删除失败，请检查网络连接');
                 }
+            }
+        }
+
+        // 批量打印房源
+        window.batchPrintProperties = function() {
+            if (selectedProperties.length === 0) {
+                showToast('请先选择要打印的房源');
+                return;
+            }
+            
+            // 合并所有房源（普通房源和代理房源）
+            const allProperties = [...properties, ...agentProperties];
+            const selectedProps = allProperties.filter(p => selectedProperties.includes(p.id));
+            
+            if (selectedProps.length === 0) {
+                showToast('未找到选中的房源');
+                return;
+            }
+            
+            // 创建打印内容
+            let printContent = `
+                <html>
+                <head>
+                    <title>房源打印</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
+                        .header h1 { margin: 0; color: #333; }
+                        .header p { margin: 10px 0 0 0; color: #666; }
+                        .property { margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+                        .property-title { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 15px; }
+                        .property-row { display: flex; margin-bottom: 10px; }
+                        .property-label { width: 100px; font-weight: bold; color: #666; }
+                        .property-value { flex: 1; color: #333; }
+                        .price { color: #ef4444; font-size: 20px; font-weight: bold; }
+                        .footer { margin-top: 40px; text-align: center; color: #999; font-size: 12px; border-top: 1px solid #ddd; padding-top: 20px; }
+                        @media print {
+                            .no-print { display: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>🏠 房源信息表</h1>
+                        <p>打印时间：${new Date().toLocaleString()}</p>
+                    </div>
+            `;
+            
+            selectedProps.forEach((property, index) => {
+                const priceUnit = property.type === 'sale' ? '万元' : '元/月';
+                const typeText = property.type === 'sale' ? '出售' : '出租';
+                
+                printContent += `
+                    <div class="property">
+                        <div class="property-title">${index + 1}. ${property.community || '未知小区'} - ${typeText}</div>
+                        <div class="property-row">
+                            <div class="property-label">区域：</div>
+                            <div class="property-value">${property.region || '未知区域'}</div>
+                        </div>
+                        <div class="property-row">
+                            <div class="property-label">户型：</div>
+                            <div class="property-value">${property.layout || '未知户型'}</div>
+                        </div>
+                        <div class="property-row">
+                            <div class="property-label">面积：</div>
+                            <div class="property-value">${property.area ? property.area + '平方米' : '未知面积'}</div>
+                        </div>
+                        <div class="property-row">
+                            <div class="property-label">楼层：</div>
+                            <div class="property-value">${property.floor || '未知楼层'}</div>
+                        </div>
+                        <div class="property-row">
+                            <div class="property-label">装修：</div>
+                            <div class="property-value">${property.decoration || '未知装修'}</div>
+                        </div>
+                        <div class="property-row">
+                            <div class="property-label">价格：</div>
+                            <div class="property-value price">${property.price || '面议'}${priceUnit}</div>
+                        </div>
+                        ${property.landlordName ? `
+                        <div class="property-row">
+                            <div class="property-label">房东：</div>
+                            <div class="property-value">${property.landlordName}</div>
+                        </div>
+                        ` : ''}
+                        ${property.landlordPhone ? `
+                        <div class="property-row">
+                            <div class="property-label">电话：</div>
+                            <div class="property-value">${property.landlordPhone}</div>
+                        </div>
+                        ` : ''}
+                        ${property.description ? `
+                        <div class="property-row">
+                            <div class="property-label">描述：</div>
+                            <div class="property-value">${property.description}</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            
+            printContent += `
+                    <div class="footer">
+                        <p>共 ${selectedProps.length} 套房源 | 合作热线：18019166290</p>
+                    </div>
+                    <div class="no-print" style="text-align: center; margin-top: 30px;">
+                        <button onclick="window.print()" style="padding: 12px 30px; font-size: 16px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                            🖨️ 打印房源信息
+                        </button>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            // 打开打印窗口
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            
+            showToast(`✅ 已生成 ${selectedProps.length} 套房源的打印预览`);
+        }
+
+        // 从详情页删除房源
+        window.deletePropertyFromDetail = async function(propertyId) {
+            // 添加密码验证
+            const password = prompt('确定要删除这套房源吗？此操作不可恢复。请输入密码：');
+            if (password !== '123456') {
+                showToast('密码错误，无法删除房源');
+                return;
+            }
+            
+            try {
+                // 初始化Supabase客户端
+                if (!supabaseClient) {
+                    const initialized = initSupabase();
+                    if (!initialized) {
+                        showToast('❌ 数据库连接失败，请检查网络');
+                        return;
+                    }
+                }
+
+                // 从云数据库删除
+                const { error } = await supabaseClient
+                    .from('properties')
+                    .delete()
+                    .eq('id', propertyId);
+                
+                if (error) {
+                    console.error('删除房源失败:', error);
+                    showToast('❌ 删除房源失败，请重试');
+                    return;
+                }
+
+                // 关闭详情模态框
+                closePropertyDetailModal();
+                
+                // 重新加载数据
+                await loadData();
+                
+                // 刷新列表
+                renderPropertyList();
+                renderAgentPropertyList();
+                updateStats();
+                
+                showToast('✅ 房源删除成功');
+            } catch (error) {
+                console.error('删除房源出错:', error);
+                showToast('❌ 删除失败，请检查网络连接');
             }
         }
 
