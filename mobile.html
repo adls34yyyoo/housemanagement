@@ -2858,13 +2858,29 @@
         
         // 打开房源详情 - 提前定义以确保在HTML解析时可用
         window.openPropertyDetailModal = function(propertyId) {
+            console.log('openPropertyDetailModal被调用，propertyId:', propertyId);
+            console.log('properties数组:', typeof properties, properties);
+            console.log('agentProperties数组:', typeof agentProperties, agentProperties);
+            
+            // 确保properties和agentProperties已初始化
+            if (typeof properties === 'undefined' || typeof agentProperties === 'undefined') {
+                console.error('properties或agentProperties未初始化');
+                showToast('⚠️ 数据加载中，请稍后再试');
+                return;
+            }
+            
             // 先在普通房源中查找
             let property = properties.find(p => p.id === propertyId);
             // 如果没找到，在代理房源中查找
             if (!property) {
                 property = agentProperties.find(p => p.id === propertyId);
             }
-            if (!property) return;
+            if (!property) {
+                console.error('未找到房源，propertyId:', propertyId);
+                return;
+            }
+
+            console.log('找到房源:', property);
 
             const priceUnit = property.type === 'sale' ? '万元' : '元/月';
             const typeText = property.type === 'sale' ? '出售' : '出租';
@@ -2961,6 +2977,7 @@
 
             document.getElementById('propertyDetailContent').innerHTML = detailHTML;
             document.getElementById('propertyDetailModal').classList.add('active');
+            console.log('房源详情模态框已显示');
         }
         
         // 关闭房源详情模态框
