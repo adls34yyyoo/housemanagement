@@ -3849,11 +3849,20 @@
 
         // 生成朋友圈文案内容
         function generateMomentsContent() {
-            if (selectedProperties.length === 0) return;
+            if (selectedProperties.length === 0) {
+                showToast('请先选择要分享的房源');
+                return;
+            }
 
             // 合并所有房源（普通房源和代理房源）
             const allProperties = [...properties, ...agentProperties];
             const selectedProps = allProperties.filter(p => selectedProperties.includes(p.id));
+            
+            if (selectedProps.length === 0) {
+                showToast('未找到选中的房源，请检查网络连接');
+                return;
+            }
+            
             let content = '';
 
             selectedProps.forEach((property, index) => {
@@ -3924,7 +3933,10 @@
             const container = document.getElementById('propertySelectorList');
             if (!container) return;
 
-            if (properties.length === 0) {
+            // 合并普通房源和代理房源
+            const allProperties = [...properties, ...agentProperties];
+
+            if (allProperties.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-icon">🏠</div>
@@ -3934,12 +3946,12 @@
                 return;
             }
 
-            container.innerHTML = properties.map(p => `
+            container.innerHTML = allProperties.map(p => `
                 <div onclick="toggleSelectorProperty('${p.id}')" style="padding: 16px; background: var(--surface); border-radius: var(--radius); margin-bottom: 12px; cursor: pointer; border: 2px solid ${selectorSelectedProperties.includes(p.id) ? 'var(--primary)' : 'transparent'}; transition: var(--transition);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                         <span style="font-weight: 600; color: var(--text); font-size: 16px;">${p.community || '未知小区'}</span>
                         <span style="padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; background: ${p.type === 'rent' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(245, 158, 11, 0.1)'}; color: ${p.type === 'rent' ? '#3b82f6' : '#f59e0b'};">
-                            ${p.type === 'rent' ? '出租' : '出售'}
+                            ${p.type === 'rent' ? '出租' : '出售'}${p.isAgent ? ' (代理)' : ''}
                         </span>
                     </div>
                     <div style="color: var(--text-secondary); font-size: 14px; margin-bottom: 4px;">
@@ -4161,7 +4173,7 @@
         }
 
         // 批量删除可代理房源
-        function batchDeleteAgentProperties() {
+        async function batchDeleteAgentProperties() {
             if (selectedProperties.length === 0) return;
             
             const deleteCount = selectedProperties.length;
@@ -4174,20 +4186,45 @@
             }
             
             if (confirm(`密码正确，确定要删除选中的 ${deleteCount} 套可代理房源吗？`)) {
-                // 过滤掉要删除的可代理房源
-                agentProperties = agentProperties.filter(p => !selectedProperties.includes(p.id));
-                
-                // 清空选中列表
-                selectedProperties = [];
-                
-                // 保存到本地存储
-    
-                
-                // 刷新UI
-                renderAgentPropertyList();
-                updateStats();
-                
-                showToast(`✅ 已删除 ${deleteCount} 套可代理房源`);
+                try {
+                    // 初始化Supabase客户端
+                    if (!supabaseClient) {
+                        const initialized = initSupabase();
+                        if (!initialized) {
+                            showToast('❌ 数据库连接失败，请检查网络');
+                            return;
+                        }
+                    }
+
+                    // 批量从云数据库删除
+                    for (const id of selectedProperties) {
+                        const { error } = await supabaseClient
+                            .from('properties')
+                            .delete()
+                            .eq('id', id);
+                        
+                        if (error) {
+                            console.error('删除房源失败:', error);
+                            showToast('❌ 删除房源失败，请重试');
+                            return;
+                        }
+                    }
+
+                    // 重新加载数据
+                    await loadData();
+                    
+                    // 清空选中列表
+                    selectedProperties = [];
+                    
+                    // 刷新UI
+                    renderAgentPropertyList();
+                    updateStats();
+                    
+                    showToast(`✅ 已删除 ${deleteCount} 套可代理房源`);
+                } catch (error) {
+                    console.error('删除房源出错:', error);
+                    showToast('❌ 删除失败，请检查网络连接');
+                }
             }
         }
 
@@ -4407,17 +4444,44 @@
         }
 
         // 删除可代理房源
-        function deleteAgentProperty(propertyId) {
+        async function deleteAgentProperty(propertyId) {
             const password = prompt('请输入密码以确认删除：');
             if (password !== '123456') {
                 showToast('密码错误，无法删除');
                 return;
             }
             
-            agentProperties = agentProperties.filter(p => p.id !== propertyId);
+            try {
+                // 初始化Supabase客户端
+                if (!supabaseClient) {
+                    const initialized = initSupabase();
+                    if (!initialized) {
+                        showToast('❌ 数据库连接失败，请检查网络');
+                        return;
+                    }
+                }
 
-            renderAgentPropertyList();
-            showToast('可代理房源已删除');
+                // 从云数据库删除
+                const { error } = await supabaseClient
+                    .from('properties')
+                    .delete()
+                    .eq('id', propertyId);
+                
+                if (error) {
+                    console.error('删除房源失败:', error);
+                    showToast('❌ 删除房源失败，请重试');
+                    return;
+                }
+
+                // 重新加载数据
+                await loadData();
+                
+                renderAgentPropertyList();
+                showToast('✅ 可代理房源已删除');
+            } catch (error) {
+                console.error('删除房源出错:', error);
+                showToast('❌ 删除失败，请检查网络连接');
+            }
         }
 
         // 渲染客户列表
