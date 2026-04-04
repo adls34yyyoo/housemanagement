@@ -4808,16 +4808,10 @@
                     <div style="margin-bottom: 16px;">
                         <h3 style="margin: 0 0 8px 0; color: var(--text); font-size: 16px;">基本信息</h3>
                         <div style="background: var(--background); border-radius: var(--radius); padding: 12px;">
-                            <div style="display: flex; gap: 20px; justify-content: center; margin-bottom: 16px;">
-                                ${customer.phone ? `<a href="tel:${customer.phone}" style="color: var(--primary); text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 600;">
-                                    📞 <span>电话</span>
-                                </a>` : ''}
-                                ${customer.wechat ? `<div onclick="copyWeChat('${customer.wechat}')" style="color: #07C160; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 600; cursor: pointer;">
-                                    🌐 <span>微信</span>
-                                </div>` : ''}
-                            </div>
                             <div style="margin-bottom: 8px;"><strong>预算：</strong>${customer.budget || '未填写'}</div>
-                            <div><strong>需求：</strong>${customer.demand || '未填写'}</div>
+                            <div style="margin-bottom: 8px;"><strong>需求：</strong>${customer.demand || '未填写'}</div>
+                            ${customer.phone ? `<div style="margin-bottom: 8px;"><strong>电话：</strong><a href="tel:${customer.phone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">📞</a></div>` : ''}
+                            ${customer.wechat ? `<div><strong>微信：</strong><div onclick="copyWeChat('${customer.wechat}')" style="color: #07C160; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">🌐</div></div>` : ''}
                         </div>
                     </div>
                     
