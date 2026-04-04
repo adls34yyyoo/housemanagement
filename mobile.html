@@ -2962,12 +2962,13 @@
                         </div>
                     ` : ''}
                     
-                    ${property.landlordName ? `
+                    ${property.landlordName || property.landlordPhone || property.landlordWechat ? `
                         <div style="margin-bottom: 20px;">
                             <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">房东信息</h4>
                             <div style="background: var(--background); border-radius: var(--radius); padding: 16px;">
-                                <div style="margin-bottom: 8px;"><strong>姓名：</strong>${property.landlordName}</div>
-                                ${property.landlordPhone ? `<div><strong>电话：</strong><a href="tel:${property.landlordPhone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 24px;">📞</a></div>` : ''}
+                                ${property.landlordName ? `<div style="margin-bottom: 8px;"><strong>姓名：</strong>${property.landlordName}</div>` : ''}
+                                ${property.landlordPhone ? `<div style="margin-bottom: 8px;"><strong>电话：</strong><a href="tel:${property.landlordPhone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 24px;">📞</a></div>` : ''}
+                                ${property.landlordWechat ? `<div><strong>微信：</strong><div onclick="copyWeChat('${property.landlordWechat}')" style="color: #07C160; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 24px;">🌐</div></div>` : ''}
                             </div>
                         </div>
                     ` : ''}
