@@ -5752,8 +5752,12 @@
 
         // 编辑客户
         function editCustomer(customerId) {
-            const customer = customers.find(c => c.id === customerId);
-            if (!customer) return;
+            // 使用String转换确保id类型匹配
+            const customer = customers.find(c => String(c.id) === String(customerId));
+            if (!customer) {
+                console.error('未找到要编辑的客户，customerId:', customerId);
+                return;
+            }
 
             editingCustomerId = customerId;
             document.getElementById('customerName').value = customer.name || '';
@@ -5818,7 +5822,8 @@
             // 获取原始客户数据（用于编辑时使用原始created_at）
             let originalCustomer = null;
             if (editingCustomerId) {
-                originalCustomer = customers.find(c => c.id === editingCustomerId);
+                // 使用String转换确保id类型匹配
+                originalCustomer = customers.find(c => String(c.id) === String(editingCustomerId));
             }
 
             const customer = {
