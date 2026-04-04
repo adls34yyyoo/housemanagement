@@ -5518,13 +5518,16 @@
 
         // 编辑房源
         window.editProperty = function(id) {
-            // 先在普通房源中查找
-            let property = properties.find(p => p.id === id);
+            // 先在普通房源中查找（使用String转换确保id类型匹配）
+            let property = properties.find(p => String(p.id) === String(id));
             // 如果没找到，在代理房源中查找
             if (!property) {
-                property = agentProperties.find(p => p.id === id);
+                property = agentProperties.find(p => String(p.id) === String(id));
             }
-            if (!property) return;
+            if (!property) {
+                console.error('未找到要编辑的房源，id:', id);
+                return;
+            }
 
             editingPropertyId = id;
             document.getElementById('propertyModalTitle').textContent = '编辑房源';
