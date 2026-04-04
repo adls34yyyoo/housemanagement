@@ -2873,11 +2873,11 @@
                 return;
             }
             
-            // 先在普通房源中查找
-            let property = properties.find(p => p.id === propertyId);
+            // 先在普通房源中查找（使用宽松比较，支持数字和字符串id）
+            let property = properties.find(p => String(p.id) === String(propertyId));
             // 如果没找到，在代理房源中查找
             if (!property) {
-                property = agentProperties.find(p => p.id === propertyId);
+                property = agentProperties.find(p => String(p.id) === String(propertyId));
             }
             if (!property) {
                 console.error('未找到房源，propertyId:', propertyId);
