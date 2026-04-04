@@ -3502,6 +3502,10 @@
 
             const extractedData = analyzeTextWithEnhancedRules(inputText);
             fillFormWithExtractedData(extractedData);
+            
+            // 将识别输入框的内容填入房源描述
+            document.getElementById('propDesc').value = inputText;
+            
             showToast('✅ AI识别完成，已自动填充表单');
         }
 
@@ -3515,6 +3519,10 @@
 
             const extractedData = analyzeCustomerText(inputText);
             fillCustomerFormWithExtractedData(extractedData);
+            
+            // 将识别输入框的内容填入客户需求
+            document.getElementById('customerDemand').value = inputText;
+            
             showToast('✅ AI识别完成，已自动填充表单');
         }
 
