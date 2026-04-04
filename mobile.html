@@ -2972,6 +2972,30 @@
                         </div>
                     ` : ''}
                     
+                    ${property.changeHistory && property.changeHistory.length > 0 ? `
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">编辑记录</h4>
+                            <div style="background: var(--background); border-radius: var(--radius); padding: 16px;">
+                                ${property.changeHistory.map((record, index) => `
+                                    <div style="padding: 8px 0; ${index > 0 ? 'border-top: 1px solid var(--border);' : ''}">
+                                        <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                                            <span style="font-weight: 600;">${record.action}</span>
+                                            <span style="color: var(--text-secondary);">${new Date(record.timestamp).toLocaleString()}</span>
+                                        </div>
+                                        <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
+                                            操作人：${record.user || '管理员'}
+                                        </div>
+                                        ${record.remark ? `
+                                            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
+                                                备注：${record.remark}
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
                     <div style="display: flex; gap: 12px;">
                         <button class="btn btn-primary" onclick="editProperty('${property.id}'); closePropertyDetailModal()">编辑</button>
                         <button class="btn btn-danger" onclick="deletePropertyFromDetail('${property.id}')" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none;">删除</button>
@@ -4850,7 +4874,7 @@
                     
                     ${customer.changeHistory && customer.changeHistory.length > 0 ? `
                         <div style="margin-bottom: 16px;">
-                            <h3 style="margin: 0 0 8px 0; color: var(--text); font-size: 16px;">变动情况</h3>
+                            <h3 style="margin: 0 0 8px 0; color: var(--text); font-size: 16px;">编辑记录</h3>
                             <div style="background: var(--background); border-radius: var(--radius); padding: 12px;">
                                 ${customer.changeHistory.map((record, index) => `
                                     <div style="padding: 8px 0; ${index > 0 ? 'border-top: 1px solid var(--border);' : ''}">
@@ -4859,8 +4883,13 @@
                                             <span style="color: var(--text-secondary);">${new Date(record.timestamp).toLocaleString()}</span>
                                         </div>
                                         <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
-                                            操作人：${record.user}
+                                            操作人：${record.user || '管理员'}
                                         </div>
+                                        ${record.remark ? `
+                                            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
+                                                备注：${record.remark}
+                                            </div>
+                                        ` : ''}
                                     </div>
                                 `).join('')}
                             </div>
