@@ -5407,6 +5407,9 @@
                     if (!isAgentMode && (originalProperty.landlord_phone || originalProperty.landlordPhone) !== landlordPhone) {
                         changeDetails.push(`电话变更`);
                     }
+                    if (!isAgentMode && (originalProperty.landlord_wechat || originalProperty.landlordWechat) !== landlordWechat) {
+                        changeDetails.push(`微信变更`);
+                    }
                 }
             } else {
                 // 新增模式：根据模态框标题判断是新增卖房还是租房
@@ -5451,6 +5454,7 @@
                 door_number: doorNumber,
                 landlord_name: isAgentMode ? '' : landlordName,
                 landlord_phone: isAgentMode ? '' : landlordPhone,
+                landlord_wechat: isAgentMode ? '' : landlordWechat,
                 status,
                 type: propertyType,
                 description: desc,
@@ -5458,7 +5462,6 @@
                 created_at: originalProperty?.created_at || new Date().toISOString(),
                 updated_at: new Date().toISOString()
                 // 移除change_history字段，因为数据库中没有这个列
-                // 移除landlord_wechat字段，因为数据库中没有这个列
             };
 
             // 如果是可代理房源，添加标记和房源方信息
