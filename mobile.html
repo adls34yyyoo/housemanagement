@@ -6445,7 +6445,7 @@
         }
 
         // 执行租售互转
-        window.toggleRentSale = function(propertyId) {
+        window.toggleRentSale = async function(propertyId) {
             // 使用String转换确保id类型匹配
             const property = properties.find(p => String(p.id) === String(propertyId)) || agentProperties.find(p => String(p.id) === String(propertyId));
             if (!property) {
@@ -6480,8 +6480,42 @@
                 user: currentUser || 'admin'
             });
 
-            // 保存到本地存储
+            // 保存到云数据库
+            try {
+                // 初始化Supabase客户端
+                if (!supabaseClient) {
+                    const initialized = initSupabase();
+                    if (!initialized) {
+                        showToast('❌ 数据库连接失败，请检查网络');
+                        return;
+                    }
+                }
 
+                // 构建要更新的属性
+                const updateData = {
+                    type: newType,
+                    price: property.price,
+                    updated_at: property.updated_at
+                };
+
+                // 更新到云端
+                const { error } = await supabaseClient
+                    .from('properties')
+                    .update(updateData)
+                    .eq('id', propertyId);
+                
+                if (error) {
+                    console.error('更新房源类型失败:', error);
+                    showToast('❌ 转换失败，请重试');
+                    return;
+                }
+
+                // 重新加载数据
+                await loadData();
+            } catch (error) {
+                console.error('租售互转时出错:', error);
+                showToast('❌ 操作失败，请检查网络连接');
+            }
 
             // 关闭模态框
             closeRentSaleToggleModal();
