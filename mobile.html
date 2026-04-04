@@ -2503,7 +2503,7 @@
     </div>
 
     <!-- 房源详情模态框 -->
-    <div class="modal" id="propertyDetailModal">
+    <div class="modal" id="propertyDetailModal" onclick="if (event.target === this) closePropertyDetailModal()">
         <div class="modal-content">
             <div class="modal-header">
                 <span class="modal-title" id="propertyDetailTitle">房源详情</span>
