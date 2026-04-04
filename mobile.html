@@ -8796,25 +8796,27 @@
                 printContent += `
                     <div class="property">
                         <div class="property-title">${index + 1}. ${property.community || '未知小区'} - ${typeText}</div>
-                        <div class="property-row">
-                            <div class="property-label">面积：</div>
-                            <div class="property-value">${property.area ? property.area + '平方米' : '未知面积'}</div>
-                        </div>
-                        <div class="property-row">
-                            <div class="property-label">楼层：</div>
-                            <div class="property-value">${property.floor || '未知楼层'}</div>
-                        </div>
-                        <div class="property-row">
-                            <div class="property-label">户型：</div>
-                            <div class="property-value">${property.layout || '未知户型'}</div>
-                        </div>
-                        <div class="property-row">
-                            <div class="property-label">装修：</div>
-                            <div class="property-value">${property.decoration || '未知装修'}</div>
-                        </div>
-                        <div class="property-row">
-                            <div class="property-label">价格：</div>
-                            <div class="property-value price">${property.price || '面议'}${priceUnit}</div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 10mm; margin-bottom: 3mm;">
+                            <div style="flex: 1; min-width: 100px;">
+                                <span style="font-weight: bold; color: #666; font-size: 40pt;">面积：</span>
+                                <span style="color: #333; font-size: 40pt;">${property.area ? property.area + '平方米' : '未知面积'}</span>
+                            </div>
+                            <div style="flex: 1; min-width: 100px;">
+                                <span style="font-weight: bold; color: #666; font-size: 40pt;">楼层：</span>
+                                <span style="color: #333; font-size: 40pt;">${property.floor || '未知楼层'}</span>
+                            </div>
+                            <div style="flex: 1; min-width: 100px;">
+                                <span style="font-weight: bold; color: #666; font-size: 40pt;">户型：</span>
+                                <span style="color: #333; font-size: 40pt;">${property.layout || '未知户型'}</span>
+                            </div>
+                            <div style="flex: 1; min-width: 100px;">
+                                <span style="font-weight: bold; color: #666; font-size: 40pt;">装修：</span>
+                                <span style="color: #333; font-size: 40pt;">${property.decoration || '未知装修'}</span>
+                            </div>
+                            <div style="flex: 1; min-width: 100px;">
+                                <span style="font-weight: bold; color: #666; font-size: 40pt;">价格：</span>
+                                <span style="color: #ef4444; font-size: 48pt; font-weight: bold;">${property.price || '面议'}${priceUnit}</span>
+                            </div>
                         </div>
                         ${property.landlordName ? `
                         <div class="property-row">
