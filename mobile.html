@@ -8739,7 +8739,7 @@
             
             // 合并所有房源（普通房源和代理房源）
             const allProperties = [...properties, ...agentProperties];
-            const selectedProps = allProperties.filter(p => selectedProperties.includes(p.id));
+            const selectedProps = allProperties.filter(p => selectedProperties.includes(String(p.id)));
             
             if (selectedProps.length === 0) {
                 showToast('未找到选中的房源');
