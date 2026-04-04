@@ -5512,9 +5512,9 @@
                 type: saleOrRentType,
                 description: desc,
                 remark,
+                change_history: changeHistoryRecord,
                 created_at: originalProperty?.created_at || new Date().toISOString(),
                 updated_at: new Date().toISOString()
-                // 移除change_history字段，因为数据库中没有这个列
             };
 
             // 如果是可代理房源，添加标记和房源方信息
@@ -6577,6 +6577,7 @@
                 const updateData = {
                     type: newType,
                     price: property.price,
+                    change_history: property.changeHistory,
                     updated_at: property.updated_at
                 };
 
