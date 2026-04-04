@@ -6633,7 +6633,7 @@
 
             // 合并所有房源（普通房源和代理房源）
             const allProperties = [...properties, ...agentProperties];
-            const selectedProps = allProperties.filter(p => selectedProperties.includes(p.id));
+            const selectedProps = allProperties.filter(p => selectedProperties.some(id => String(id) === String(p.id)));
             let shareText = '';
 
             // 检查是否有出售房源
@@ -7004,11 +7004,12 @@
 
         // 切换转发页面的房源选择
         function toggleSharePropertySelection(propertyId) {
-            const index = selectedProperties.indexOf(propertyId);
+            const stringId = String(propertyId);
+            const index = selectedProperties.findIndex(id => String(id) === stringId);
             if (index > -1) {
                 selectedProperties.splice(index, 1);
             } else {
-                selectedProperties.push(propertyId);
+                selectedProperties.push(stringId);
             }
             // 更新转发内容
             document.getElementById('shareContent').value = getSelectedPropertiesShareText();
@@ -7038,10 +7039,10 @@
             
             if (allSelected) {
                 // 取消全选
-                selectedProperties = selectedProperties.filter(id => !filteredProps.some(p => p.id === id));
+                selectedProperties = selectedProperties.filter(id => !filteredProps.some(p => String(p.id) === String(id)));
             } else {
                 // 全选
-                const filteredIds = filteredProps.map(p => p.id);
+                const filteredIds = filteredProps.map(p => String(p.id));
                 selectedProperties = [...new Set([...selectedProperties, ...filteredIds])];
             }
             
@@ -7062,7 +7063,7 @@
         function generateMomentsContent(style) {
             // 合并所有房源（普通房源和代理房源）
             const allProperties = [...properties, ...agentProperties];
-            const selectedProps = allProperties.filter(p => selectedProperties.includes(p.id));
+            const selectedProps = allProperties.filter(p => selectedProperties.some(id => String(id) === String(p.id)));
             if (selectedProps.length === 0) {
                 showToast('请先选择要转发的房源');
                 return;
