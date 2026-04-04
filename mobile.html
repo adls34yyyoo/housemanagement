@@ -2962,13 +2962,13 @@
                         </div>
                     ` : ''}
                     
-                    ${property.landlordName || property.landlordPhone || property.landlordWechat ? `
+                    ${(property.landlordName || property.landlord_name) || (property.landlordPhone || property.landlord_phone) || (property.landlordWechat || property.landlord_wechat) ? `
                         <div style="margin-bottom: 20px;">
                             <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">房东信息</h4>
                             <div style="background: var(--background); border-radius: var(--radius); padding: 16px;">
-                                ${property.landlordName ? `<div style="margin-bottom: 8px;"><strong>姓名：</strong>${property.landlordName}</div>` : ''}
-                                ${property.landlordPhone ? `<div style="margin-bottom: 8px;"><strong>电话：</strong><a href="tel:${property.landlordPhone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 24px;">📞</a></div>` : ''}
-                                ${property.landlordWechat ? `<div><strong>微信：</strong><div onclick="copyWeChat('${property.landlordWechat}')" style="color: #07C160; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 24px;">🌐</div></div>` : ''}
+                                ${(property.landlordName || property.landlord_name) ? `<div style="margin-bottom: 8px;"><strong>姓名：</strong>${property.landlordName || property.landlord_name}</div>` : ''}
+                                ${(property.landlordPhone || property.landlord_phone) ? `<div style="margin-bottom: 8px;"><strong>电话：</strong><a href="tel:${property.landlordPhone || property.landlord_phone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 24px;">📞</a></div>` : ''}
+                                ${(property.landlordWechat || property.landlord_wechat) ? `<div><strong>微信：</strong><div onclick="copyWeChat('${property.landlordWechat || property.landlord_wechat}')" style="color: #07C160; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 24px;">🌐</div></div>` : ''}
                             </div>
                         </div>
                     ` : ''}
@@ -7911,7 +7911,13 @@
                     ]);
 
                     if (!propertiesError && propertiesData) {
-                        properties = propertiesData;
+                        properties = propertiesData.map(p => ({
+                            ...p,
+                            // 确保 changeHistory 字段存在
+                            changeHistory: p.changeHistory || p.change_history || [],
+                            // 确保 landlordWechat 字段存在
+                            landlordWechat: p.landlordWechat || p.landlord_wechat || ''
+                        }));
                         // 更新agentProperties数组，包含所有is_agent: true的房源
                         agentProperties = properties.filter(p => p.is_agent === true);
                         console.log(`成功加载 ${properties.length} 条房源数据`);
@@ -7932,7 +7938,11 @@
                     ]);
 
                     if (!customersError && customersData) {
-                        customers = customersData;
+                        customers = customersData.map(c => ({
+                            ...c,
+                            // 确保 changeHistory 字段存在
+                            changeHistory: c.changeHistory || c.change_history || []
+                        }));
                         console.log(`成功加载 ${customers.length} 条客户数据`);
                     } else if (customersError) {
                         console.warn('加载客户数据失败:', customersError);
