@@ -4184,7 +4184,7 @@
             let propsToRender = filteredProperties.length ? filteredProperties : properties;
             
             // 只显示自有房源（非可代理）
-            propsToRender = propsToRender.filter(p => !p.isAgent || p.isAgent === false);
+            propsToRender = propsToRender.filter(p => !(p.isAgent || p.is_agent));
 
             if (propsToRender.length === 0) {
                 container.innerHTML = `
