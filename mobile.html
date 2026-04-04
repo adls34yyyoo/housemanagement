@@ -2567,6 +2567,24 @@
                     </div>
                 </div>
                 <div class="form-group">
+                    <label class="form-label">房源类型</label>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <select class="form-select" id="propPropertyType" style="flex: 1;">
+                            <option value="">请选择房源类型</option>
+                        </select>
+                        <input type="text" class="form-input" id="propPropertyTypeCustom" placeholder="自定义" style="width: 100px;">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">产证情况</label>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <select class="form-select" id="propCertificate" style="flex: 1;">
+                            <option value="">请选择产证情况</option>
+                        </select>
+                        <input type="text" class="form-input" id="propCertificateCustom" placeholder="自定义" style="width: 100px;">
+                    </div>
+                </div>
+                <div class="form-group">
                     <label class="form-label">户型</label>
                     <div style="display: flex; gap: 8px; align-items: center;">
                         <select class="form-select" id="propLayout" style="flex: 1;">
@@ -2782,6 +2800,8 @@
                             <option value="decoration">装修</option>
                             <option value="layout">户型</option>
                             <option value="region">地区</option>
+                            <option value="propertyType">房源类型</option>
+                            <option value="propertyCertificate">产证情况</option>
                             <option value="agentParties">被代理方</option>
                         </select>
                 </div>
@@ -2921,6 +2941,14 @@
                             <span>${property.region || '未知区域'}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                            <span style="color: var(--text-secondary);">房源类型</span>
+                            <span>${property.property_type || property.propertyType || '未知类型'}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                            <span style="color: var(--text-secondary);">产证情况</span>
+                            <span>${property.property_certificate || property.propertyCertificate || '未知'}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                             <span style="color: var(--text-secondary);">户型</span>
                             <span>${property.layout || '未知户型'}</span>
                         </div>
@@ -2939,10 +2967,6 @@
                         <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                             <span style="color: var(--text-secondary);">门牌号</span>
                             <span>${property.door_number || property.doorNumber || '未知门牌号'}</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-                            <span style="color: var(--text-secondary);">产证情况</span>
-                            <span>${property.propertyCertificate || '未知'}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; color: var(--danger);">
                             <span>价格</span>
@@ -3250,6 +3274,7 @@
             decoration: ['精装修', '简装', '豪装', '毛坯', '中装'],
             layout: ['3-2-2', '2-1-1', '3-1-1', '2-2-1', '1-1-1'],
             region: ['惠南镇', '周浦镇', '康桥镇', '祝桥镇', '新场镇', '大团镇', '老港镇', '书院镇', '临港滴水湖', '泥城镇', '芦潮港镇'],
+            propertyType: ['商品房', '动迁房', '公寓', '别墅', '商铺', '写字楼'],
             propertyCertificate: ['满5唯一', '满5年', '满两年', '不满两年']
         };
 
@@ -3297,6 +3322,18 @@
                 }
                 regionSelect.appendChild(option);
             });
+
+            // 初始化房源类型选择
+            const propertyTypeSelect = document.getElementById('propPropertyType');
+            if (propertyTypeSelect) {
+                propertyTypeSelect.innerHTML = '<option value="">请选择房源类型</option>';
+                optionsData.propertyType.forEach(type => {
+                    const option = document.createElement('option');
+                    option.value = type;
+                    option.textContent = type;
+                    propertyTypeSelect.appendChild(option);
+                });
+            }
 
             // 初始化产证情况选择
             const certificateSelect = document.getElementById('propCertificate');
@@ -5292,6 +5329,10 @@
             document.getElementById('propPrice').value = '';
             document.getElementById('propRegion').value = '';
             document.getElementById('propRegionCustom').value = '';
+            document.getElementById('propPropertyType').value = '';
+            document.getElementById('propPropertyTypeCustom').value = '';
+            document.getElementById('propCertificate').value = '';
+            document.getElementById('propCertificateCustom').value = '';
             document.getElementById('propLayout').value = '';
             document.getElementById('propLayoutCustom').value = '';
             document.getElementById('propArea').value = '';
@@ -5301,7 +5342,6 @@
             document.getElementById('propLandlordName').value = '';
             document.getElementById('propLandlordWechat').value = '';
             document.getElementById('propLandlordPhone').value = '';
-            document.getElementById('propCertificate').value = '';
             document.getElementById('propStatus').value = 'pending';
             document.getElementById('propDesc').value = '';
             document.getElementById('propRemark').value = '';
@@ -5313,6 +5353,8 @@
             const decoration = document.getElementById('propDecoration').value || document.getElementById('propDecorationCustom').value;
             const price = document.getElementById('propPrice').value;
             const region = document.getElementById('propRegion').value || document.getElementById('propRegionCustom').value;
+            const propertyType = document.getElementById('propPropertyType').value || document.getElementById('propPropertyTypeCustom').value;
+            const propertyCertificate = document.getElementById('propCertificate').value || document.getElementById('propCertificateCustom').value;
             const layout = document.getElementById('propLayout').value || document.getElementById('propLayoutCustom').value;
             const area = document.getElementById('propArea').value;
             const floor = document.getElementById('propFloor').value || document.getElementById('propFloorCustom').value;
@@ -5387,6 +5429,12 @@
                     if (originalProperty.decoration !== decoration) {
                         changeDetails.push(`装修：${originalProperty.decoration || '无'} → ${decoration || '无'}`);
                     }
+                    if ((originalProperty.property_type || originalProperty.propertyType) !== propertyType) {
+                        changeDetails.push(`房源类型：${(originalProperty.property_type || originalProperty.propertyType) || '无'} → ${propertyType || '无'}`);
+                    }
+                    if ((originalProperty.property_certificate || originalProperty.propertyCertificate) !== propertyCertificate) {
+                        changeDetails.push(`产证情况：${(originalProperty.property_certificate || originalProperty.propertyCertificate) || '无'} → ${propertyCertificate || '无'}`);
+                    }
                     if (!isAgentMode && (originalProperty.landlord_name || originalProperty.landlordName) !== landlordName) {
                         changeDetails.push(`房东：${(originalProperty.landlord_name || originalProperty.landlordName) || '无'} → ${landlordName || '无'}`);
                     }
@@ -5434,6 +5482,8 @@
                 decoration,
                 price: propertyPrice,
                 region,
+                property_type: propertyType,
+                property_certificate: propertyCertificate,
                 layout,
                 area: area ? parseFloat(area) : null,
                 floor,
@@ -5556,6 +5606,8 @@
             document.getElementById('propDecoration').value = property.decoration || '';
             document.getElementById('propPrice').value = property.price || '';
             document.getElementById('propRegion').value = property.region || '';
+            document.getElementById('propPropertyType').value = property.property_type || property.propertyType || '';
+            document.getElementById('propCertificate').value = property.property_certificate || property.propertyCertificate || '';
             document.getElementById('propLayout').value = property.layout || '';
             document.getElementById('propArea').value = property.area || '';
             document.getElementById('propFloor').value = property.floor || '';
@@ -5919,6 +5971,7 @@
                         decoration: [],
                         layout: [],
                         region: [],
+                        propertyType: [],
                         propertyCertificate: []
                     };
 
@@ -6238,7 +6291,9 @@
                 (type === 'community' && p.community === value) ||
                 (type === 'decoration' && p.decoration === value) ||
                 (type === 'layout' && p.layout === value) ||
-                (type === 'region' && p.region === value)
+                (type === 'region' && p.region === value) ||
+                (type === 'propertyType' && p.propertyType === value) ||
+                (type === 'propertyCertificate' && p.propertyCertificate === value)
             );
 
             if (isInUse) {
