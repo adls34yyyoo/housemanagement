@@ -3875,7 +3875,7 @@
             }
 
             const priceUnit = property.type === 'sale' ? '万元' : '元/月';
-            const isSelected = selectedProperties.includes(property.id);
+            const isSelected = selectedProperties.some(id => String(id) === String(property.id));
 
             return `
                 <div class="property-card" style="padding: 12px 16px; cursor: pointer; transition: var(--transition); position: relative; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid var(--border);" onclick="openPropertyDetailModal('${property.id}')">
@@ -3908,11 +3908,12 @@
 
         // 切换房源选择
         window.togglePropertySelection = function(propertyId) {
-            const index = selectedProperties.indexOf(propertyId);
+            const stringId = String(propertyId);
+            const index = selectedProperties.findIndex(id => String(id) === stringId);
             if (index > -1) {
                 selectedProperties.splice(index, 1);
             } else {
-                selectedProperties.push(propertyId);
+                selectedProperties.push(stringId);
             }
             renderPropertyList();
             renderAgentPropertyList();
@@ -4378,7 +4379,7 @@
             }
 
             const priceUnit = property.type === 'sale' ? '万' : '元/月'; // 修改代理出售房源价格单位为万
-            const isSelected = selectedProperties.includes(property.id);
+            const isSelected = selectedProperties.some(id => String(id) === String(property.id));
 
             return `
                 <div class="property-card" style="padding: 12px 16px; cursor: pointer; transition: var(--transition); position: relative; display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid var(--border);" onclick="openPropertyDetailModal('${property.id}')">
@@ -6947,7 +6948,7 @@
                         <div style="margin-bottom: 20px;">
                             <div style="font-weight: 600; color: var(--text); margin-bottom: 12px; padding-bottom: 4px; border-bottom: 2px solid var(--primary);">${groupName}</div>
                             ${groupProps.map(property => {
-                                const isSelected = selectedProperties.includes(property.id);
+                                const isSelected = selectedProperties.some(id => String(id) === String(property.id));
                                 const priceUnit = property.type === 'sale' ? '万元' : '元/月';
                                 
                                 return `
