@@ -8224,7 +8224,7 @@
         }
 
         // 保存沟通记录
-        function saveCommunicationRecord(customerId) {
+        async function saveCommunicationRecord(customerId) {
             const type = document.getElementById('communicationType').value;
             const time = document.getElementById('communicationTime').value;
             const remark = document.getElementById('communicationRemark').value;
@@ -8235,44 +8235,67 @@
                 return;
             }
 
-            // 找到对应的客户
-            const customer = customers.find(c => c.id === customerId);
-            if (!customer) {
-                showToast('未找到对应的客户');
-                return;
+            try {
+                // 初始化Supabase客户端
+                if (!supabaseClient) {
+                    const initialized = initSupabase();
+                    if (!initialized) {
+                        showToast('❌ 数据库连接失败，请检查网络');
+                        return;
+                    }
+                }
+
+                // 找到对应的客户
+                const customer = customers.find(c => String(c.id) === String(customerId));
+                if (!customer) {
+                    showToast('未找到对应的客户');
+                    return;
+                }
+
+                // 添加沟通记录
+                if (!customer.communicationRecords) {
+                    customer.communicationRecords = [];
+                }
+
+                customer.communicationRecords.push({
+                    id: Date.now().toString(),
+                    type,
+                    timestamp: time,
+                    remark,
+                    operator,
+                    created_at: new Date().toISOString()
+                });
+
+                // 更新客户的更新时间
+                customer.updatedat = new Date().toISOString();
+
+                // 保存到云数据库
+                const { error } = await supabaseClient
+                    .from('customers')
+                    .update(customer)
+                    .eq('id', String(customerId));
+                
+                if (error) {
+                    console.error('更新客户失败:', error);
+                    showToast(`❌ 保存沟通记录失败: ${error.message}`);
+                    return;
+                }
+
+                // 重新加载数据
+                await loadData();
+
+                // 关闭模态框
+                closeCommunicationModal();
+
+                // 重新显示客户详情，以更新沟通记录
+                showCustomerDetail(customerId);
+
+                // 显示成功提示
+                showToast('✅ 沟通记录已保存');
+            } catch (error) {
+                console.error('保存沟通记录时出错:', error);
+                showToast('❌ 保存失败，请检查网络连接');
             }
-
-            // 添加沟通记录
-            if (!customer.communicationRecords) {
-                customer.communicationRecords = [];
-            }
-
-            customer.communicationRecords.push({
-                id: Date.now().toString(),
-                type,
-                timestamp: time,
-                remark,
-                operator,
-                created_at: new Date().toISOString()
-            });
-
-            // 更新客户的更新时间
-            customer.updated_at = new Date().toISOString();
-            
-            // 标记为未同步
-            customer.synced = false;
-
-            // 保存到本地存储
-
-
-            // 关闭模态框
-            closeCommunicationModal();
-
-            // 重新显示客户详情，以更新沟通记录
-            showCustomerDetail(customerId);
-
-            // 显示成功提示
-            showToast('✅ 沟通记录已保存');
         }
 
         // 同步本地未上传的数据到云数据库
