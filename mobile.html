@@ -4883,7 +4883,7 @@
             // 确保模态框存在
             if (!document.getElementById('customerDetailModal')) {
                 const modalHtml = `
-                    <div class="modal" id="customerDetailModal">
+                    <div class="modal" id="customerDetailModal" onclick="if (event.target === this) document.getElementById('customerDetailModal').classList.remove('active')">
                         <div class="modal-content">
                             <div class="modal-header">
                                 <span class="modal-title">客户详情</span>
