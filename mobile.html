@@ -4203,7 +4203,7 @@
                             ${allSelected ? '取消全选' : '全选'}
                         </button>
                         ${selectedProperties.length > 0 ? `
-                            <button onclick="batchPrintProperties()" style="padding: 8px 16px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
+                            <button onclick="batchPrintProperties()" style="padding: 32px 64px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500; font-size: 16px;">
                                 🖨️ 打印 (${selectedProperties.length})
                             </button>
                         ` : ''}
@@ -4274,7 +4274,7 @@
                             ${allSelected ? '取消全选' : '全选'}
                         </button>
                         ${selectedProperties.length > 0 ? `
-                            <button onclick="batchPrintProperties()" style="padding: 8px 16px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
+                            <button onclick="batchPrintProperties()" style="padding: 32px 64px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500; font-size: 16px;">
                                 🖨️ 打印 (${selectedProperties.length})
                             </button>
                         ` : ''}
@@ -8741,9 +8741,13 @@
                 return;
             }
             
-            // 合并所有房源（普通房源和代理房源）
+            // 合并所有房源（普通房源和代理房源），去重
             const allProperties = [...properties, ...agentProperties];
-            const selectedProps = allProperties.filter(p => selectedProperties.includes(String(p.id)));
+            // 使用Map去重，确保每个ID只出现一次
+            const propertyMap = new Map();
+            allProperties.forEach(p => propertyMap.set(String(p.id), p));
+            const uniqueProperties = Array.from(propertyMap.values());
+            const selectedProps = uniqueProperties.filter(p => selectedProperties.includes(String(p.id)));
             
             if (selectedProps.length === 0) {
                 showToast('未找到选中的房源');
@@ -8790,21 +8794,19 @@
                 printContent += `
                     <div class="property">
                         <div class="property-title">${index + 1}. ${property.community || '未知小区'} - ${typeText}</div>
-                        <div class="property-row">
-                            <div class="property-label">区域：</div>
-                            <div class="property-value">${property.region || '未知区域'}</div>
-                        </div>
-                        <div class="property-row">
-                            <div class="property-label">户型：</div>
-                            <div class="property-value">${property.layout || '未知户型'}</div>
-                        </div>
-                        <div class="property-row">
-                            <div class="property-label">面积：</div>
-                            <div class="property-value">${property.area ? property.area + '平方米' : '未知面积'}</div>
-                        </div>
-                        <div class="property-row">
-                            <div class="property-label">楼层：</div>
-                            <div class="property-value">${property.floor || '未知楼层'}</div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 2mm;">
+                            <div style="flex: 1; min-width: 150px;">
+                                <span style="font-weight: bold; color: #666; font-size: 40pt;">楼层：</span>
+                                <span style="color: #333; font-size: 40pt;">${property.floor || '未知楼层'}</span>
+                            </div>
+                            <div style="flex: 1; min-width: 150px;">
+                                <span style="font-weight: bold; color: #666; font-size: 40pt;">户型：</span>
+                                <span style="color: #333; font-size: 40pt;">${property.layout || '未知户型'}</span>
+                            </div>
+                            <div style="flex: 1; min-width: 150px;">
+                                <span style="font-weight: bold; color: #666; font-size: 40pt;">面积：</span>
+                                <span style="color: #333; font-size: 40pt;">${property.area ? property.area + '平方米' : '未知面积'}</span>
+                            </div>
                         </div>
                         <div class="property-row">
                             <div class="property-label">装修：</div>
