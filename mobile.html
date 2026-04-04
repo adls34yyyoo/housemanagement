@@ -6486,8 +6486,12 @@
             // 关闭模态框
             closeRentSaleToggleModal();
 
-            // 重新打开房源详情，显示更新后的信息
-            openPropertyDetailModal(propertyId);
+            // 关闭房源详情卡片
+            closePropertyDetailModal();
+
+            // 刷新房源列表
+            renderPropertyList();
+            renderAgentPropertyList();
 
             // 显示成功提示
             showToast(`✅ 房源已成功转换为${newType === 'sale' ? '出售' : '出租'}`);
