@@ -6366,8 +6366,12 @@
 
         // 显示租售互转模态框
         window.showRentSaleToggleModal = function(propertyId) {
-            const property = properties.find(p => p.id === propertyId);
-            if (!property) return;
+            // 使用String转换确保id类型匹配
+            const property = properties.find(p => String(p.id) === String(propertyId)) || agentProperties.find(p => String(p.id) === String(propertyId));
+            if (!property) {
+                console.error('未找到要转换的房源，propertyId:', propertyId);
+                return;
+            }
 
             const currentType = property.type;
             const newType = currentType === 'rent' ? 'sale' : 'rent';
@@ -6442,8 +6446,12 @@
 
         // 执行租售互转
         window.toggleRentSale = function(propertyId) {
-            const property = properties.find(p => p.id === propertyId);
-            if (!property) return;
+            // 使用String转换确保id类型匹配
+            const property = properties.find(p => String(p.id) === String(propertyId)) || agentProperties.find(p => String(p.id) === String(propertyId));
+            if (!property) {
+                console.error('未找到要转换的房源，propertyId:', propertyId);
+                return;
+            }
 
             const currentType = property.type;
             const newType = currentType === 'rent' ? 'sale' : 'rent';
