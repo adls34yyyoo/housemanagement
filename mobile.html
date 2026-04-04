@@ -2967,7 +2967,7 @@
                             <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">房东信息</h4>
                             <div style="background: var(--background); border-radius: var(--radius); padding: 16px;">
                                 <div style="margin-bottom: 8px;"><strong>姓名：</strong>${property.landlordName}</div>
-                                ${property.landlordPhone ? `<div><strong>电话：</strong><a href="tel:${property.landlordPhone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">📞</a></div>` : ''}
+                                ${property.landlordPhone ? `<div><strong>电话：</strong><a href="tel:${property.landlordPhone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 24px;">📞</a></div>` : ''}
                             </div>
                         </div>
                     ` : ''}
@@ -4810,8 +4810,8 @@
                         <div style="background: var(--background); border-radius: var(--radius); padding: 12px;">
                             <div style="margin-bottom: 8px;"><strong>预算：</strong>${customer.budget || '未填写'}</div>
                             <div style="margin-bottom: 8px;"><strong>需求：</strong>${customer.demand || '未填写'}</div>
-                            ${customer.phone ? `<div style="margin-bottom: 8px;"><strong>电话：</strong><a href="tel:${customer.phone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">📞</a></div>` : ''}
-                            ${customer.wechat ? `<div><strong>微信：</strong><div onclick="copyWeChat('${customer.wechat}')" style="color: #07C160; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">🌐</div></div>` : ''}
+                            ${customer.phone ? `<div style="margin-bottom: 8px;"><strong>电话：</strong><a href="tel:${customer.phone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 24px;">📞</a></div>` : ''}
+                            ${customer.wechat ? `<div><strong>微信：</strong><div onclick="copyWeChat('${customer.wechat}')" style="color: #07C160; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 24px;">🌐</div></div>` : ''}
                         </div>
                     </div>
                     
