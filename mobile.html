@@ -3006,10 +3006,10 @@
                 }
                 
                 // 检查是否在全局作用域中可用
-                if (typeof createClient !== 'undefined') {
+                if (typeof window.createClient !== 'undefined') {
                     // 直接使用全局的createClient
                     console.log('使用全局createClient');
-                    supabaseClient = createClient(supabaseUrl, supabaseKey);
+                    supabaseClient = window.createClient(supabaseUrl, supabaseKey);
                     console.log('✅ Supabase初始化成功 (使用全局createClient)');
                     
                     // 测试连接
@@ -3798,13 +3798,13 @@
             };
 
             const navMap = {
-                'home': 0,
-                'properties': 1,
-                'customers': 2,
-                'profile': 3,
-                'agentProperties': 4,
-                'share': 5
-            };
+            'home': 0,
+            'properties': 1,
+            'agentProperties': 2,
+            'share': 3,
+            'customers': 4,
+            'profile': 5
+        };
 
             const targetPage = document.getElementById(pageMap[page]);
             if (targetPage) {
@@ -5854,11 +5854,11 @@
                     const { error } = await supabaseClient
                         .from('customers')
                         .update(customer)
-                        .eq('id', editingCustomerId);
+                        .eq('id', String(editingCustomerId));
                     
                     if (error) {
                         console.error('更新客户失败:', error);
-                        showToast('❌ 更新客户失败，请重试');
+                        showToast(`❌ 更新客户失败: ${error.message}`);
                         return;
                     }
                 } else {
@@ -5868,7 +5868,7 @@
                     
                     if (error) {
                         console.error('保存客户失败:', error);
-                        showToast('❌ 保存客户失败，请重试');
+                        showToast(`❌ 保存客户失败: ${error.message}`);
                         return;
                     }
                 }
