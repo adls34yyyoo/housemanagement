@@ -5513,6 +5513,7 @@
                 description: desc,
                 remark,
                 change_history: changeHistoryRecord,
+                communication_records: originalProperty?.communication_records || originalProperty?.communicationRecords || [],
                 created_at: originalProperty?.created_at || new Date().toISOString(),
                 updated_at: new Date().toISOString()
             };
@@ -5894,6 +5895,31 @@
                 originalCustomer = customers.find(c => String(c.id) === String(editingCustomerId));
             }
 
+            // 构建编辑记录
+            let changeHistoryRecord;
+            if (editingCustomerId) {
+                const originalChangeHistory = originalCustomer?.change_history || originalCustomer?.changeHistory || [];
+                const changeDetails = [];
+                if (originalCustomer?.name !== name) changeDetails.push('姓名');
+                if (originalCustomer?.phone !== phone) changeDetails.push('电话');
+                if (originalCustomer?.wechat !== (wechat || name)) changeDetails.push('微信');
+                if (originalCustomer?.budget !== budget) changeDetails.push('预算');
+                if (originalCustomer?.demand !== demand) changeDetails.push('需求');
+                if (originalCustomer?.status !== status) changeDetails.push('状态');
+                
+                changeHistoryRecord = originalChangeHistory.concat({
+                    timestamp: new Date().toISOString(),
+                    action: changeDetails.length > 0 ? `更新：${changeDetails.join('、')}` : '更新',
+                    user: currentUser || 'admin'
+                });
+            } else {
+                changeHistoryRecord = [{
+                    timestamp: new Date().toISOString(),
+                    action: '创建',
+                    user: currentUser || 'admin'
+                }];
+            }
+
             const customer = {
                 id: editingCustomerId || Date.now().toString(),
                 name,
@@ -5902,9 +5928,10 @@
                 budget,
                 demand,
                 status,
+                change_history: changeHistoryRecord,
+                communication_records: originalCustomer?.communication_records || originalCustomer?.communicationRecords || [],
                 createdat: originalCustomer?.createdat || new Date().toISOString(),
                 updatedat: new Date().toISOString()
-                // 移除communicationRecords字段，因为数据库中可能没有这个列
             };
 
             try {
@@ -7984,6 +8011,8 @@
                             ...p,
                             // 确保 changeHistory 字段存在
                             changeHistory: p.changeHistory || p.change_history || [],
+                            // 确保 communicationRecords 字段存在
+                            communicationRecords: p.communicationRecords || p.communication_records || [],
                             // 确保 landlordWechat 字段存在
                             landlordWechat: p.landlordWechat || p.landlord_wechat || ''
                         }));
@@ -8010,7 +8039,9 @@
                         customers = customersData.map(c => ({
                             ...c,
                             // 确保 changeHistory 字段存在
-                            changeHistory: c.changeHistory || c.change_history || []
+                            changeHistory: c.changeHistory || c.change_history || [],
+                            // 确保 communicationRecords 字段存在
+                            communicationRecords: c.communicationRecords || c.communication_records || []
                         }));
                         console.log(`成功加载 ${customers.length} 条客户数据`);
                     } else if (customersError) {
@@ -8313,7 +8344,7 @@
         }
 
         // 保存沟通记录
-        function saveCommunicationRecord(customerId) {
+        window.saveCommunicationRecord = async function(customerId) {
             const type = document.getElementById('communicationType').value;
             const time = document.getElementById('communicationTime').value;
             const remark = document.getElementById('communicationRemark').value;
@@ -8335,15 +8366,53 @@
             if (!customer.communicationRecords) {
                 customer.communicationRecords = [];
             }
+            if (!customer.communication_records) {
+                customer.communication_records = [];
+            }
 
-            customer.communicationRecords.push({
+            const newRecord = {
                 id: Date.now().toString(),
                 type,
                 timestamp: time,
                 remark,
                 operator,
                 created_at: new Date().toISOString()
-            });
+            };
+
+            customer.communicationRecords.push(newRecord);
+            customer.communication_records.push(newRecord);
+
+            // 保存到云数据库
+            try {
+                if (!supabaseClient) {
+                    const initialized = initSupabase();
+                    if (!initialized) {
+                        showToast('❌ 数据库连接失败，请检查网络');
+                        return;
+                    }
+                }
+
+                const { error } = await supabaseClient
+                    .from('customers')
+                    .update({
+                        communication_records: customer.communication_records,
+                        updatedat: new Date().toISOString()
+                    })
+                    .eq('id', String(customerId));
+                
+                if (error) {
+                    console.error('保存沟通记录失败:', error);
+                    showToast('❌ 保存沟通记录失败');
+                    return;
+                }
+
+                // 重新加载数据
+                await loadData();
+
+            } catch (error) {
+                console.error('保存沟通记录时出错:', error);
+                showToast('❌ 保存失败，请检查网络连接');
+            }
 
             // 关闭模态框
             closeCommunicationModal();
