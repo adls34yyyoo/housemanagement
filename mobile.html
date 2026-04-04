@@ -4807,7 +4807,7 @@
 
         // 显示客户详情
         function showCustomerDetail(customerId) {
-            const customer = customers.find(c => c.id === customerId);
+            const customer = customers.find(c => String(c.id) === String(customerId));
             if (!customer) return;
 
             const detailHtml = `
