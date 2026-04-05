@@ -2551,6 +2551,24 @@
                     </div>
                 </div>
                 <div class="form-group">
+                    <label class="form-label">小学学区</label>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <select class="form-select" id="propPrimarySchool" style="flex: 1;">
+                            <option value="">请选择小学学区</option>
+                        </select>
+                        <input type="text" class="form-input" id="propPrimarySchoolCustom" placeholder="自定义" style="width: 100px;">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">初中学区</label>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <select class="form-select" id="propMiddleSchool" style="flex: 1;">
+                            <option value="">请选择初中学区</option>
+                        </select>
+                        <input type="text" class="form-input" id="propMiddleSchoolCustom" placeholder="自定义" style="width: 100px;">
+                    </div>
+                </div>
+                <div class="form-group">
                     <label class="form-label">装修</label>
                     <div style="display: flex; gap: 8px; align-items: center;">
                         <select class="form-select" id="propDecoration" style="flex: 1;">
@@ -3340,6 +3358,8 @@
         // 选项数据存储
         let optionsData = {
             community: ['金地城', '一方新城'],
+            primarySchool: [],
+            middleSchool: [],
             decoration: ['精装修', '简装', '豪装', '毛坯', '中装'],
             layout: ['3-2-2', '2-1-1', '3-1-1', '2-2-1', '1-1-1'],
             region: ['惠南镇', '周浦镇', '康桥镇', '祝桥镇', '新场镇', '大团镇', '老港镇', '书院镇', '临港滴水湖', '泥城镇', '芦潮港镇'],
@@ -3358,6 +3378,34 @@
                 option.textContent = community;
                 communitySelect.appendChild(option);
             });
+
+            // 初始化小学学区选择
+            const primarySchoolSelect = document.getElementById('propPrimarySchool');
+            if (primarySchoolSelect) {
+                primarySchoolSelect.innerHTML = '<option value="">请选择小学学区</option>';
+                if (optionsData.primarySchool) {
+                    optionsData.primarySchool.forEach(school => {
+                        const option = document.createElement('option');
+                        option.value = school;
+                        option.textContent = school;
+                        primarySchoolSelect.appendChild(option);
+                    });
+                }
+            }
+
+            // 初始化初中学区选择
+            const middleSchoolSelect = document.getElementById('propMiddleSchool');
+            if (middleSchoolSelect) {
+                middleSchoolSelect.innerHTML = '<option value="">请选择初中学区</option>';
+                if (optionsData.middleSchool) {
+                    optionsData.middleSchool.forEach(school => {
+                        const option = document.createElement('option');
+                        option.value = school;
+                        option.textContent = school;
+                        middleSchoolSelect.appendChild(option);
+                    });
+                }
+            }
 
             // 初始化装修选择
             const decorationSelect = document.getElementById('propDecoration');
@@ -5612,6 +5660,8 @@
         // 保存房源
         async function saveProperty() {
             const community = document.getElementById('propCommunity').value || document.getElementById('propCommunityCustom').value;
+            const primarySchool = document.getElementById('propPrimarySchool').value || document.getElementById('propPrimarySchoolCustom').value;
+            const middleSchool = document.getElementById('propMiddleSchool').value || document.getElementById('propMiddleSchoolCustom').value;
             const decoration = document.getElementById('propDecoration').value || document.getElementById('propDecorationCustom').value;
             const price = document.getElementById('propPrice').value;
             const region = document.getElementById('propRegion').value || document.getElementById('propRegionCustom').value;
@@ -5644,6 +5694,8 @@
 
             // 添加各个自定义值到选项
             await addToOptionsIfNotExist('community', community);
+            await addToOptionsIfNotExist('primarySchool', primarySchool);
+            await addToOptionsIfNotExist('middleSchool', middleSchool);
             await addToOptionsIfNotExist('decoration', decoration);
             await addToOptionsIfNotExist('region', region);
             await addToOptionsIfNotExist('propertyType', propType);
@@ -5800,6 +5852,10 @@
             const property = {
                 id: editingPropertyId || Date.now().toString(),
                 community,
+                primary_school: primarySchool,
+                primarySchool: primarySchool,
+                middle_school: middleSchool,
+                middleSchool: middleSchool,
                 decoration,
                 price: propertyPrice,
                 region,
@@ -5927,6 +5983,8 @@
             }
 
             document.getElementById('propCommunity').value = property.community || '';
+            document.getElementById('propPrimarySchool').value = property.primarySchool || property.primary_school || '';
+            document.getElementById('propMiddleSchool').value = property.middleSchool || property.middle_school || '';
             document.getElementById('propDecoration').value = property.decoration || '';
             document.getElementById('propPrice').value = property.price || '';
             document.getElementById('propRegion').value = property.region || '';
