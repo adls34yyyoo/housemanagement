@@ -3079,9 +3079,9 @@
                     ` : ''}
                     
                     <div style="display: flex; gap: 12px;">
+                        <button class="btn btn-default" onclick="closePropertyDetailModal(); showPropertyCommunicationModal('${property.id}')">添加沟通记录</button>
                         <button class="btn btn-primary" onclick="editProperty('${property.id}'); closePropertyDetailModal()">编辑</button>
                         <button class="btn btn-danger" onclick="deletePropertyFromDetail('${property.id}')" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none;">删除</button>
-                        <button class="btn btn-default" onclick="closePropertyDetailModal(); showPropertyCommunicationModal('${property.id}')">添加沟通记录</button>
                     </div>
                 </div>
             `;
@@ -8804,6 +8804,9 @@
 
         // 显示房源沟通记录模态框
         function showPropertyCommunicationModal(propertyId) {
+            // 获取当前登录人员
+            const currentUser = '管理员'; // 这里可以根据实际的登录状态获取
+            
             // 创建沟通记录模态框
             const modalHTML = `
                 <div class="modal" id="propertyCommunicationModal" onclick="if (event.target === this) closePropertyCommunicationModal()">
@@ -8828,7 +8831,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">操作人员</label>
-                                <input type="text" class="form-input" id="propertyCommunicationOperator" placeholder="请输入操作人员姓名">
+                                <input type="text" class="form-input" id="propertyCommunicationOperator" value="${currentUser}" placeholder="请输入操作人员姓名">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">沟通内容</label>
@@ -8859,39 +8862,44 @@
 
         // 保存房源沟通记录
         async function savePropertyCommunication(propertyId) {
-            const type = document.querySelector('input[name="propertyCommunicationType"]:checked').value;
-            const operator = document.getElementById('propertyCommunicationOperator').value;
-            const remark = document.getElementById('propertyCommunicationRemark').value;
-            
-            if (!remark) {
-                showToast('请输入沟通内容');
-                return;
-            }
-            
-            // 合并所有房源（普通房源和代理房源）
-            const allProperties = [...properties, ...agentProperties];
-            const property = allProperties.find(p => String(p.id) === String(propertyId));
-            
-            if (!property) {
-                showToast('房源不存在');
-                return;
-            }
-            
-            // 添加沟通记录
-            const communicationRecord = {
-                type,
-                operator: operator || '管理员',
-                remark,
-                timestamp: new Date().toISOString()
-            };
-            
-            if (!property.communicationRecords) {
-                property.communicationRecords = [];
-            }
-            
-            property.communicationRecords.unshift(communicationRecord);
-            
             try {
+                const type = document.querySelector('input[name="propertyCommunicationType"]:checked').value;
+                const operator = document.getElementById('propertyCommunicationOperator').value;
+                const remark = document.getElementById('propertyCommunicationRemark').value;
+                
+                if (!remark) {
+                    showToast('请输入沟通内容');
+                    return;
+                }
+                
+                // 合并所有房源（普通房源和代理房源）
+                const allProperties = [...properties, ...agentProperties];
+                const property = allProperties.find(p => String(p.id) === String(propertyId));
+                
+                if (!property) {
+                    showToast('房源不存在');
+                    return;
+                }
+                
+                // 添加沟通记录
+                const communicationRecord = {
+                    type,
+                    operator: operator || '管理员',
+                    remark,
+                    timestamp: new Date().toISOString()
+                };
+                
+                // 同时更新 communicationRecords 和 communication_records 字段
+                if (!property.communicationRecords) {
+                    property.communicationRecords = [];
+                }
+                if (!property.communication_records) {
+                    property.communication_records = [];
+                }
+                
+                property.communicationRecords.unshift(communicationRecord);
+                property.communication_records.unshift(communicationRecord);
+                
                 // 保存到本地存储
                 savePropertiesToLocalStorage();
                 
@@ -8902,7 +8910,7 @@
                         // 保存代理房源
                         const { error } = await supabaseClient
                             .from('agent_properties')
-                            .update({ communication_records: property.communicationRecords })
+                            .update({ communication_records: property.communication_records })
                             .eq('id', property.id);
                         
                         if (error) {
@@ -8913,7 +8921,7 @@
                         // 保存普通房源
                         const { error } = await supabaseClient
                             .from('properties')
-                            .update({ communication_records: property.communicationRecords })
+                            .update({ communication_records: property.communication_records })
                             .eq('id', property.id);
                         
                         if (error) {
