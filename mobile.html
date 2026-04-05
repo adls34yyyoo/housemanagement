@@ -2388,11 +2388,12 @@
                 <!-- 转发内容 -->
                 <div class="form-group">
                     <label class="form-label">转发内容</label>
-                    <textarea id="shareContent" rows="6" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 20px; resize: vertical;">${getSelectedPropertiesShareText()}</textarea>
+                    <textarea id="shareContent" rows="6" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 20px; resize: vertical;"></textarea>
                 </div>
                 
                 <!-- 操作按钮 -->
                 <div class="form-actions" style="display: flex; gap: 12px;">
+                    <button class="btn btn-primary" onclick="generateShareContent()">生成文案</button>
                     <button class="btn btn-default" onclick="shareToCopy()">复制文案</button>
                 </div>
             </div>
@@ -4073,7 +4074,8 @@
                     allProperties.some(p => String(p.id) === String(selectedId))
                 );
                 renderSharePropertyList();
-                document.getElementById('shareContent').value = getSelectedPropertiesShareText();
+                // 清空分享内容，等待用户点击生成文案
+                document.getElementById('shareContent').value = '';
             }
         }
 
@@ -7024,6 +7026,24 @@
             // 这里可以添加实际的朋友圈分享逻辑
         }
 
+        // 生成分享文案
+        function generateShareContent() {
+            if (selectedProperties.length === 0) {
+                showToast('⚠️ 请先选择要分享的房源');
+                return;
+            }
+            
+            const content = getSelectedPropertiesShareText();
+            const shareContent = document.getElementById('shareContent');
+            
+            if (shareContent) {
+                shareContent.value = content;
+                showToast('✅ 文案生成成功');
+            } else {
+                showToast('⚠️ 分享内容不存在');
+            }
+        }
+
         // 复制文案
         window.shareToCopy = function() {
             const shareContent = document.getElementById('shareContent');
@@ -7033,6 +7053,10 @@
             }
             
             const content = shareContent.value;
+            if (!content.trim()) {
+                showToast('⚠️ 请先生成文案');
+                return;
+            }
             if (!navigator.clipboard) {
                 // 备用方法
                 const textArea = document.createElement('textarea');
