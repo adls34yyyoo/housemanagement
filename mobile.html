@@ -7176,7 +7176,13 @@
             if (index > -1) {
                 selectedProperties.splice(index, 1);
             } else {
-                selectedProperties.push(stringId);
+                // 合并所有房源（普通房源和代理房源）
+                const allProperties = [...properties, ...agentProperties];
+                // 检查房源是否存在
+                const propertyExists = allProperties.some(p => String(p.id) === stringId);
+                if (propertyExists) {
+                    selectedProperties.push(stringId);
+                }
             }
             // 更新转发内容
             document.getElementById('shareContent').value = getSelectedPropertiesShareText();
@@ -7210,7 +7216,10 @@
             } else {
                 // 全选
                 const filteredIds = filteredProps.map(p => String(p.id));
-                selectedProperties = [...new Set([...selectedProperties, ...filteredIds])];
+                // 清理 selectedProperties 数组，只保留存在的房源
+                const allProperties = [...properties, ...agentProperties];
+                const existingIds = selectedProperties.filter(id => allProperties.some(p => String(p.id) === String(id)));
+                selectedProperties = [...new Set([...existingIds, ...filteredIds])];
             }
             
             // 重新渲染列表
@@ -8976,8 +8985,8 @@
                         @page { size: A4; margin: 15mm; }
                         body { font-family: Arial, sans-serif; padding: 0; margin: 0; }
                         .header { text-align: center; margin-bottom: 20mm; border-bottom: 3px solid #333; padding-bottom: 10mm; }
-                        .header h1 { margin: 0; color: #333; font-size: 288pt; }
-                        .header p { margin: 5mm 0 0 0; color: #666; font-size: 144pt; }
+                        .header h1 { margin: 0; color: #333; font-size: 144pt; }
+                        .header p { margin: 5mm 0 0 0; color: #666; font-size: 72pt; }
                         .property { 
                             padding: 15mm; 
                             border: 2px solid #ddd; 
@@ -8988,11 +8997,11 @@
                             page-break-after: always;
                         }
                         .property:last-child { page-break-after: avoid; }
-                        .property-title { font-size: 192pt; font-weight: bold; color: #333; margin-bottom: 20mm; text-align: center; }
+                        .property-title { font-size: 96pt; font-weight: bold; color: #333; margin-bottom: 20mm; text-align: center; }
                         .property-row { display: flex; margin-bottom: 10mm; padding: 5mm 0; border-bottom: 1px solid #eee; }
-                        .property-label { width: 100mm; font-weight: bold; color: #666; font-size: 128pt; }
-                        .property-value { flex: 1; color: #333; font-size: 128pt; }
-                        .price { color: #ef4444; font-size: 160pt; font-weight: bold; }
+                        .property-label { width: 100mm; font-weight: bold; color: #666; font-size: 64pt; }
+                        .property-value { flex: 1; color: #333; font-size: 64pt; }
+                        .price { color: #ef4444; font-size: 80pt; font-weight: bold; }
                         @media print {
                             .no-print { display: none; }
                             body { -webkit-print-color-adjust: exact; }
