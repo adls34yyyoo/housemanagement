@@ -3674,180 +3674,208 @@
                 description: ''
             };
 
-            // 小区识别 - 支持惠南镇等上海地区小区
-            const communityPatterns = [
-                /(?:位于|在|小区|楼盘|花园|家园|新城|公寓|大厦|苑|墅|庭|府|里|坊|郡|城)[\s]*([\u4e00-\u9fa5]{2,10}(?:小区|花园|家园|新城|公寓|大厦|苑|墅|庭|府|里|坊|郡|城))/,
-                /([\u4e00-\u9fa5]{2,8}(?:小区|花园|家园|新城|公寓|大厦))/,
-                /金地城|一方新城|锦绣华都|海曲雅苑|德盈佳园|康达公寓|丽水雅苑|汇锦城|东城花苑|彩虹园|听潮新村|西门新村|北门新村|南门新村|城东新村/,
-                /([\u4e00-\u9fa5]{2,6}苑)/,
-                /([\u4e00-\u9fa5]{2,6}里)/,
-                /([\u4e00-\u9fa5]{2,6}园)/
-            ];
+            // 首先使用训练数据进行识别
+            for (const [key, data] of Object.entries(trainingData)) {
+                for (const item of data) {
+                    if (text.includes(item.text)) {
+                        result[key] = item.target;
+                        break;
+                    }
+                }
+            }
 
-            for (const pattern of communityPatterns) {
-                const match = text.match(pattern);
-                if (match) {
-                    result.community = match[1] || match[0];
-                    break;
+            // 小区识别 - 支持惠南镇等上海地区小区
+            if (!result.community) {
+                const communityPatterns = [
+                    /(?:位于|在|小区|楼盘|花园|家园|新城|公寓|大厦|苑|墅|庭|府|里|坊|郡|城)[\s]*([\u4e00-\u9fa5]{2,10}(?:小区|花园|家园|新城|公寓|大厦|苑|墅|庭|府|里|坊|郡|城))/,
+                    /([\u4e00-\u9fa5]{2,8}(?:小区|花园|家园|新城|公寓|大厦))/,
+                    /金地城|一方新城|锦绣华都|海曲雅苑|德盈佳园|康达公寓|丽水雅苑|汇锦城|东城花苑|彩虹园|听潮新村|西门新村|北门新村|南门新村|城东新村/,
+                    /([\u4e00-\u9fa5]{2,6}苑)/,
+                    /([\u4e00-\u9fa5]{2,6}里)/,
+                    /([\u4e00-\u9fa5]{2,6}园)/
+                ];
+
+                for (const pattern of communityPatterns) {
+                    const match = text.match(pattern);
+                    if (match) {
+                        result.community = match[1] || match[0];
+                        break;
+                    }
                 }
             }
 
             // 装修类型识别
-            const decorationPatterns = [
-                /(精装修|豪装|简装|毛坯|中装|普装|老装修|新装修|未装修|全装|半装|一般装修|简装修)/,
-                /(精装|简装|毛坯|一般装|简装)/,
-                /装修[:\s]*([\u4e00-\u9fa5]{2,4})/
-            ];
+            if (!result.decoration) {
+                const decorationPatterns = [
+                    /(精装修|豪装|简装|毛坯|中装|普装|老装修|新装修|未装修|全装|半装|一般装修|简装修)/,
+                    /(精装|简装|毛坯|一般装|简装)/,
+                    /装修[:\s]*([\u4e00-\u9fa5]{2,4})/
+                ];
 
-            for (const pattern of decorationPatterns) {
-                const match = text.match(pattern);
-                if (match) {
-                    result.decoration = match[1] || match[0];
-                    break;
+                for (const pattern of decorationPatterns) {
+                    const match = text.match(pattern);
+                    if (match) {
+                        result.decoration = match[1] || match[0];
+                        break;
+                    }
+                }
+
+                // 装修类型映射，将简写形式映射到完整形式
+                const decorationMap = {
+                    '精装': '精装修',
+                    '简装': '简装修',
+                    '一般装': '一般装修',
+                    '普装': '普通装修',
+                    '中装': '中等装修'
+                };
+
+                if (result.decoration && decorationMap[result.decoration]) {
+                    result.decoration = decorationMap[result.decoration];
                 }
             }
 
-            // 装修类型映射，将简写形式映射到完整形式
-            const decorationMap = {
-                '精装': '精装修',
-                '简装': '简装修',
-                '一般装': '一般装修',
-                '普装': '普通装修',
-                '中装': '中等装修'
-            };
-
-            if (result.decoration && decorationMap[result.decoration]) {
-                result.decoration = decorationMap[result.decoration];
-            }
-
             // 户型识别 - 支持 3-2-2 格式
-            const layoutPatterns = [
-                /(\d+)[室\-](\d+)[厅\-](\d+)[卫]/,
-                /(\d+)室(\d+)厅(\d+)卫/,
-                /(\d+)[\-](\d+)[\-](\d+)/,
-                /(\d+)房(\d+)厅/,
-                /(\d+)室(\d+)厅/,
-                /户型[:\s]*([\u4e00-\u9fa50-9\-]+)/
-            ];
+            if (!result.layout) {
+                const layoutPatterns = [
+                    /(\d+)[室\-](\d+)[厅\-](\d+)[卫]/,
+                    /(\d+)室(\d+)厅(\d+)卫/,
+                    /(\d+)[\-](\d+)[\-](\d+)/,
+                    /(\d+)房(\d+)厅/,
+                    /(\d+)室(\d+)厅/,
+                    /户型[:\s]*([\u4e00-\u9fa50-9\-]+)/
+                ];
 
-            for (const pattern of layoutPatterns) {
-                const match = text.match(pattern);
-                if (match) {
-                    if (match[0].includes('-') && match[1] && match[2] && match[3]) {
-                        result.layout = `${match[1]}-${match[2]}-${match[3]}`;
-                    } else if (match[1] && match[2]) {
-                        const room = match[1];
-                        const hall = match[2];
-                        const bath = match[3] || '1';
-                        result.layout = `${room}-${hall}-${bath}`;
-                    } else {
-                        result.layout = match[1] || match[0];
+                for (const pattern of layoutPatterns) {
+                    const match = text.match(pattern);
+                    if (match) {
+                        if (match[0].includes('-') && match[1] && match[2] && match[3]) {
+                            result.layout = `${match[1]}-${match[2]}-${match[3]}`;
+                        } else if (match[1] && match[2]) {
+                            const room = match[1];
+                            const hall = match[2];
+                            const bath = match[3] || '1';
+                            result.layout = `${room}-${hall}-${bath}`;
+                        } else {
+                            result.layout = match[1] || match[0];
+                        }
+                        break;
                     }
-                    break;
                 }
             }
 
             // 价格识别 - 支持万元和元/月
-            const pricePatterns = [
-                /(\d+(?:\.\d+)?)\s*[万wW]/,
-                /价格[:\s]*(\d+(?:\.\d+)?)/,
-                /(?:售价|租金|价格)[:\s]*(\d+)/,
-                /(\d+)\s*(?:元|块)/
-            ];
+            if (!result.price) {
+                const pricePatterns = [
+                    /(\d+(?:\.\d+)?)\s*[万wW]/,
+                    /价格[:\s]*(\d+(?:\.\d+)?)/,
+                    /(?:售价|租金|价格)[:\s]*(\d+)/,
+                    /(\d+)\s*(?:元|块)/
+                ];
 
-            for (const pattern of pricePatterns) {
-                const match = text.match(pattern);
-                if (match) {
-                    let price = parseFloat(match[1]);
-                    // 如果包含"万"字或价格小于100，认为是万元
-                    if (match[0].includes('万') || price < 100) {
-                        result.price = price;
-                    } else {
-                        result.price = price;
+                for (const pattern of pricePatterns) {
+                    const match = text.match(pattern);
+                    if (match) {
+                        let price = parseFloat(match[1]);
+                        // 如果包含"万"字或价格小于100，认为是万元
+                        if (match[0].includes('万') || price < 100) {
+                            result.price = price;
+                        } else {
+                            result.price = price;
+                        }
+                        break;
                     }
-                    break;
                 }
             }
 
             // 面积识别
-            const areaPatterns = [
-                /(\d+(?:\.\d+)?)\s*(?:平|㎡|平方米|m²|平米)/,
-                /面积[:\s]*(\d+)/,
-                /(\d+)\s*平/
-            ];
+            if (!result.area) {
+                const areaPatterns = [
+                    /(\d+(?:\.\d+)?)\s*(?:平|㎡|平方米|m²|平米)/,
+                    /面积[:\s]*(\d+)/,
+                    /(\d+)\s*平/
+                ];
 
-            for (const pattern of areaPatterns) {
-                const match = text.match(pattern);
-                if (match) {
-                    result.area = match[1];
-                    break;
+                for (const pattern of areaPatterns) {
+                    const match = text.match(pattern);
+                    if (match) {
+                        result.area = match[1];
+                        break;
+                    }
                 }
             }
 
             // 楼层识别
-            const floorPatterns = [
-                /(\d+)\s*楼/,
-                /(\d+)\s*层/,
-                /楼层[:\s]*(\d+)/,
-                /(\d+)F/i,
-                /(\d+)\s*f/i
-            ];
+            if (!result.floor) {
+                const floorPatterns = [
+                    /(\d+)\s*楼/,
+                    /(\d+)\s*层/,
+                    /楼层[:\s]*(\d+)/,
+                    /(\d+)F/i,
+                    /(\d+)\s*f/i
+                ];
 
-            for (const pattern of floorPatterns) {
-                const match = text.match(pattern);
-                if (match) {
-                    result.floor = match[1];
-                    break;
+                for (const pattern of floorPatterns) {
+                    const match = text.match(pattern);
+                    if (match) {
+                        result.floor = match[1];
+                        break;
+                    }
                 }
             }
 
             // 地区识别
-            const regionPatterns = [
-                /(惠南镇|周浦镇|康桥镇|祝桥镇|新场镇|大团镇|老港镇|书院镇|宣桥镇|六灶镇|航头镇|新场镇|万祥镇|泥城镇|芦潮港镇|临港滴水湖)/,
-                /位于[:\s]*([\u4e00-\u9fa5]{2,6})/,
-                /([\u4e00-\u9fa5]{2,6}镇)/,
-                /([\u4e00-\u9fa5]{2,6}区)/
-            ];
+            if (!result.region) {
+                const regionPatterns = [
+                    /(惠南镇|周浦镇|康桥镇|祝桥镇|新场镇|大团镇|老港镇|书院镇|宣桥镇|六灶镇|航头镇|新场镇|万祥镇|泥城镇|芦潮港镇|临港滴水湖)/,
+                    /位于[:\s]*([\u4e00-\u9fa5]{2,6})/,
+                    /([\u4e00-\u9fa5]{2,6}镇)/,
+                    /([\u4e00-\u9fa5]{2,6}区)/
+                ];
 
-            for (const pattern of regionPatterns) {
-                const match = text.match(pattern);
-                if (match) {
-                    result.region = match[1] || match[0];
-                    break;
+                for (const pattern of regionPatterns) {
+                    const match = text.match(pattern);
+                    if (match) {
+                        result.region = match[1] || match[0];
+                        break;
+                    }
                 }
             }
 
             // 房东姓名识别
-            const namePatterns = [
-                /房东[:\s]*([\u4e00-\u9fa5]{2,4})/,
-                /业主[:\s]*([\u4e00-\u9fa5]{2,4})/,
-                /联系人[:\s]*([\u4e00-\u9fa5]{2,4})/,
-                /([\u4e00-\u9fa5]{2,4})(?:先生|女士|老师|总)/,
-                /(菜|姚|苏|张|李|王|赵|钱|孙|周|吴|郑|陈|杨|黄|赵|徐|朱|马|胡|郭|林|何|高|梁|郑|罗|宋|谢|唐|韩|曹|许|邓|萧|冯|曾|程|蔡|彭|潘|袁|于|董|余|苏|叶|吕|魏|蒋|田|杜|丁|沈|姜|范|江|傅|钟|卢|汪|戴|崔|任|陆|廖|方|金|邱|夏|谭|韦|贾|邹|石|熊|孟|秦|阎|薛|侯|雷|白|龙|段|郝|孔|邵|史|毛|常|万|顾|赖|武|康|贺|严|尹|钱|施|牛|洪|龚|汤|陶|黎|温|莫|易|樊|乔|文|安|殷|颜|庄|章|鲁|倪|庞|邢|俞|翟|蓝|聂|齐|申|葛|柴|伍|覃|骆|关|焦|柳|欧|祝|左|涂|谷|祁|时|舒|耿|牟|卜|路|詹|关|苗|凌|费|纪|靳|盛|童|欧|甄|项|曲|成|游|阳|裴|席|卫|查|屈|鲍|位|覃|霍|翁|隋|植|甘|景|薄|单|包|司|柏|宁|柯|阮|桂|闵|欧阳|上官|司马|诸葛|司徒|司空|公孙|东方|皇甫|令狐|申屠|太叔|轩辕|仲孙|钟离|宇文|长孙|慕容|司寇|仲长|闻人|申徒|颛孙|太叔|轩辕|令狐|钟离|宇文|长孙|慕容|司寇|仲长|闻人|申徒|颛孙)(?:先生|女士|老师|总)?/,
-                /(?:先生|女士|老师|总)[:\s]*([\u4e00-\u9fa5]{2,4})/
-            ];
+            if (!result.landlordName) {
+                const namePatterns = [
+                    /房东[:\s]*([\u4e00-\u9fa5]{2,4})/,
+                    /业主[:\s]*([\u4e00-\u9fa5]{2,4})/,
+                    /联系人[:\s]*([\u4e00-\u9fa5]{2,4})/,
+                    /([\u4e00-\u9fa5]{2,4})(?:先生|女士|老师|总)/,
+                    /(菜|姚|苏|张|李|王|赵|钱|孙|周|吴|郑|陈|杨|黄|赵|徐|朱|马|胡|郭|林|何|高|梁|郑|罗|宋|谢|唐|韩|曹|许|邓|萧|冯|曾|程|蔡|彭|潘|袁|于|董|余|苏|叶|吕|魏|蒋|田|杜|丁|沈|姜|范|江|傅|钟|卢|汪|戴|崔|任|陆|廖|方|金|邱|夏|谭|韦|贾|邹|石|熊|孟|秦|阎|薛|侯|雷|白|龙|段|郝|孔|邵|史|毛|常|万|顾|赖|武|康|贺|严|尹|钱|施|牛|洪|龚|汤|陶|黎|温|莫|易|樊|乔|文|安|殷|颜|庄|章|鲁|倪|庞|邢|俞|翟|蓝|聂|齐|申|葛|柴|伍|覃|骆|关|焦|柳|欧|祝|左|涂|谷|祁|时|舒|耿|牟|卜|路|詹|关|苗|凌|费|纪|靳|盛|童|欧|甄|项|曲|成|游|阳|裴|席|卫|查|屈|鲍|位|覃|霍|翁|隋|植|甘|景|薄|单|包|司|柏|宁|柯|阮|桂|闵|欧阳|上官|司马|诸葛|司徒|司空|公孙|东方|皇甫|令狐|申屠|太叔|轩辕|仲孙|钟离|宇文|长孙|慕容|司寇|仲长|闻人|申徒|颛孙|太叔|轩辕|令狐|钟离|宇文|长孙|慕容|司寇|仲长|闻人|申徒|颛孙)(?:先生|女士|老师|总)?/,
+                    /(?:先生|女士|老师|总)[:\s]*([\u4e00-\u9fa5]{2,4})/
+                ];
 
-            for (const pattern of namePatterns) {
-                const match = text.match(pattern);
-                if (match) {
-                    result.landlordName = match[1];
-                    break;
+                for (const pattern of namePatterns) {
+                    const match = text.match(pattern);
+                    if (match) {
+                        result.landlordName = match[1];
+                        break;
+                    }
                 }
             }
 
             // 电话号码识别
-            const phonePatterns = [
-                /(1[3-9]\d{9})/,
-                /电话[:\s]*(1[3-9]\d{9})/,
-                /手机[:\s]*(1[3-9]\d{9})/,
-                /联系方式[:\s]*(1[3-9]\d{9})/
-            ];
+            if (!result.landlordPhone) {
+                const phonePatterns = [
+                    /(1[3-9]\d{9})/,
+                    /电话[:\s]*(1[3-9]\d{9})/,
+                    /手机[:\s]*(1[3-9]\d{9})/,
+                    /联系方式[:\s]*(1[3-9]\d{9})/
+                ];
 
-            for (const pattern of phonePatterns) {
-                const match = text.match(pattern);
-                if (match) {
-                    result.landlordPhone = match[1];
-                    break;
+                for (const pattern of phonePatterns) {
+                    const match = text.match(pattern);
+                    if (match) {
+                        result.landlordPhone = match[1];
+                        break;
+                    }
                 }
             }
 
@@ -6752,7 +6780,23 @@
             showToast(`✅ 房源已成功转换为${newType === 'sale' ? '出售' : '出租'}`);
         }
 
-        // 训练模型（模拟）
+        // 存储训练数据
+        let trainingData = JSON.parse(localStorage.getItem('trainingData')) || {
+            community: [],
+            layout: [],
+            area: [],
+            price: [],
+            decoration: [],
+            landlordName: [],
+            landlordPhone: []
+        };
+
+        // 保存训练数据到本地存储
+        function saveTrainingData() {
+            localStorage.setItem('trainingData', JSON.stringify(trainingData));
+        }
+
+        // 训练模型（实际应用）
         function trainModel() {
             const type = document.getElementById('trainType').value;
             const text = document.getElementById('trainText').value;
@@ -6766,8 +6810,23 @@
             const statusEl = document.getElementById('trainStatus');
             statusEl.textContent = '训练中...';
 
-            // 模拟训练过程
+            // 实际训练逻辑
             setTimeout(() => {
+                // 保存训练数据
+                if (trainingData[type]) {
+                    // 检查是否已存在相同的训练数据
+                    const existingIndex = trainingData[type].findIndex(item => item.text === text);
+                    if (existingIndex >= 0) {
+                        // 更新现有数据
+                        trainingData[type][existingIndex].target = target;
+                    } else {
+                        // 添加新数据
+                        trainingData[type].push({ text, target });
+                    }
+                    // 保存到本地存储
+                    saveTrainingData();
+                }
+
                 statusEl.textContent = '训练完成！模型已更新';
                 showToast('AI训练完成');
             }, 2000);
