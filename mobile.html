@@ -3932,6 +3932,14 @@
                 renderAgentPropertyList();
             } else if (page === 'customers') {
                 renderCustomerList();
+            } else if (page === 'share') {
+                // 切换到分享页面时，清理 selectedProperties 数组，移除已删除的房源 ID
+                const allProperties = [...properties, ...agentProperties];
+                selectedProperties = selectedProperties.filter(selectedId => 
+                    allProperties.some(p => String(p.id) === String(selectedId))
+                );
+                renderSharePropertyList();
+                document.getElementById('shareContent').value = getSelectedPropertiesShareText();
             }
         }
 
