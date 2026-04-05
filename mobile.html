@@ -7072,8 +7072,7 @@
             let shareText = '';
 
             // 根据选择的文案风格生成不同风格的文案
-            if (currentStyle === 'simple') {
-                // 简洁风格
+            if (currentStyle === 'simple' || currentStyle === 'wonderful') {
                 // 检查是否有出售房源
                 const hasSale = selectedProps.some(p => p.type === 'sale');
                 const hasRent = selectedProps.some(p => p.type === 'rent');
@@ -7088,60 +7087,30 @@
                 }
 
                 selectedProps.forEach((property, index) => {
-                    shareText += `房源 ${index + 1}:\n`;
-                    shareText += `小区：${property.community || '未知'}\n`;
-                    shareText += `户型：${property.layout || '未知'}\n`;
-                    shareText += `面积：${property.area || '未知'}平\n`;
-                    shareText += `价格：${property.price || '面议'}${property.type === 'sale' ? '万元' : '元/月'}\n`;
-                    shareText += `装修：${property.decoration || '未知'}\n`;
-                    shareText += `楼层：${property.floor || '未知'}楼\n`;
-                    shareText += `地区：${property.region || '未知'}\n`;
-                    if (property.isAgent) {
-                        // 代理房源显示被代理方信息
-                        if (property.agentParties && property.agentParties.length > 0) {
-                            const firstAgent = property.agentParties[0];
-                            shareText += `被代理方：${firstAgent.name || '未知'} ${firstAgent.phone || ''}\n`;
-                        } else {
-                            shareText += `被代理方：未知\n`;
-                        }
+                    // 简洁风格和精彩风格都使用相同的基本格式
+                    if (currentStyle === 'wonderful') {
+                        shareText += `✨ ${property.type === 'sale' ? '出售' : '出租'} ${property.community || '未知'} ✨\n`;
+                        shareText += `🔑 户型：${property.layout || '未知'}\n`;
+                        shareText += `📏 面积：${property.area || '未知'}平\n`;
+                        shareText += `💰 价格：${property.price || '面议'}${property.type === 'sale' ? '万元' : '元/月'}\n`;
+                        shareText += `🎨 装修：${property.decoration || '未知'}\n`;
+                        shareText += `🏢 楼层：${property.floor || '未知'}楼\n`;
                     } else {
-                        // 普通房源显示房东信息
-                        shareText += `联系人：${property.landlordName || '未知'} ${property.landlordPhone || ''}\n`;
+                        shareText += `${property.type === 'sale' ? '出售' : '出租'} ${property.community || '未知'}\n`;
+                        shareText += `户型：${property.layout || '未知'}\n`;
+                        shareText += `面积：${property.area || '未知'}平\n`;
+                        shareText += `价格：${property.price || '面议'}${property.type === 'sale' ? '万元' : '元/月'}\n`;
+                        shareText += `装修：${property.decoration || '未知'}\n`;
+                        shareText += `楼层：${property.floor || '未知'}楼\n`;
                     }
-                    // 每个房源后面增加合作热线
-                    shareText += `合作热线（微信同号）：13761547030 王 18019166290 韩 13917755549 苏\n\n`;
-                });
-            } else if (currentStyle === 'wonderful') {
-                // 精彩风格
-                shareText += '🏠 优质房源推荐 🏠\n\n';
-                
-                selectedProps.forEach((property, index) => {
-                    shareText += `✨ 房源 ${index + 1} ✨\n`;
-                    shareText += `🏘️ 小区：${property.community || '精品小区'}\n`;
-                    shareText += `🔑 户型：${property.layout || '优质户型'}\n`;
-                    shareText += `📏 面积：${property.area || '宽敞'}平\n`;
-                    shareText += `💰 价格：${property.price || '面议'}${property.type === 'sale' ? '万元' : '元/月'}\n`;
-                    shareText += `🎨 装修：${property.decoration || '精美装修'}\n`;
-                    shareText += `🏢 楼层：${property.floor || '黄金楼层'}\n`;
-                    shareText += `📍 地区：${property.region || '核心地段'}\n`;
-                    if (property.isAgent) {
-                        // 代理房源显示被代理方信息
-                        if (property.agentParties && property.agentParties.length > 0) {
-                            const firstAgent = property.agentParties[0];
-                            shareText += `👤 被代理方：${firstAgent.name || '优质客户'} ${firstAgent.phone || ''}\n`;
-                        } else {
-                            shareText += `👤 被代理方：优质客户\n`;
-                        }
-                    } else {
-                        // 普通房源显示房东信息
-                        shareText += `👤 联系人：${property.landlordName || '房东'} ${property.landlordPhone || ''}\n`;
-                    }
-                    // 每个房源后面增加合作热线
-                    shareText += `📞 合作热线（微信同号）：13761547030 王 18019166290 韩 13917755549 苏\n\n`;
+                    // 取消地区字段显示
+                    // 取消联系人字段显示
+                    // 每个房源后面增加合作热线，只保留18019166290
+                    shareText += `合作热线：18019166290\n\n`;
                 });
                 
-                shareText += '🌟 机会难得，手慢无！\n';
-                shareText += '📱 随时看房，欢迎咨询！\n';
+                // 结尾添加完整的合作热线
+                shareText += `合作热线（微信同号）：13761547030 王 18019166290 韩 13917755549 苏`;
             }
 
             return shareText;
