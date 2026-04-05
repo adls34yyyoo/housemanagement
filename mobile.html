@@ -4012,6 +4012,19 @@
         // 切换房源选择
         window.togglePropertySelection = function(propertyId) {
             const stringId = String(propertyId);
+            
+            // 检查房源是否存在
+            const propertyExists = 
+                properties.some(p => String(p.id) === stringId) ||
+                agentProperties.some(p => String(p.id) === stringId);
+            
+            if (!propertyExists) {
+                // 房源不存在，清理 selectedProperties 数组
+                selectedProperties = selectedProperties.filter(id => String(id) !== stringId);
+                showToast('❌ 房源不存在，无法选择');
+                return;
+            }
+            
             const index = selectedProperties.findIndex(id => String(id) === stringId);
             if (index > -1) {
                 selectedProperties.splice(index, 1);
@@ -4094,7 +4107,7 @@
 
             // 合并所有房源（普通房源和代理房源）
             const allProperties = [...properties, ...agentProperties];
-            const selectedProps = allProperties.filter(p => selectedProperties.includes(p.id));
+            const selectedProps = allProperties.filter(p => selectedProperties.includes(String(p.id)));
             
             if (selectedProps.length === 0) {
                 showToast('未找到选中的房源，请检查网络连接');
