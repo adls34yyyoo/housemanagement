@@ -5686,8 +5686,12 @@
             // 自动将自定义值添加到选项中（如果不存在）
             async function addToOptionsIfNotExist(type, value) {
                 if (value) {
-                    // 确保 optionsData[type] 存在
-                    if (!optionsData[type]) {
+                    // 确保 optionsData 存在
+                    if (!optionsData) {
+                        optionsData = {};
+                    }
+                    // 确保 optionsData[type] 存在且是数组
+                    if (!optionsData[type] || !Array.isArray(optionsData[type])) {
                         optionsData[type] = [];
                     }
                     if (!optionsData[type].includes(value)) {
