@@ -3693,8 +3693,8 @@
 
             // 装修类型识别
             const decorationPatterns = [
-                /(精装修|豪装|简装|毛坯|中装|普装|老装修|新装修|未装修|全装|半装)/,
-                /(精装|简装|毛坯)/,
+                /(精装修|豪装|简装|毛坯|中装|普装|老装修|新装修|未装修|全装|半装|一般装修|简装修)/,
+                /(精装|简装|毛坯|一般装|简装)/,
                 /装修[:\s]*([\u4e00-\u9fa5]{2,4})/
             ];
 
@@ -3704,6 +3704,19 @@
                     result.decoration = match[1] || match[0];
                     break;
                 }
+            }
+
+            // 装修类型映射，将简写形式映射到完整形式
+            const decorationMap = {
+                '精装': '精装修',
+                '简装': '简装修',
+                '一般装': '一般装修',
+                '普装': '普通装修',
+                '中装': '中等装修'
+            };
+
+            if (result.decoration && decorationMap[result.decoration]) {
+                result.decoration = decorationMap[result.decoration];
             }
 
             // 户型识别 - 支持 3-2-2 格式
