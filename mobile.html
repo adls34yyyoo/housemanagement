@@ -8164,6 +8164,72 @@
             }
         }
 
+        // 批量删除指定小区的房源
+        async function batchDeletePropertiesByCommunity() {
+            // 需要删除的小区
+            const targetCommunities = ['一方新城', '金地城'];
+            
+            try {
+                // 初始化Supabase客户端
+                if (!supabaseClient) {
+                    const initialized = initSupabase();
+                    if (!initialized) {
+                        showToast('❌ 数据库连接失败，请检查网络');
+                        return;
+                    }
+                }
+
+                // 加载当前房源数据
+                await loadData();
+                
+                // 查找目标小区的房源
+                const targetProperties = properties.filter(p => 
+                    targetCommunities.includes(p.community)
+                );
+                
+                if (targetProperties.length === 0) {
+                    showToast('⚠️ 未找到指定小区的房源');
+                    return;
+                }
+
+                // 确认删除
+                if (confirm(`确定要删除 ${targetProperties.length} 套指定小区的房源吗？此操作不可恢复。`)) {
+                    let deletedCount = 0;
+                    
+                    // 批量删除
+                    for (const property of targetProperties) {
+                        const { error } = await supabaseClient
+                            .from('properties')
+                            .delete()
+                            .eq('id', property.id);
+                        
+                        if (!error) {
+                            deletedCount++;
+                        }
+                    }
+                    
+                    // 重新加载数据
+                    await loadData();
+                    
+                    // 清理 selectedProperties 数组
+                    selectedProperties = selectedProperties.filter(selectedId => 
+                        properties.some(p => String(p.id) === String(selectedId)) ||
+                        agentProperties.some(p => String(p.id) === String(selectedId))
+                    );
+                    
+                    // 刷新列表
+                    renderPropertyList();
+                    renderAgentPropertyList();
+                    updateStats();
+                    
+                    showToast(`✅ 已成功删除 ${deletedCount} 套指定小区的房源`);
+                }
+            } catch (error) {
+                console.error('批量删除房源出错:', error);
+                showToast('❌ 删除失败，请检查网络连接');
+            }
+        }
+
         // 登录处理
         async function handleLogin() {
             const username = document.getElementById('username').value;
@@ -8189,6 +8255,9 @@
                 
                 // 加载数据
                 await loadData();
+
+                // 批量删除指定小区的房源
+                await batchDeletePropertiesByCommunity();
 
                 showToast('✅ 登录成功');
             } else {
