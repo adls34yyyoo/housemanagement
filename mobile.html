@@ -8860,7 +8860,8 @@
         // 保存房源沟通记录
         async function savePropertyCommunication(propertyId) {
             try {
-                const type = document.querySelector('input[name="propertyCommunicationType"]:checked').value;
+                const typeElement = document.querySelector('input[name="propertyCommunicationType"]:checked');
+                const type = typeElement ? typeElement.value : 'call';
                 const operator = document.getElementById('propertyCommunicationOperator').value;
                 const remark = document.getElementById('propertyCommunicationRemark').value;
                 
