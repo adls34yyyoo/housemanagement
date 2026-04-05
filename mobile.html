@@ -3002,16 +3002,70 @@
                     
                     ${property.changeHistory && property.changeHistory.length > 0 ? `
                         <div style="margin-bottom: 20px;">
-                            <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">编辑记录</h4>
+                            <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">更改记录</h4>
                             <div style="background: var(--background); border-radius: var(--radius); padding: 16px;">
                                 ${property.changeHistory.map((record, index) => `
-                                    <div style="padding: 8px 0; ${index > 0 ? 'border-top: 1px solid var(--border);' : ''}">
-                                        <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                                    <div style="padding: 12px 0; ${index > 0 ? 'border-top: 1px solid var(--border);' : ''}">
+                                        <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px;">
                                             <span style="font-weight: 600;">${record.action}</span>
                                             <span style="color: var(--text-secondary);">${new Date(record.timestamp).toLocaleString()}</span>
                                         </div>
-                                        <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
+                                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">
                                             操作人：${record.user || '管理员'}
+                                        </div>
+                                        ${record.changes ? `
+                                            <div style="font-size: 13px; margin-top: 8px;">
+                                                <strong>变更内容：</strong>
+                                                <div style="margin-top: 4px; padding-left: 12px;">
+                                                    ${Object.entries(record.changes).map(([key, change]) => {
+                                                        if (change.oldValue !== change.newValue) {
+                                                            const fieldName = {
+                                                                'community': '小区',
+                                                                'price': '价格',
+                                                                'layout': '户型',
+                                                                'area': '面积',
+                                                                'decoration': '装修',
+                                                                'floor': '楼层',
+                                                                'region': '地区',
+                                                                'landlordName': '房东姓名',
+                                                                'landlordPhone': '房东电话',
+                                                                'description': '描述',
+                                                                'propertyType': '房源类型',
+                                                                'propertyCertificate': '产证情况',
+                                                                'doorNumber': '门牌号',
+                                                                'type': '房源类型',
+                                                                'status': '状态'
+                                                            }[key] || key;
+                                                            return `<div style="margin-bottom: 4px;">${fieldName}：${change.oldValue || '空'} → ${change.newValue || '空'}</div>`;
+                                                        }
+                                                        return '';
+                                                    }).filter(Boolean).join('')}
+                                                </div>
+                                            </div>
+                                        ` : ''}
+                                        ${record.remark ? `
+                                            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 8px;">
+                                                备注：${record.remark}
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    ${property.communicationRecords && property.communicationRecords.length > 0 ? `
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">沟通记录</h4>
+                            <div style="background: var(--background); border-radius: var(--radius); padding: 16px;">
+                                ${property.communicationRecords.map((record, index) => `
+                                    <div style="padding: 12px 0; ${index > 0 ? 'border-top: 1px solid var(--border);' : ''}">
+                                        <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px;">
+                                            <span style="font-weight: 600;">${record.type === 'call' ? '电话沟通' : '微信沟通'}</span>
+                                            <span style="color: var(--text-secondary);">${new Date(record.timestamp).toLocaleDateString()}</span>
+                                        </div>
+                                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">
+                                            操作人员：${record.operator || '管理员'}
                                         </div>
                                         ${record.remark ? `
                                             <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
@@ -3027,6 +3081,7 @@
                     <div style="display: flex; gap: 12px;">
                         <button class="btn btn-primary" onclick="editProperty('${property.id}'); closePropertyDetailModal()">编辑</button>
                         <button class="btn btn-danger" onclick="deletePropertyFromDetail('${property.id}')" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none;">删除</button>
+                        <button class="btn btn-default" onclick="closePropertyDetailModal(); showPropertyCommunicationModal('${property.id}')">添加沟通记录</button>
                     </div>
                 </div>
             `;
@@ -5623,42 +5678,86 @@
                 
                 // 比较字段变化
                 if (originalProperty) {
+                    // 生成详细的变更记录
+                    const changes = {};
+                    
                     if (originalProperty.community !== community) {
+                        changes.community = { oldValue: originalProperty.community, newValue: community };
                         changeDetails.push(`小区：${originalProperty.community || '无'} → ${community || '无'}`);
                     }
                     if (originalProperty.layout !== layout) {
+                        changes.layout = { oldValue: originalProperty.layout, newValue: layout };
                         changeDetails.push(`户型：${originalProperty.layout || '无'} → ${layout || '无'}`);
                     }
                     if (originalProperty.price != propertyPrice) {
+                        changes.price = { oldValue: originalProperty.price, newValue: propertyPrice };
                         const priceUnit = saleOrRentType === 'sale' ? '万元' : '元/月';
                         changeDetails.push(`价格：${originalProperty.price || '面议'}${priceUnit} → ${propertyPrice || '面议'}${priceUnit}`);
                     }
                     if (originalProperty.status !== status) {
+                        changes.status = { oldValue: originalProperty.status, newValue: status };
                         changeDetails.push(`状态变更`);
                     }
                     if (originalProperty.floor !== floor) {
+                        changes.floor = { oldValue: originalProperty.floor, newValue: floor };
                         changeDetails.push(`楼层：${originalProperty.floor || '无'} → ${floor || '无'}`);
                     }
                     if (originalProperty.area != area) {
+                        changes.area = { oldValue: originalProperty.area, newValue: area };
                         changeDetails.push(`面积：${originalProperty.area || '无'} → ${area || '无'}`);
                     }
                     if (originalProperty.decoration !== decoration) {
+                        changes.decoration = { oldValue: originalProperty.decoration, newValue: decoration };
                         changeDetails.push(`装修：${originalProperty.decoration || '无'} → ${decoration || '无'}`);
                     }
                     if ((originalProperty.property_type || originalProperty.propertyType) !== propType) {
+                        changes.propertyType = { oldValue: originalProperty.property_type || originalProperty.propertyType, newValue: propType };
                         changeDetails.push(`房源类型：${(originalProperty.property_type || originalProperty.propertyType) || '无'} → ${propType || '无'}`);
                     }
                     if ((originalProperty.property_certificate || originalProperty.propertyCertificate) !== propertyCertificate) {
+                        changes.propertyCertificate = { oldValue: originalProperty.property_certificate || originalProperty.propertyCertificate, newValue: propertyCertificate };
                         changeDetails.push(`产证情况：${(originalProperty.property_certificate || originalProperty.propertyCertificate) || '无'} → ${propertyCertificate || '无'}`);
                     }
                     if (!isAgentMode && (originalProperty.landlord_name || originalProperty.landlordName) !== landlordName) {
+                        changes.landlordName = { oldValue: originalProperty.landlord_name || originalProperty.landlordName, newValue: landlordName };
                         changeDetails.push(`房东：${(originalProperty.landlord_name || originalProperty.landlordName) || '无'} → ${landlordName || '无'}`);
                     }
                     if (!isAgentMode && (originalProperty.landlord_phone || originalProperty.landlordPhone) !== landlordPhone) {
+                        changes.landlordPhone = { oldValue: originalProperty.landlord_phone || originalProperty.landlordPhone, newValue: landlordPhone };
                         changeDetails.push(`电话变更`);
                     }
                     if (!isAgentMode && (originalProperty.landlord_wechat || originalProperty.landlordWechat) !== landlordWechat) {
+                        changes.landlordWechat = { oldValue: originalProperty.landlord_wechat || originalProperty.landlordWechat, newValue: landlordWechat };
                         changeDetails.push(`微信变更`);
+                    }
+                    if (originalProperty.description !== desc) {
+                        changes.description = { oldValue: originalProperty.description, newValue: desc };
+                        changeDetails.push(`房源描述：${originalProperty.description ? '有内容' : '无'} → ${desc ? '有内容' : '无'}`);
+                    }
+                    if (originalProperty.door_number !== doorNumber) {
+                        changes.doorNumber = { oldValue: originalProperty.door_number, newValue: doorNumber };
+                        changeDetails.push(`门牌号：${originalProperty.door_number || '无'} → ${doorNumber || '无'}`);
+                    }
+                    if (originalProperty.region !== region) {
+                        changes.region = { oldValue: originalProperty.region, newValue: region };
+                        changeDetails.push(`地区：${originalProperty.region || '无'} → ${region || '无'}`);
+                    }
+                    
+                    // 如果有变更，添加到变更历史
+                    if (Object.keys(changes).length > 0) {
+                        if (!originalProperty.changeHistory) {
+                            originalProperty.changeHistory = [];
+                        }
+                        
+                        const changeRecord = {
+                            action: '编辑房源',
+                            timestamp: new Date().toISOString(),
+                            user: '管理员',
+                            changes: changes,
+                            remark: remark || '无'
+                        };
+                        
+                        originalProperty.changeHistory.unshift(changeRecord);
                     }
                 }
             } else {
@@ -5675,20 +5774,18 @@
                 }
             }
             
-            // 构建更新记录 - 暂时存储在内存中，因为数据库中没有change_history列
+            // 构建更新记录
             let changeHistoryRecord;
             if (editingPropertyId) {
-                const originalChangeHistory = originalProperty?.change_history || originalProperty?.changeHistory || [];
-                changeHistoryRecord = originalChangeHistory.concat({
-                    timestamp: new Date().toISOString(),
-                    action: changeDetails.length > 0 ? `更新：${changeDetails.join('、')}` : '更新',
-                    user: currentUser || 'admin'
-                });
+                // 编辑模式：使用已有的变更历史
+                changeHistoryRecord = originalProperty?.change_history || originalProperty?.changeHistory || [];
             } else {
+                // 新增模式：创建初始变更历史
                 changeHistoryRecord = [{
+                    action: '创建房源',
                     timestamp: new Date().toISOString(),
-                    action: '创建',
-                    user: currentUser || 'admin'
+                    user: '管理员',
+                    remark: remark || '无'
                 }];
             }
             
@@ -5712,7 +5809,9 @@
                 description: desc,
                 remark,
                 change_history: changeHistoryRecord,
+                changeHistory: changeHistoryRecord, // 同时保存为changeHistory，方便前端使用
                 communication_records: originalProperty?.communication_records || originalProperty?.communicationRecords || [],
+                communicationRecords: originalProperty?.communication_records || originalProperty?.communicationRecords || [], // 同时保存为communicationRecords，方便前端使用
                 created_at: originalProperty?.created_at || new Date().toISOString(),
                 updated_at: new Date().toISOString()
             };
@@ -8731,6 +8830,135 @@
             const modal = document.getElementById('communicationModal');
             if (modal) {
                 modal.remove();
+            }
+        }
+
+        // 显示房源沟通记录模态框
+        function showPropertyCommunicationModal(propertyId) {
+            // 创建沟通记录模态框
+            const modalHTML = `
+                <div class="modal" id="propertyCommunicationModal" onclick="if (event.target === this) closePropertyCommunicationModal()">
+                    <div class="modal-content" style="max-width: 500px;">
+                        <div class="modal-header">
+                            <span class="modal-title">添加沟通记录</span>
+                            <button class="modal-close" onclick="closePropertyCommunicationModal()">×</button>
+                        </div>
+                        <div class="modal-body" style="padding: 20px;">
+                            <div class="form-group">
+                                <label class="form-label">沟通类型</label>
+                                <div style="display: flex; gap: 12px;">
+                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                        <input type="radio" name="propertyCommunicationType" value="call" checked style="width: auto;">
+                                        <span>电话沟通</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                        <input type="radio" name="propertyCommunicationType" value="wechat" style="width: auto;">
+                                        <span>微信沟通</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">操作人员</label>
+                                <input type="text" class="form-input" id="propertyCommunicationOperator" placeholder="请输入操作人员姓名">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">沟通内容</label>
+                                <textarea class="form-textarea" id="propertyCommunicationRemark" rows="4" placeholder="请输入沟通内容"></textarea>
+                            </div>
+                            <div style="margin-top: 24px; display: flex; gap: 12px;">
+                                <button class="btn btn-default" onclick="closePropertyCommunicationModal()">取消</button>
+                                <button class="btn btn-primary" onclick="savePropertyCommunication('${propertyId}')">保存记录</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 插入模态框
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            // 显示模态框
+            document.getElementById('propertyCommunicationModal').classList.add('active');
+        }
+
+        // 关闭房源沟通记录模态框
+        function closePropertyCommunicationModal() {
+            const modal = document.getElementById('propertyCommunicationModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // 保存房源沟通记录
+        async function savePropertyCommunication(propertyId) {
+            const type = document.querySelector('input[name="propertyCommunicationType"]:checked').value;
+            const operator = document.getElementById('propertyCommunicationOperator').value;
+            const remark = document.getElementById('propertyCommunicationRemark').value;
+            
+            if (!remark) {
+                showToast('请输入沟通内容');
+                return;
+            }
+            
+            // 合并所有房源（普通房源和代理房源）
+            const allProperties = [...properties, ...agentProperties];
+            const property = allProperties.find(p => String(p.id) === String(propertyId));
+            
+            if (!property) {
+                showToast('房源不存在');
+                return;
+            }
+            
+            // 添加沟通记录
+            const communicationRecord = {
+                type,
+                operator: operator || '管理员',
+                remark,
+                timestamp: new Date().toISOString()
+            };
+            
+            if (!property.communicationRecords) {
+                property.communicationRecords = [];
+            }
+            
+            property.communicationRecords.unshift(communicationRecord);
+            
+            try {
+                // 保存到本地存储
+                savePropertiesToLocalStorage();
+                
+                // 尝试保存到 Supabase
+                if (supabaseClient) {
+                    // 检查是否是代理房源
+                    if (property.isAgent) {
+                        // 保存代理房源
+                        const { error } = await supabaseClient
+                            .from('agent_properties')
+                            .update({ communication_records: property.communicationRecords })
+                            .eq('id', property.id);
+                        
+                        if (error) {
+                            console.error('保存代理房源沟通记录失败:', error);
+                            // 继续执行，因为本地存储已经保存
+                        }
+                    } else {
+                        // 保存普通房源
+                        const { error } = await supabaseClient
+                            .from('properties')
+                            .update({ communication_records: property.communicationRecords })
+                            .eq('id', property.id);
+                        
+                        if (error) {
+                            console.error('保存房源沟通记录失败:', error);
+                            // 继续执行，因为本地存储已经保存
+                        }
+                    }
+                }
+                
+                showToast('✅ 沟通记录已保存');
+                closePropertyCommunicationModal();
+            } catch (error) {
+                console.error('保存沟通记录时出错:', error);
+                showToast('❌ 保存沟通记录失败');
             }
         }
 
