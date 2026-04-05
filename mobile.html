@@ -3361,17 +3361,29 @@
 
         // 初始化语音识别
         function initVoiceRecognition() {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            // 尝试各种浏览器前缀，包括华为浏览器可能使用的前缀
+            const SpeechRecognition = window.SpeechRecognition || 
+                                     window.webkitSpeechRecognition || 
+                                     window.mozSpeechRecognition || 
+                                     window.msSpeechRecognition ||
+                                     window.oSpeechRecognition;
+            
             if (!SpeechRecognition) {
                 console.warn('浏览器不支持语音识别');
                 return null;
             }
 
-            recognition = new SpeechRecognition();
-            recognition.lang = 'zh-CN';
-            recognition.interimResults = true;
-            recognition.continuous = true;
-            recognition.maxAlternatives = 1;
+            try {
+                recognition = new SpeechRecognition();
+                recognition.lang = 'zh-CN';
+                // 调整参数以提高兼容性
+                recognition.interimResults = false; // 禁用中间结果，提高兼容性
+                recognition.continuous = false; // 禁用连续识别，提高兼容性
+                recognition.maxAlternatives = 1;
+            } catch (e) {
+                console.error('创建语音识别实例失败:', e);
+                return null;
+            }
 
             recognition.onstart = function() {
                 isRecording = true;
@@ -3381,27 +3393,20 @@
 
             recognition.onresult = function(event) {
                 let finalTranscript = '';
-                let interimTranscript = '';
 
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     const transcript = event.results[i][0].transcript;
                     if (event.results[i].isFinal) {
                         finalTranscript += transcript;
-                    } else {
-                        interimTranscript += transcript;
                     }
                 }
 
                 const aiInput = document.getElementById('aiInput');
-                if (aiInput) {
+                if (aiInput && finalTranscript) {
                     const currentValue = aiInput.value;
-                    if (finalTranscript) {
-                        aiInput.value = currentValue + finalTranscript;
-                        // 实时分析并填充表单
-                        aiExtractFromInput();
-                    } else if (interimTranscript) {
-                        aiInput.value = currentValue + interimTranscript;
-                    }
+                    aiInput.value = currentValue + finalTranscript;
+                    // 分析并填充表单
+                    aiExtractFromInput();
                 }
             };
 
@@ -3430,7 +3435,10 @@
             };
 
             recognition.onend = function() {
-                stopVoiceRecognition();
+                isRecording = false;
+                stopVoiceWaveAnimation();
+                // 识别结束后，可以提示用户
+                // 不自动停止，让用户手动控制
             };
 
             return recognition;
@@ -3466,11 +3474,16 @@
 
         // 停止语音识别
         function stopVoiceRecognition() {
-            if (recognition) {
-                recognition.stop();
+            try {
+                if (recognition) {
+                    recognition.stop();
+                }
+            } catch (e) {
+                console.error('停止语音识别失败:', e);
+            } finally {
+                isRecording = false;
+                stopVoiceWaveAnimation();
             }
-            isRecording = false;
-            stopVoiceWaveAnimation();
         }
 
         // 语音输入功能
