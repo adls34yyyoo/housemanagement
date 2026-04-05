@@ -2393,8 +2393,7 @@
                 
                 <!-- 操作按钮 -->
                 <div class="form-actions" style="display: flex; gap: 12px;">
-                    <button class="btn btn-primary" onclick="generateShareContent()">生成文案</button>
-                    <button class="btn btn-default" onclick="shareToCopy()">复制文案</button>
+                    <button class="btn btn-primary" onclick="shareToWeChat()">一键转发</button>
                 </div>
             </div>
         </div>
@@ -4238,8 +4237,8 @@
                     btn.classList.remove('active');
                 }
             });
-            // 重新生成文案
-            generateMomentsContent();
+            // 重新生成一键转发文案
+            generateShareContent();
         }
 
         // 生成朋友圈文案内容
@@ -6973,51 +6972,168 @@
             const selectedProps = allProperties.filter(p => selectedProperties.some(id => String(id) === String(p.id)));
             let shareText = '';
 
-            // 检查是否有出售房源
-            const hasSale = selectedProps.some(p => p.type === 'sale');
-            const hasRent = selectedProps.some(p => p.type === 'rent');
-            
-            // 只在第一行显示出售或出租
-            if (hasSale && hasRent) {
-                shareText += '出售/出租\n\n';
-            } else if (hasSale) {
-                shareText += '出售\n\n';
-            } else if (hasRent) {
-                shareText += '出租\n\n';
-            }
-
-            selectedProps.forEach((property, index) => {
-                shareText += `房源 ${index + 1}:\n`;
-                shareText += `小区：${property.community || '未知'}\n`;
-                shareText += `户型：${property.layout || '未知'}\n`;
-                shareText += `面积：${property.area || '未知'}平\n`;
-                shareText += `价格：${property.price || '面议'}${property.type === 'sale' ? '万元' : '元/月'}\n`;
-                shareText += `装修：${property.decoration || '未知'}\n`;
-                shareText += `楼层：${property.floor || '未知'}楼\n`;
-                shareText += `地区：${property.region || '未知'}\n`;
-                if (property.isAgent) {
-                    // 代理房源显示被代理方信息
-                    if (property.agentParties && property.agentParties.length > 0) {
-                        const firstAgent = property.agentParties[0];
-                        shareText += `被代理方：${firstAgent.name || '未知'} ${firstAgent.phone || ''}\n`;
-                    } else {
-                        shareText += `被代理方：未知\n`;
-                    }
-                } else {
-                    // 普通房源显示房东信息
-                    shareText += `联系人：${property.landlordName || '未知'} ${property.landlordPhone || ''}\n`;
+            // 根据选择的文案风格生成不同风格的文案
+            if (currentStyle === 'simple') {
+                // 简洁风格
+                // 检查是否有出售房源
+                const hasSale = selectedProps.some(p => p.type === 'sale');
+                const hasRent = selectedProps.some(p => p.type === 'rent');
+                
+                // 只在第一行显示出售或出租
+                if (hasSale && hasRent) {
+                    shareText += '出售/出租\n\n';
+                } else if (hasSale) {
+                    shareText += '出售\n\n';
+                } else if (hasRent) {
+                    shareText += '出租\n\n';
                 }
-                // 每个房源后面增加合作热线
-                shareText += `合作热线（微信同号）：13761547030 王 18019166290 韩 13917755549 苏\n\n`;
-            });
+
+                selectedProps.forEach((property, index) => {
+                    shareText += `房源 ${index + 1}:\n`;
+                    shareText += `小区：${property.community || '未知'}\n`;
+                    shareText += `户型：${property.layout || '未知'}\n`;
+                    shareText += `面积：${property.area || '未知'}平\n`;
+                    shareText += `价格：${property.price || '面议'}${property.type === 'sale' ? '万元' : '元/月'}\n`;
+                    shareText += `装修：${property.decoration || '未知'}\n`;
+                    shareText += `楼层：${property.floor || '未知'}楼\n`;
+                    shareText += `地区：${property.region || '未知'}\n`;
+                    if (property.isAgent) {
+                        // 代理房源显示被代理方信息
+                        if (property.agentParties && property.agentParties.length > 0) {
+                            const firstAgent = property.agentParties[0];
+                            shareText += `被代理方：${firstAgent.name || '未知'} ${firstAgent.phone || ''}\n`;
+                        } else {
+                            shareText += `被代理方：未知\n`;
+                        }
+                    } else {
+                        // 普通房源显示房东信息
+                        shareText += `联系人：${property.landlordName || '未知'} ${property.landlordPhone || ''}\n`;
+                    }
+                    // 每个房源后面增加合作热线
+                    shareText += `合作热线（微信同号）：13761547030 王 18019166290 韩 13917755549 苏\n\n`;
+                });
+            } else if (currentStyle === 'wonderful') {
+                // 精彩风格
+                shareText += '🏠 优质房源推荐 🏠\n\n';
+                
+                selectedProps.forEach((property, index) => {
+                    shareText += `✨ 房源 ${index + 1} ✨\n`;
+                    shareText += `🏘️ 小区：${property.community || '精品小区'}\n`;
+                    shareText += `🔑 户型：${property.layout || '优质户型'}\n`;
+                    shareText += `📏 面积：${property.area || '宽敞'}平\n`;
+                    shareText += `💰 价格：${property.price || '面议'}${property.type === 'sale' ? '万元' : '元/月'}\n`;
+                    shareText += `🎨 装修：${property.decoration || '精美装修'}\n`;
+                    shareText += `🏢 楼层：${property.floor || '黄金楼层'}\n`;
+                    shareText += `📍 地区：${property.region || '核心地段'}\n`;
+                    if (property.isAgent) {
+                        // 代理房源显示被代理方信息
+                        if (property.agentParties && property.agentParties.length > 0) {
+                            const firstAgent = property.agentParties[0];
+                            shareText += `👤 被代理方：${firstAgent.name || '优质客户'} ${firstAgent.phone || ''}\n`;
+                        } else {
+                            shareText += `👤 被代理方：优质客户\n`;
+                        }
+                    } else {
+                        // 普通房源显示房东信息
+                        shareText += `👤 联系人：${property.landlordName || '房东'} ${property.landlordPhone || ''}\n`;
+                    }
+                    // 每个房源后面增加合作热线
+                    shareText += `📞 合作热线（微信同号）：13761547030 王 18019166290 韩 13917755549 苏\n\n`;
+                });
+                
+                shareText += '🌟 机会难得，手慢无！\n';
+                shareText += '📱 随时看房，欢迎咨询！\n';
+            }
 
             return shareText;
         }
 
         // 分享到微信好友
         function shareToWeChat() {
-            showToast('请手动打开微信分享给好友');
-            // 这里可以添加实际的微信分享逻辑
+            const shareContent = document.getElementById('shareContent');
+            if (!shareContent) {
+                showToast('⚠️ 文案内容不存在');
+                return;
+            }
+            
+            const content = shareContent.value;
+            if (!content.trim()) {
+                showToast('⚠️ 请先生成文案');
+                return;
+            }
+            
+            // 复制文案
+            if (!navigator.clipboard) {
+                // 备用方法
+                const textArea = document.createElement('textarea');
+                textArea.value = content;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    const successful = document.execCommand('copy');
+                    if (successful) {
+                        showToast('✅ 文案已复制，正在打开微信...');
+                        // 尝试打开微信
+                        try {
+                            // 这里使用微信的URL Scheme尝试打开微信
+                            window.location.href = 'weixin://';
+                        } catch (e) {
+                            showToast('请手动打开微信分享');
+                        }
+                    } else {
+                        showToast('⚠️ 复制失败，请手动复制');
+                    }
+                } catch (err) {
+                    showToast('⚠️ 复制失败，请手动复制');
+                } finally {
+                    document.body.removeChild(textArea);
+                }
+                return;
+            }
+            
+            navigator.clipboard.writeText(content).then(() => {
+                showToast('✅ 文案已复制，正在打开微信...');
+                // 尝试打开微信
+                try {
+                    // 这里使用微信的URL Scheme尝试打开微信
+                    window.location.href = 'weixin://';
+                } catch (e) {
+                    showToast('请手动打开微信分享');
+                }
+            }).catch(err => {
+                // 备用方法
+                const textArea = document.createElement('textarea');
+                textArea.value = content;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    const successful = document.execCommand('copy');
+                    if (successful) {
+                        showToast('✅ 文案已复制，正在打开微信...');
+                        // 尝试打开微信
+                        try {
+                            // 这里使用微信的URL Scheme尝试打开微信
+                            window.location.href = 'weixin://';
+                        } catch (e) {
+                            showToast('请手动打开微信分享');
+                        }
+                    } else {
+                        showToast('⚠️ 复制失败，请手动复制');
+                    }
+                } catch (err) {
+                    showToast('⚠️ 复制失败，请手动复制');
+                } finally {
+                    document.body.removeChild(textArea);
+                }
+            });
         }
 
         // 分享到朋友圈
@@ -7381,7 +7497,7 @@
                     selectedProperties.push(stringId);
                 }
             }
-            // 更新转发内容
+            // 更新转发内容，根据当前选择的文案风格生成文案
             document.getElementById('shareContent').value = getSelectedPropertiesShareText();
         }
 
@@ -7421,7 +7537,7 @@
             
             // 重新渲染列表
             renderSharePropertyList();
-            // 更新转发内容
+            // 更新转发内容，根据当前选择的文案风格生成文案
             document.getElementById('shareContent').value = getSelectedPropertiesShareText();
         }
 
