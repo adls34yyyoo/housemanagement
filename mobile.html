@@ -3471,7 +3471,8 @@
                 stopVoiceWaveAnimation();
                 // 重置 currentInputId
                 currentInputId = null;
-                // 不要在这里设置 recognition = null，保留实例以便下次使用
+                // 重要：在 onend 事件后，recognition 实例不能再使用，需要重新初始化
+                recognition = null;
                 // 识别结束后，可以提示用户
                 showToast('🎤 语音识别已结束');
             };
@@ -3520,8 +3521,8 @@
                 stopVoiceWaveAnimation();
                 // 重置当前输入框ID
                 currentInputId = null;
-                // 不要重置 recognition 实例，保留以便下次使用
-                // recognition = null;
+                // 重置 recognition 实例，确保下次可以重新初始化
+                recognition = null;
             }
         }
 
