@@ -2974,6 +2974,14 @@
                             <span style="color: var(--text-secondary);">门牌号</span>
                             <span>${property.door_number || property.doorNumber || '未知门牌号'}</span>
                         </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                            <span style="color: var(--text-secondary);">小学学区</span>
+                            <span>${property.primarySchool || property.primary_school || '未知'}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                            <span style="color: var(--text-secondary);">初中学区</span>
+                            <span>${property.middleSchool || property.middle_school || '未知'}</span>
+                        </div>
                         <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; color: var(--danger);">
                             <span>价格</span>
                             <span>${property.price || '面议'}${priceUnit}</span>
