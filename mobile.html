@@ -5832,6 +5832,12 @@
                 // 重新加载数据
                 await loadData();
                 
+                // 清理 selectedProperties 数组，移除已删除的房源 ID
+                selectedProperties = selectedProperties.filter(selectedId => 
+                    properties.some(p => String(p.id) === String(selectedId)) ||
+                    agentProperties.some(p => String(p.id) === String(selectedId))
+                );
+                
                 updateStats();
                 renderPropertyList();
                 showToast('✅ 房源删除成功');
@@ -9074,6 +9080,12 @@
                 
                 // 重新加载数据
                 await loadData();
+                
+                // 清理 selectedProperties 数组，移除已删除的房源 ID
+                selectedProperties = selectedProperties.filter(selectedId => 
+                    properties.some(p => String(p.id) === String(selectedId)) ||
+                    agentProperties.some(p => String(p.id) === String(selectedId))
+                );
                 
                 // 刷新列表
                 renderPropertyList();
