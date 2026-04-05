@@ -5469,11 +5469,11 @@
             if (editingPropertyId) {
                 // 编辑模式：根据原房源类型判断
                 originalProperty = properties.find(p => p.id === editingPropertyId) || agentProperties.find(p => p.id === editingPropertyId);
-                if (!isAgentMode && originalProperty && originalProperty.type === 'sale') {
+                if (originalProperty && originalProperty.type === 'sale') {
                     saleOrRentType = 'sale';
                     // 确保价格单位为万元
                     propertyPrice = propertyPrice;
-                } else if (!isAgentMode) {
+                } else if (originalProperty && originalProperty.type === 'rent') {
                     // 编辑租房房源
                     saleOrRentType = 'rent';
                 }
