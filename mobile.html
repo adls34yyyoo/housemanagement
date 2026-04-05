@@ -5685,10 +5685,16 @@
 
             // 自动将自定义值添加到选项中（如果不存在）
             async function addToOptionsIfNotExist(type, value) {
-                if (value && !optionsData[type].includes(value)) {
-                    optionsData[type].push(value);
-                    await saveOptionToDatabase(type, value);
-                    initSelectOptions();
+                if (value) {
+                    // 确保 optionsData[type] 存在
+                    if (!optionsData[type]) {
+                        optionsData[type] = [];
+                    }
+                    if (!optionsData[type].includes(value)) {
+                        optionsData[type].push(value);
+                        await saveOptionToDatabase(type, value);
+                        initSelectOptions();
+                    }
                 }
             }
 
@@ -6382,6 +6388,8 @@
                     // 清空默认选项
                     optionsData = {
                         community: [],
+                        primarySchool: [],
+                        middleSchool: [],
                         decoration: [],
                         layout: [],
                         region: [],
