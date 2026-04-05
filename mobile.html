@@ -3363,14 +3363,20 @@
         // 初始化语音识别
         function initVoiceRecognition() {
             // 尝试各种浏览器前缀，包括华为浏览器可能使用的前缀
-            const SpeechRecognition = window.SpeechRecognition || 
-                                     window.webkitSpeechRecognition || 
-                                     window.mozSpeechRecognition || 
-                                     window.msSpeechRecognition ||
-                                     window.oSpeechRecognition ||
-                                     // 华为浏览器可能的前缀
-                                     window.huaweiSpeechRecognition ||
-                                     window.SpeechRecognitionAPI;
+            let SpeechRecognition = window.SpeechRecognition || 
+                                    window.webkitSpeechRecognition || 
+                                    window.mozSpeechRecognition || 
+                                    window.msSpeechRecognition ||
+                                    window.oSpeechRecognition;
+            
+            // 华为浏览器特殊处理
+            if (!SpeechRecognition) {
+                // 尝试华为浏览器可能的实现
+                SpeechRecognition = window.HuaweiSpeechRecognition ||
+                                   window.huaweiSpeechRecognition ||
+                                   window.SpeechRecognitionAPI ||
+                                   window.webkitSpeechRecognition;
+            }
             
             if (!SpeechRecognition) {
                 console.warn('浏览器不支持语音识别');
@@ -3378,106 +3384,130 @@
             }
 
             try {
-                recognition = new SpeechRecognition();
+                // 创建新的识别实例
+                const newRecognition = new SpeechRecognition();
+                
                 // 设置语言为中文
-                recognition.lang = 'zh-CN';
+                newRecognition.lang = 'zh-CN';
+                
                 // 调整参数以提高兼容性
-                recognition.interimResults = false; // 禁用中间结果，提高兼容性
-                recognition.continuous = false; // 禁用连续识别，提高兼容性
-                recognition.maxAlternatives = 1;
+                newRecognition.interimResults = false; // 禁用中间结果，提高兼容性
+                newRecognition.continuous = false; // 禁用连续识别，提高兼容性
+                newRecognition.maxAlternatives = 1;
+                
                 // 华为浏览器可能需要的额外配置
-                recognition.serviceURI = 'https://api.voice.mozilla.org/asr';
+                try {
+                    newRecognition.serviceURI = 'https://api.voice.mozilla.org/asr';
+                } catch (e) {
+                    // 忽略不支持的属性
+                }
+
+                newRecognition.onstart = function() {
+                    isRecording = true;
+                    showVoiceWaveAnimation();
+                    showToast('🎤 开始语音识别...');
+                };
+
+                newRecognition.onresult = function(event) {
+                    let finalTranscript = '';
+
+                    try {
+                        for (let i = event.resultIndex; i < event.results.length; i++) {
+                            if (event.results[i] && event.results[i][0]) {
+                                const transcript = event.results[i][0].transcript;
+                                if (event.results[i].isFinal) {
+                                    finalTranscript += transcript;
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.error('处理识别结果失败:', e);
+                        showToast('❌ 处理识别结果失败');
+                        return;
+                    }
+
+                    // 确保 currentInputId 有效
+                    if (!currentInputId) {
+                        console.error('currentInputId 未设置');
+                        showToast('❌ 语音识别错误：输入框未设置');
+                        return;
+                    }
+
+                    const inputElement = document.getElementById(currentInputId);
+                    if (inputElement && finalTranscript) {
+                        try {
+                            // 清空输入框并填入识别结果
+                            inputElement.value = finalTranscript;
+                            // 分析并填充表单
+                            if (currentInputId === 'aiInput') {
+                                aiExtractFromInput();
+                            } else if (currentInputId === 'customerAiInput') {
+                                aiExtractCustomerFromInput();
+                            }
+                            // 显示识别成功的提示
+                            showToast(`✅ 识别成功: ${finalTranscript}`);
+                        } catch (e) {
+                            console.error('填入识别结果失败:', e);
+                            showToast('❌ 填入识别结果失败');
+                        }
+                    } else {
+                        console.error('输入框不存在或识别结果为空');
+                        showToast('❌ 识别失败，请重试');
+                    }
+                };
+
+                newRecognition.onerror = function(event) {
+                    console.error('语音识别错误:', event.error);
+                    let errorMsg = '语音识别失败';
+                    switch(event.error) {
+                        case 'no-speech':
+                            errorMsg = '未检测到语音，请重试';
+                            break;
+                        case 'audio-capture':
+                            errorMsg = '无法访问麦克风';
+                            break;
+                        case 'not-allowed':
+                            errorMsg = '请允许使用麦克风';
+                            break;
+                        case 'network':
+                            errorMsg = '网络错误，请检查连接';
+                            break;
+                        case 'aborted':
+                            errorMsg = '语音识别已取消';
+                            break;
+                        case 'service-not-allowed':
+                            errorMsg = '语音服务不可用';
+                            break;
+                        case 'bad-grammar':
+                            errorMsg = '语音识别语法错误';
+                            break;
+                        case 'language-not-supported':
+                            errorMsg = '不支持的语言';
+                            break;
+                    }
+                    showToast(errorMsg);
+                    stopVoiceRecognition();
+                };
+
+                newRecognition.onend = function() {
+                    isRecording = false;
+                    stopVoiceWaveAnimation();
+                    // 重置 currentInputId
+                    currentInputId = null;
+                    // 重要：在 onend 事件后，recognition 实例不能再使用，需要重新初始化
+                    recognition = null;
+                    // 识别结束后，可以提示用户
+                    showToast('🎤 语音识别已结束');
+                };
+
+                // 保存新实例
+                recognition = newRecognition;
+                return newRecognition;
             } catch (e) {
                 console.error('创建语音识别实例失败:', e);
+                showToast('❌ 创建语音识别实例失败');
                 return null;
             }
-
-            recognition.onstart = function() {
-                isRecording = true;
-                showVoiceWaveAnimation();
-                showToast('🎤 开始语音识别...');
-            };
-
-            recognition.onresult = function(event) {
-                let finalTranscript = '';
-
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    const transcript = event.results[i][0].transcript;
-                    if (event.results[i].isFinal) {
-                        finalTranscript += transcript;
-                    }
-                }
-
-                // 确保 currentInputId 有效
-                if (!currentInputId) {
-                    console.error('currentInputId 未设置');
-                    showToast('❌ 语音识别错误：输入框未设置');
-                    return;
-                }
-
-                const inputElement = document.getElementById(currentInputId);
-                if (inputElement && finalTranscript) {
-                    // 清空输入框并填入识别结果
-                    inputElement.value = finalTranscript;
-                    // 分析并填充表单
-                    if (currentInputId === 'aiInput') {
-                        aiExtractFromInput();
-                    } else if (currentInputId === 'customerAiInput') {
-                        aiExtractCustomerFromInput();
-                    }
-                    // 显示识别成功的提示
-                    showToast(`✅ 识别成功: ${finalTranscript}`);
-                } else {
-                    console.error('输入框不存在或识别结果为空');
-                    showToast('❌ 识别失败，请重试');
-                }
-            };
-
-            recognition.onerror = function(event) {
-                console.error('语音识别错误:', event.error);
-                let errorMsg = '语音识别失败';
-                switch(event.error) {
-                    case 'no-speech':
-                        errorMsg = '未检测到语音，请重试';
-                        break;
-                    case 'audio-capture':
-                        errorMsg = '无法访问麦克风';
-                        break;
-                    case 'not-allowed':
-                        errorMsg = '请允许使用麦克风';
-                        break;
-                    case 'network':
-                        errorMsg = '网络错误，请检查连接';
-                        break;
-                    case 'aborted':
-                        errorMsg = '语音识别已取消';
-                        break;
-                    case 'service-not-allowed':
-                        errorMsg = '语音服务不可用';
-                        break;
-                    case 'bad-grammar':
-                        errorMsg = '语音识别语法错误';
-                        break;
-                    case 'language-not-supported':
-                        errorMsg = '不支持的语言';
-                        break;
-                }
-                showToast(errorMsg);
-                stopVoiceRecognition();
-            };
-
-            recognition.onend = function() {
-                isRecording = false;
-                stopVoiceWaveAnimation();
-                // 重置 currentInputId
-                currentInputId = null;
-                // 重要：在 onend 事件后，recognition 实例不能再使用，需要重新初始化
-                recognition = null;
-                // 识别结束后，可以提示用户
-                showToast('🎤 语音识别已结束');
-            };
-
-            return recognition;
         }
 
         // 显示语音波形动画
@@ -3534,12 +3564,19 @@
                 return;
             }
 
+            // 验证输入框是否存在
+            const inputElement = document.getElementById(inputId);
+            if (!inputElement) {
+                console.error('输入框不存在:', inputId);
+                showToast('❌ 输入框不存在');
+                return;
+            }
+
             // 设置当前输入框ID
             currentInputId = inputId;
 
-            if (!recognition) {
-                recognition = initVoiceRecognition();
-            }
+            // 每次都重新初始化，确保在华为浏览器中正常工作
+            recognition = initVoiceRecognition();
 
             if (!recognition) {
                 showToast('❌ 您的浏览器不支持语音识别');
@@ -3547,10 +3584,17 @@
             }
 
             try {
+                // 显示启动提示
+                showToast('🎤 正在启动语音识别...');
                 recognition.start();
             } catch (e) {
                 console.error('启动语音识别失败:', e);
-                showToast('启动语音识别失败');
+                showToast('启动语音识别失败，请检查麦克风权限');
+                // 重置状态
+                isRecording = false;
+                stopVoiceWaveAnimation();
+                currentInputId = null;
+                recognition = null;
             }
         }
 
