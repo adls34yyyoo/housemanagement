@@ -7073,30 +7073,17 @@
 
             // 根据选择的文案风格生成不同风格的文案
             if (currentStyle === 'simple' || currentStyle === 'wonderful') {
-                // 检查是否有出售房源
-                const hasSale = selectedProps.some(p => p.type === 'sale');
-                const hasRent = selectedProps.some(p => p.type === 'rent');
-                
-                // 只在第一行显示出售或出租
-                if (hasSale && hasRent) {
-                    shareText += '出售/出租\n\n';
-                } else if (hasSale) {
-                    shareText += '出售\n\n';
-                } else if (hasRent) {
-                    shareText += '出租\n\n';
-                }
-
                 selectedProps.forEach((property, index) => {
                     // 简洁风格和精彩风格都使用相同的基本格式
                     if (currentStyle === 'wonderful') {
-                        shareText += `✨ ${property.type === 'sale' ? '出售' : '出租'} ${property.community || '未知'} ✨\n`;
+                        shareText += `✨ ${property.type === 'sale' ? '出售:' : '出租:'} ${property.community || '未知'} ✨\n`;
                         shareText += `🔑 户型：${property.layout || '未知'}\n`;
                         shareText += `📏 面积：${property.area || '未知'}平\n`;
                         shareText += `💰 价格：${property.price || '面议'}${property.type === 'sale' ? '万元' : '元/月'}\n`;
                         shareText += `🎨 装修：${property.decoration || '未知'}\n`;
                         shareText += `🏢 楼层：${property.floor || '未知'}楼\n`;
                     } else {
-                        shareText += `${property.type === 'sale' ? '出售' : '出租'} ${property.community || '未知'}\n`;
+                        shareText += `${property.type === 'sale' ? '出售:' : '出租:'} ${property.community || '未知'}\n`;
                         shareText += `户型：${property.layout || '未知'}\n`;
                         shareText += `面积：${property.area || '未知'}平\n`;
                         shareText += `价格：${property.price || '面议'}${property.type === 'sale' ? '万元' : '元/月'}\n`;
@@ -7106,7 +7093,11 @@
                     // 取消地区字段显示
                     // 取消联系人字段显示
                     // 每个房源后面增加合作热线，只保留18019166290
-                    shareText += `合作热线：18019166290\n\n`;
+                    if (index < selectedProps.length - 1) {
+                        shareText += `合作热线：18019166290\n\n`;
+                    } else {
+                        shareText += `合作热线：18019166290`;
+                    }
                 });
             }
 
