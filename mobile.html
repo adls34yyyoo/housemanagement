@@ -3355,6 +3355,9 @@
 
 
 
+        // 小区与学区的映射关系
+        let communitySchoolMapping = JSON.parse(localStorage.getItem('communitySchoolMapping')) || {};
+        
         // 选项数据存储
         let optionsData = {
             community: ['金地城', '一方新城'],
@@ -3377,6 +3380,54 @@
                 option.value = community;
                 option.textContent = community;
                 communitySelect.appendChild(option);
+            });
+            
+            // 添加小区选择变化事件监听器
+            communitySelect.addEventListener('change', function() {
+                const selectedCommunity = this.value;
+                if (selectedCommunity && communitySchoolMapping[selectedCommunity]) {
+                    const mapping = communitySchoolMapping[selectedCommunity];
+                    if (mapping.primarySchool) {
+                        const primarySchoolSelect = document.getElementById('propPrimarySchool');
+                        const primarySchoolCustom = document.getElementById('propPrimarySchoolCustom');
+                        if (primarySchoolSelect) {
+                            // 检查是否在下拉选项中
+                            let found = false;
+                            for (let i = 0; i < primarySchoolSelect.options.length; i++) {
+                                if (primarySchoolSelect.options[i].value === mapping.primarySchool) {
+                                    primarySchoolSelect.value = mapping.primarySchool;
+                                    primarySchoolCustom.value = '';
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (!found) {
+                                primarySchoolSelect.value = '';
+                                primarySchoolCustom.value = mapping.primarySchool;
+                            }
+                        }
+                    }
+                    if (mapping.middleSchool) {
+                        const middleSchoolSelect = document.getElementById('propMiddleSchool');
+                        const middleSchoolCustom = document.getElementById('propMiddleSchoolCustom');
+                        if (middleSchoolSelect) {
+                            // 检查是否在下拉选项中
+                            let found = false;
+                            for (let i = 0; i < middleSchoolSelect.options.length; i++) {
+                                if (middleSchoolSelect.options[i].value === mapping.middleSchool) {
+                                    middleSchoolSelect.value = mapping.middleSchool;
+                                    middleSchoolCustom.value = '';
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (!found) {
+                                middleSchoolSelect.value = '';
+                                middleSchoolCustom.value = mapping.middleSchool;
+                            }
+                        }
+                    }
+                }
             });
 
             // 初始化小学学区选择
@@ -5711,6 +5762,15 @@
             await addToOptionsIfNotExist('propertyType', propType);
             await addToOptionsIfNotExist('propertyCertificate', propertyCertificate);
             await addToOptionsIfNotExist('layout', layout);
+            
+            // 保存小区与学区的映射关系
+            if (community && (primarySchool || middleSchool)) {
+                communitySchoolMapping[community] = {
+                    primarySchool: primarySchool,
+                    middleSchool: middleSchool
+                };
+                localStorage.setItem('communitySchoolMapping', JSON.stringify(communitySchoolMapping));
+            }
 
             // 对于卖房，价格单位为万元
             let saleOrRentType = 'rent';
