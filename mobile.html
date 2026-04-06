@@ -5349,9 +5349,40 @@
                         </div>
                     ` : ''}
                     
+                    ${(() => {
+                        // 获取客户看过的房源
+                        const viewedProperties = customer.viewedProperties || [];
+                        const allProperties = [...properties, ...agentProperties];
+                        const customerViewedProperties = allProperties.filter(p => viewedProperties.includes(String(p.id)));
+                        
+                        if (customerViewedProperties.length > 0) {
+                            return `
+                                <div style="margin-bottom: 16px;">
+                                    <h3 style="margin: 0 0 8px 0; color: var(--text); font-size: 16px;">看过的房源</h3>
+                                    <div style="background: var(--background); border-radius: var(--radius); padding: 12px;">
+                                        ${customerViewedProperties.map((property, index) => `
+                                            <div style="padding: 8px 0; ${index > 0 ? 'border-top: 1px solid var(--border);' : ''}">
+                                                <div style="font-weight: 600; margin-bottom: 4px;">
+                                                    ${property.community || '未知小区'} - ${property.type === 'sale' ? '出售' : '出租'}
+                                                </div>
+                                                <div style="font-size: 13px; color: var(--text-secondary);">
+                                                    ${property.layout || '未知'} | ${property.area || '未知'}平 | ${property.price || '面议'}${property.type === 'sale' ? '万元' : '元/月'}
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            `;
+                        }
+                        return '';
+                    })()}
+                    
                     <div style="display: flex; gap: 12px; margin-top: 24px;">
                         <button onclick="showCommunicationModal('${customer.id}')" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #2196F3 0%, #0b7dda 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
                             添加沟通记录
+                        </button>
+                        <button onclick="addViewedProperty('${customer.id}')" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
+                            添加看过的房源
                         </button>
                         <button onclick="editCustomer('${customer.id}'); document.getElementById('customerDetailModal').classList.remove('active')" style="flex: 1; padding: 12px; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
                             编辑
@@ -5398,6 +5429,103 @@
                 (c.phone && c.phone.includes(keyword))
             );
             renderCustomerList();
+        }
+
+        // 添加客户看过的房源
+        function addViewedProperty(customerId) {
+            const customer = customers.find(c => String(c.id) === String(customerId));
+            if (!customer) return;
+
+            // 获取所有房源（排除已删除的）
+            const allProperties = [...properties, ...agentProperties].filter(p => !p.deleted);
+            
+            // 生成房源选择列表
+            const propertyOptions = allProperties.map(p => `
+                <option value="${p.id}">${p.community || '未知小区'} - ${p.type === 'sale' ? '出售' : '出租'} - ${p.layout || '未知'} - ${p.area || '未知'}平</option>
+            `).join('');
+
+            // 显示选择房源的模态框
+            const modalHtml = `
+                <div class="modal" id="addViewedPropertyModal" onclick="if (event.target === this) document.getElementById('addViewedPropertyModal').classList.remove('active')">
+                    <div class="modal-content" style="max-width: 90%;">
+                        <div class="modal-header">
+                            <span class="modal-title">添加看过的房源</span>
+                            <button class="modal-close" onclick="document.getElementById('addViewedPropertyModal').classList.remove('active')">×</button>
+                        </div>
+                        <div class="modal-body" style="padding: 20px;">
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 500;">选择房源：</label>
+                                <select id="viewedPropertySelect" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 14px;">
+                                    <option value="">请选择房源</option>
+                                    ${propertyOptions}
+                                </select>
+                            </div>
+                            <div style="display: flex; gap: 12px; margin-top: 24px;">
+                                <button onclick="document.getElementById('addViewedPropertyModal').classList.remove('active')" style="flex: 1; padding: 12px; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; font-weight: 500;">
+                                    取消
+                                </button>
+                                <button onclick="saveViewedProperty('${customerId}')" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
+                                    保存
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 确保模态框存在
+            if (!document.getElementById('addViewedPropertyModal')) {
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+            }
+
+            document.getElementById('addViewedPropertyModal').classList.add('active');
+        }
+
+        // 保存客户看过的房源
+        function saveViewedProperty(customerId) {
+            const propertyId = document.getElementById('viewedPropertySelect').value;
+            if (!propertyId) {
+                showToast('请选择房源');
+                return;
+            }
+
+            const customer = customers.find(c => String(c.id) === String(customerId));
+            if (!customer) return;
+
+            // 初始化 viewedProperties 数组
+            if (!customer.viewedProperties) {
+                customer.viewedProperties = [];
+            }
+
+            // 检查是否已经添加过
+            if (customer.viewedProperties.includes(propertyId)) {
+                showToast('该房源已在看过的列表中');
+                return;
+            }
+
+            // 添加到看过的房源列表
+            customer.viewedProperties.push(propertyId);
+
+            // 保存到本地存储
+            localStorage.setItem('customers', JSON.stringify(customers));
+
+            // 保存到 Supabase
+            if (supabaseClient) {
+                supabaseClient
+                    .from('customers')
+                    .update({ viewed_properties: customer.viewedProperties })
+                    .eq('id', customer.id)
+                    .then(({ error }) => {
+                        if (error) {
+                            console.error('保存客户看过的房源失败:', error);
+                        }
+                    });
+            }
+
+            // 关闭模态框并刷新客户详情
+            document.getElementById('addViewedPropertyModal').classList.remove('active');
+            showCustomerDetail(customerId);
+            showToast('✅ 已添加看过的房源');
         }
 
         // 筛选可代理房源
