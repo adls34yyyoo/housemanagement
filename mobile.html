@@ -2241,6 +2241,72 @@
             </div>
         </div>
 
+        <!-- 合作房源页面 -->
+        <div class="page" id="pageCoopProperties">
+            <div class="app-header">
+                <div class="header-content">
+                    <span class="header-title">合作房源</span>
+                    <span class="header-user" id="headerUserCoop">admin</span>
+                </div>
+            </div>
+            
+            <div class="search-bar">
+                <input type="text" class="search-input" id="coopPropertySearch" placeholder="搜索合作房源..." oninput="searchCoopProperties()">
+            </div>
+            
+            <div class="action-buttons">
+                <div class="action-button" onclick="openCoopPropertyModal()">💰 新增合作卖房</div>
+                <div class="action-button" onclick="toggleCoopFilterMenu()">🔍 筛选</div>
+            </div>
+            
+            <div class="content-section" id="coopPropertyList"></div>
+            
+            <!-- 筛选菜单 -->
+            <div class="filter-menu" id="coopFilterMenu">
+                <div class="filter-header">
+                    <span class="filter-title">筛选条件</span>
+                    <button class="filter-close" onclick="toggleCoopFilterMenu()">×</button>
+                </div>
+                <div class="filter-body">
+                    <div class="filter-section">
+                        <div class="filter-label">类型</div>
+                        <div class="filter-checkbox-group">
+                            <label class="filter-checkbox-item">
+                                <input type="checkbox" value="sale" class="coop-filter-type" onchange="applyCoopFilters()" checked disabled> 卖房
+                            </label>
+                        </div>
+                    </div>
+                    <div class="filter-section">
+                        <div class="filter-label">状态</div>
+                        <div class="filter-checkbox-group">
+                            <label class="filter-checkbox-item">
+                                <input type="checkbox" value="pending" class="coop-filter-status" onchange="applyCoopFilters()"> 待发布
+                            </label>
+                            <label class="filter-checkbox-item">
+                                <input type="checkbox" value="off_shelf" class="coop-filter-status" onchange="applyCoopFilters()"> 已下架
+                            </label>
+                        </div>
+                    </div>
+                    <div class="filter-section">
+                        <div class="filter-label">区域</div>
+                        <select class="filter-select" id="coopFilterRegion" onchange="applyCoopFilters()">
+                            <option value="">全部</option>
+                        </select>
+                    </div>
+                    <div class="filter-section">
+                        <div class="filter-label">小区</div>
+                        <select class="filter-select" id="coopFilterCommunity" onchange="applyCoopFilters()">
+                            <option value="">全部</option>
+                        </select>
+                    </div>
+                    <div class="filter-actions">
+                        <button class="filter-btn filter-btn-clear" onclick="clearCoopFilters()">清除筛选</button>
+                        <button class="filter-btn filter-btn-confirm" onclick="toggleCoopFilterMenu()">确定</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- 客户页面 -->
         <div class="page" id="pageCustomers">
             <div class="app-header">
@@ -2431,6 +2497,12 @@
                     <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
                 </div>
                 <div class="nav-label">可代理</div>
+            </div>
+            <div class="nav-item" onclick="switchPage('coopProperties')">
+                <div class="nav-icon">
+                    <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                </div>
+                <div class="nav-label">合作</div>
             </div>
             <div class="nav-item" onclick="switchPage('share')">
                 <div class="nav-icon">
@@ -4240,6 +4312,7 @@
                 'customers': 'pageCustomers',
                 'profile': 'pageProfile',
                 'agentProperties': 'pageAgentProperties',
+                'coopProperties': 'pageCoopProperties',
                 'share': 'pageShare'
             };
 
@@ -4247,9 +4320,10 @@
             'home': 0,
             'properties': 1,
             'agentProperties': 2,
-            'share': 3,
-            'customers': 4,
-            'profile': 5
+            'coopProperties': 3,
+            'share': 4,
+            'customers': 5,
+            'profile': 6
         };
 
             const targetPage = document.getElementById(pageMap[page]);
@@ -4273,6 +4347,10 @@
                 // 切换到可代理房源页面时，清空过滤条件，显示全部可代理房源
                 filteredAgentProperties = [];
                 renderAgentPropertyList();
+            } else if (page === 'coopProperties') {
+                // 切换到合作房源页面时，清空过滤条件，显示全部合作房源
+                filteredCoopProperties = [];
+                renderCoopPropertyList();
             } else if (page === 'customers') {
                 renderCustomerList();
             } else if (page === 'share') {
@@ -4688,6 +4766,8 @@
 
         // 可代理房源数据
         let filteredAgentProperties = [];
+        // 合作房源数据
+        let filteredCoopProperties = [];
         
         // 全局被代理方列表
         let agentParties = [];
@@ -4745,6 +4825,61 @@
             container.innerHTML = html;
         }
 
+        // 渲染合作房源列表
+        function renderCoopPropertyList() {
+            const container = document.getElementById('coopPropertyList');
+            if (!container) return;
+
+            // 只显示合作房源
+            let allCoopProperties = agentProperties.filter(p => p.isCoop || p.is_coop);
+            let propsToRender = filteredCoopProperties.length ? filteredCoopProperties : allCoopProperties;
+
+            if (propsToRender.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🤝</div>
+                        <div class="empty-text">暂无合作房源</div>
+                        <div style="margin-top: 12px; font-size: 14px; color: var(--text-tertiary);">点击上方按钮添加合作房源</div>
+                    </div>
+                `;
+                return;
+            }
+
+            // 添加全选和批量操作按钮
+            const allSelected = selectedProperties.length === propsToRender.length && propsToRender.length > 0;
+            let html = `
+                <div style="padding: 12px 16px; background: var(--surface); border-radius: var(--radius); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px; height: 60px;">
+                    <span style="font-weight: 600; color: var(--text);">已选择 ${selectedProperties.length} 套房源</span>
+                    <div style="display: flex; gap: 10px; align-items: center; height: 36px;">
+                        <button onclick="toggleCoopSelectAll()" style="padding: 0 16px; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500; height: 36px; min-width: 100px; text-align: center; white-space: nowrap;">
+                            ${allSelected ? '取消全选' : '全选'}
+                        </button>
+                        ${selectedProperties.length > 0 ? `
+                            <button onclick="batchPrintProperties()" style="padding: 0 16px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500; height: 36px; min-width: 100px; text-align: center; white-space: nowrap;">
+                                🖨️ 打印 (${selectedProperties.length})
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+
+            // 只显示出售房源
+            const saleProps = propsToRender.filter(p => p.type === 'sale');
+            
+            // 添加出售房源标题和卡片
+            if (saleProps.length > 0) {
+                html += `
+                    <div style="padding: 12px 16px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.1) 100%); border-left: 4px solid #3b82f6; margin-bottom: 12px; border-radius: 0 var(--radius) var(--radius) 0;">
+                        <h3 style="margin: 0; color: #3b82f6; font-size: 16px; font-weight: 700;">🏠 出售</h3>
+                        <p style="margin: 4px 0 0 0; color: var(--text-secondary); font-size: 13px;">共 ${saleProps.length} 套合作房源</p>
+                    </div>
+                `;
+                html += saleProps.map(p => createAgentPropertyCard(p)).join('');
+            }
+
+            container.innerHTML = html;
+        }
+
         // 全选/取消全选可代理房源
         window.toggleAgentSelectAll = function() {
             const propsToRender = filteredAgentProperties.length ? filteredAgentProperties : agentProperties;
@@ -4760,6 +4895,26 @@
             }
             
             renderAgentPropertyList();
+            renderPropertyList();
+            updateShareButton();
+        }
+
+        // 全选/取消全选合作房源
+        window.toggleCoopSelectAll = function() {
+            let allCoopProperties = agentProperties.filter(p => p.isCoop || p.is_coop);
+            const propsToRender = filteredCoopProperties.length ? filteredCoopProperties : allCoopProperties;
+            const allSelected = selectedProperties.length === propsToRender.length && propsToRender.length > 0;
+            
+            if (allSelected) {
+                // 取消全选
+                selectedProperties = selectedProperties.filter(id => !propsToRender.some(p => p.id === id));
+            } else {
+                // 全选
+                const filteredIds = propsToRender.map(p => p.id);
+                selectedProperties = [...new Set([...selectedProperties, ...filteredIds])];
+            }
+            
+            renderCoopPropertyList();
             renderPropertyList();
             updateShareButton();
         }
@@ -4948,6 +5103,77 @@
         function openAgentPropertyModal() {
             // 复用房源模态框，但添加isAgent标记，只支持卖房功能
             openPropertyModal('sale', true);
+        }
+
+        // 搜索合作房源
+        function searchCoopProperties() {
+            const keyword = document.getElementById('coopPropertySearch').value.toLowerCase();
+            if (!keyword) {
+                filteredCoopProperties = [];
+                renderCoopPropertyList();
+                return;
+            }
+
+            filteredCoopProperties = agentProperties.filter(p =>
+                p.isCoop && (
+                    (p.community && p.community.toLowerCase().includes(keyword)) ||
+                    (p.region && p.region.toLowerCase().includes(keyword)) ||
+                    (p.layout && p.layout.toLowerCase().includes(keyword)) ||
+                    (p.agentName && p.agentName.toLowerCase().includes(keyword))
+                )
+            );
+            renderCoopPropertyList();
+        }
+
+        // 切换合作房源筛选菜单
+        function toggleCoopFilterMenu() {
+            const menu = document.getElementById('coopFilterMenu');
+            if (menu) {
+                menu.classList.toggle('active');
+            }
+        }
+
+        // 应用合作房源筛选
+        function applyCoopFilters() {
+            const typeCheckboxes = document.querySelectorAll('.coop-filter-type:checked');
+            const statusCheckboxes = document.querySelectorAll('.coop-filter-status:checked');
+            const regionSelect = document.getElementById('coopFilterRegion');
+            const communitySelect = document.getElementById('coopFilterCommunity');
+
+            const selectedTypes = Array.from(typeCheckboxes).map(cb => cb.value);
+            const selectedStatuses = Array.from(statusCheckboxes).map(cb => cb.value);
+            const selectedRegion = regionSelect ? regionSelect.value : '';
+            const selectedCommunity = communitySelect ? communitySelect.value : '';
+
+            filteredCoopProperties = agentProperties.filter(p => {
+                if (!p.isCoop) return false;
+                const matchType = selectedTypes.length === 0 || selectedTypes.includes(p.type);
+                const matchStatus = selectedStatuses.length === 0 || selectedStatuses.includes(p.status);
+                const matchRegion = !selectedRegion || p.region === selectedRegion;
+                const matchCommunity = !selectedCommunity || p.community === selectedCommunity;
+
+                return matchType && matchStatus && matchRegion && matchCommunity;
+            });
+
+            renderCoopPropertyList();
+        }
+
+        // 清除合作房源筛选
+        function clearCoopFilters() {
+            document.querySelectorAll('.coop-filter-type').forEach(cb => cb.checked = false);
+            document.querySelectorAll('.coop-filter-status').forEach(cb => cb.checked = false);
+            const regionSelect = document.getElementById('coopFilterRegion');
+            const communitySelect = document.getElementById('coopFilterCommunity');
+            if (regionSelect) regionSelect.value = '';
+            if (communitySelect) communitySelect.value = '';
+            filteredCoopProperties = [];
+            renderCoopPropertyList();
+        }
+
+        // 打开合作房源编辑模态框
+        function openCoopPropertyModal() {
+            // 复用房源模态框，但添加isAgent和isCoop标记，只支持卖房功能
+            openPropertyModal('sale', true, true);
         }
 
         // 编辑可代理房源
@@ -5702,10 +5928,13 @@
         // 打开房源模态框
         // 当前是否为可代理房源模式
         let isAgentPropertyMode = false;
+        // 当前是否为合作房源模式
+        let isCoopPropertyMode = false;
 
-        function openPropertyModal(type = 'rent', isAgent = false) {
+        function openPropertyModal(type = 'rent', isAgent = false, isCoop = false) {
             editingPropertyId = null;
             isAgentPropertyMode = isAgent;
+            isCoopPropertyMode = isCoop;
             
             const priceLabel = document.getElementById('priceLabel');
             const landlordSection = document.getElementById('landlordSection');
@@ -5713,7 +5942,7 @@
             const certificateSection = document.getElementById('certificateSection');
             
             if (isAgent) {
-                // 可代理房源模式 - 显示房源方区域，隐藏房东区域和产证
+                // 可代理/合作房源模式 - 显示房源方区域，隐藏房东区域和产证
                 if (landlordSection) landlordSection.style.display = 'none';
                 if (agentPartiesSection) {
                     agentPartiesSection.style.display = 'block';
@@ -5721,9 +5950,9 @@
                     initAgentPartiesList();
                 }
                 if (certificateSection) certificateSection.style.display = 'none';
-                // 可代理房源强制使用卖房类型
+                // 可代理/合作房源强制使用卖房类型
                 type = 'sale';
-                document.getElementById('propertyModalTitle').textContent = '新增代理卖房';
+                document.getElementById('propertyModalTitle').textContent = isCoop ? '新增合作卖房' : '新增代理卖房';
                 // 卖房房源状态选项
                 const statusSelect = document.getElementById('propStatus');
                 statusSelect.innerHTML = `
@@ -6173,9 +6402,10 @@
                 updated_at: new Date().toISOString()
             };
 
-            // 如果是可代理房源，添加标记和房源方信息
+            // 如果是可代理/合作房源，添加标记和房源方信息
             if (isAgentMode) {
                 property.is_agent = true;
+                property.is_coop = isCoopPropertyMode;
                 property.agent_parties = agentParties;
                 // 兼容旧数据，保留第一个房源方作为agentName/agentPhone
                 if (agentParties.length > 0) {
