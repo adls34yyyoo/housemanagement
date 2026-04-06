@@ -5306,19 +5306,40 @@
                     
                     ${customer.changeHistory && customer.changeHistory.length > 0 ? `
                         <div style="margin-bottom: 16px;">
-                            <h3 style="margin: 0 0 8px 0; color: var(--text); font-size: 16px;">编辑记录</h3>
+                            <h3 style="margin: 0 0 8px 0; color: var(--text); font-size: 16px;">变更记录</h3>
                             <div style="background: var(--background); border-radius: var(--radius); padding: 12px;">
                                 ${customer.changeHistory.map((record, index) => `
-                                    <div style="padding: 8px 0; ${index > 0 ? 'border-top: 1px solid var(--border);' : ''}">
-                                        <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                                    <div style="padding: 12px 0; ${index > 0 ? 'border-top: 1px solid var(--border);' : ''}">
+                                        <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px;">
                                             <span style="font-weight: 600;">${record.action}</span>
                                             <span style="color: var(--text-secondary);">${new Date(record.timestamp).toLocaleString()}</span>
                                         </div>
-                                        <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
+                                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">
                                             操作人：${record.user || '管理员'}
                                         </div>
+                                        ${record.changes ? `
+                                            <div style="font-size: 13px; margin-top: 8px;">
+                                                <strong>变更内容：</strong>
+                                                <div style="margin-top: 4px; padding-left: 12px;">
+                                                    ${Object.entries(record.changes).map(([key, change]) => {
+                                                        if (change.oldValue !== change.newValue) {
+                                                            const fieldName = {
+                                                                'name': '客户姓名',
+                                                                'phone': '电话',
+                                                                'wechat': '微信',
+                                                                'budget': '预算',
+                                                                'demand': '需求',
+                                                                'status': '状态'
+                                                            }[key] || key;
+                                                            return `<div style="margin-bottom: 4px;">${fieldName}：${change.oldValue || '空'} → ${change.newValue || '空'}</div>`;
+                                                        }
+                                                        return '';
+                                                    }).filter(Boolean).join('')}
+                                                </div>
+                                            </div>
+                                        ` : ''}
                                         ${record.remark ? `
-                                            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
+                                            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 8px;">
                                                 备注：${record.remark}
                                             </div>
                                         ` : ''}
