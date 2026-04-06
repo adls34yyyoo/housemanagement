@@ -5686,7 +5686,7 @@
             
             // 生成房源选择列表
             const propertyOptions = allProperties.map(p => `
-                <option value="${p.id}">${p.community || '未知小区'} - ${p.type === 'sale' ? '出售' : '出租'} - ${p.layout || '未知'} - ${p.area || '未知'}平</option>
+                <option value="${p.id}">${p.community || '未知小区'} - ${p.type === 'sale' ? '售' : '租'} - ${p.area || '未知'}平 - ${p.price || '面议'}${p.type === 'sale' ? '万元' : '元/月'}</option>
             `).join('');
 
             // 显示选择房源的模态框
