@@ -5363,11 +5363,17 @@
                                         ${customerViewedProperties.map((property, index) => `
                                             <div style="padding: 8px 0; ${index > 0 ? 'border-top: 1px solid var(--border);' : ''}">
                                                 <div style="font-weight: 600; margin-bottom: 4px;">
-                                                    ${property.community || '未知小区'} - ${property.type === 'sale' ? '出售' : '出租'}
+                                                    ${property.community || '未知小区'} - ${property.type === 'sale' ? '出售' : '出租'} - ${property.isAgent ? (property.isCoop ? '合作房源' : '代理房源') : '自有房源'}
                                                 </div>
                                                 <div style="font-size: 13px; color: var(--text-secondary);">
                                                     ${property.layout || '未知'} | ${property.area || '未知'}平 | ${property.price || '面议'}${property.type === 'sale' ? '万元' : '元/月'}
                                                 </div>
+                                                ${(property.isAgent || property.isCoop) ? `
+                                                    <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
+                                                        ${property.phone ? `电话：<a href="tel:${property.phone}" style="color: var(--primary); text-decoration: none;">${property.phone}</a> | ` : ''}
+                                                        ${property.wechat ? `微信：<div onclick="copyWeChat('${property.wechat}')" style="color: #07C160; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">${property.wechat}</div>` : ''}
+                                                    </div>
+                                                ` : ''}
                                             </div>
                                         `).join('')}
                                     </div>
