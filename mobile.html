@@ -9384,19 +9384,27 @@
                 showToast('📵 网络已断开');
             });
 
-            // 页面可见性变化时的处理
+            // 页面可见性变化时的处理 - 添加防抖机制
+            let lastLoadTime = 0;
+            const minLoadInterval = 30000; // 至少间隔30秒
             document.addEventListener('visibilitychange', () => {
                 if (document.visibilityState === 'visible') {
-                    console.log('页面重新可见，刷新数据...');
-                    // 重新连接
-                    if (reconnectCount < maxReconnectCount) {
-                        initRealtimeConnection();
+                    const now = Date.now();
+                    if (now - lastLoadTime >= minLoadInterval) {
+                        console.log('页面重新可见，刷新数据...');
+                        lastLoadTime = now;
+                        // 重新连接
+                        if (reconnectCount < maxReconnectCount) {
+                            initRealtimeConnection();
+                        }
+                        // 加载最新数据
+                        loadData().then(() => {
+                            updateStats();
+                            renderPropertyList();
+                        });
+                    } else {
+                        console.log('距离上次加载不足30秒，跳过本次刷新');
                     }
-                    // 加载最新数据
-                    loadData().then(() => {
-                        updateStats();
-                        renderPropertyList();
-                    });
                 }
             });
 
