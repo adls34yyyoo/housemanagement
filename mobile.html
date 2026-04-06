@@ -3060,7 +3060,9 @@
                                                                 'propertyCertificate': '产证情况',
                                                                 'doorNumber': '门牌号',
                                                                 'type': '房源类型',
-                                                                'status': '状态'
+                                                                'status': '状态',
+                                                                'primarySchool': '小学学区',
+                                                                'middleSchool': '初中学区'
                                                             }[key] || key;
                                                             return `<div style="margin-bottom: 4px;">${fieldName}：${change.oldValue || '空'} → ${change.newValue || '空'}</div>`;
                                                         }
@@ -5871,6 +5873,14 @@
                     if (originalProperty.region !== region) {
                         changes.region = { oldValue: originalProperty.region, newValue: region };
                         changeDetails.push(`地区：${originalProperty.region || '无'} → ${region || '无'}`);
+                    }
+                    if ((originalProperty.primary_school || originalProperty.primarySchool) !== primarySchool) {
+                        changes.primarySchool = { oldValue: originalProperty.primary_school || originalProperty.primarySchool, newValue: primarySchool };
+                        changeDetails.push(`小学学区：${(originalProperty.primary_school || originalProperty.primarySchool) || '无'} → ${primarySchool || '无'}`);
+                    }
+                    if ((originalProperty.middle_school || originalProperty.middleSchool) !== middleSchool) {
+                        changes.middleSchool = { oldValue: originalProperty.middle_school || originalProperty.middleSchool, newValue: middleSchool };
+                        changeDetails.push(`初中学区：${(originalProperty.middle_school || originalProperty.middleSchool) || '无'} → ${middleSchool || '无'}`);
                     }
                     
                     // 如果有变更，添加到变更历史
