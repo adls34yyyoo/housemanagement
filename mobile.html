@@ -3421,6 +3421,15 @@
         let editingCustomerId = null;
 
         // 从本地存储加载数据
+        const savedCustomers = localStorage.getItem('customers');
+        if (savedCustomers) {
+            try {
+                customers = JSON.parse(savedCustomers);
+            } catch (error) {
+                console.error('解析本地存储的客户数据失败:', error);
+                customers = [];
+            }
+        }
 
 
 
