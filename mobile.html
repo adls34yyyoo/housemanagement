@@ -9082,9 +9082,6 @@
                 property.communicationRecords.unshift(communicationRecord);
                 property.communication_records.unshift(communicationRecord);
                 
-                // 保存到本地存储
-                savePropertiesToLocalStorage();
-                
                 // 尝试保存到 Supabase
                 if (supabaseClient) {
                     // 检查是否是代理房源
