@@ -7292,14 +7292,15 @@
                 selectedProps.forEach((property, index) => {
                     // 简洁风格和精彩风格都使用相同的基本格式
                     if (currentStyle === 'wonderful') {
-                        shareText += `✨ ${property.type === 'sale' ? '出售:' : '出租:'} ${property.community || '未知'} ✨\n`;
-                        shareText += `🔑 户型：${property.layout || '未知'}\n`;
-                        shareText += `📏 面积：${property.area || '未知'}平\n`;
-                        shareText += `💰 价格：${property.price || '面议'}${property.type === 'sale' ? '万元' : '元/月'}\n`;
-                        shareText += `🎨 装修：${property.decoration || '未知'}\n`;
-                        shareText += `🏢 楼层：${property.floor || '未知'}楼\n`;
+                        // 精彩风格保持原来的样子
+                        shareText += `${property.type === 'sale' ? '出售:' : '出租:'} ${property.community || '未知'}\n`;
+                        shareText += `户型：${property.layout || '未知'}\n`;
+                        shareText += `面积：${property.area || '未知'}平\n`;
+                        shareText += `价格：${property.price || '面议'}${property.type === 'sale' ? '万元' : '元/月'}\n`;
+                        shareText += `装修：${property.decoration || '未知'}\n`;
+                        shareText += `楼层：${property.floor || '未知'}楼\n`;
                     } else {
-                        // 简洁风格也添加图标，使其更加吸引眼球
+                        // 简洁风格添加图标，使其更加吸引眼球
                         shareText += `🏠 ${property.type === 'sale' ? '出售:' : '出租:'} ${property.community || '未知'}\n`;
                         shareText += `🔑 户型：${property.layout || '未知'}\n`;
                         shareText += `📏 面积：${property.area || '未知'}平\n`;
