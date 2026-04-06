@@ -4121,6 +4121,51 @@
                 } else if (communitySelect) {
                     communitySelect.value = data.community;
                 }
+                
+                // 自动填充学区信息
+                if (communitySchoolMapping[data.community]) {
+                    const mapping = communitySchoolMapping[data.community];
+                    if (mapping.primarySchool) {
+                        const primarySchoolSelect = document.getElementById('propPrimarySchool');
+                        const primarySchoolCustom = document.getElementById('propPrimarySchoolCustom');
+                        if (primarySchoolSelect) {
+                            // 检查是否在下拉选项中
+                            let found = false;
+                            for (let i = 0; i < primarySchoolSelect.options.length; i++) {
+                                if (primarySchoolSelect.options[i].value === mapping.primarySchool) {
+                                    primarySchoolSelect.value = mapping.primarySchool;
+                                    primarySchoolCustom.value = '';
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (!found) {
+                                primarySchoolSelect.value = '';
+                                primarySchoolCustom.value = mapping.primarySchool;
+                            }
+                        }
+                    }
+                    if (mapping.middleSchool) {
+                        const middleSchoolSelect = document.getElementById('propMiddleSchool');
+                        const middleSchoolCustom = document.getElementById('propMiddleSchoolCustom');
+                        if (middleSchoolSelect) {
+                            // 检查是否在下拉选项中
+                            let found = false;
+                            for (let i = 0; i < middleSchoolSelect.options.length; i++) {
+                                if (middleSchoolSelect.options[i].value === mapping.middleSchool) {
+                                    middleSchoolSelect.value = mapping.middleSchool;
+                                    middleSchoolCustom.value = '';
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (!found) {
+                                middleSchoolSelect.value = '';
+                                middleSchoolCustom.value = mapping.middleSchool;
+                            }
+                        }
+                    }
+                }
             }
 
             if (data.decoration) {
