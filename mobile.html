@@ -5884,7 +5884,6 @@
                 remark,
                 change_history: changeHistoryRecord,
                 communication_records: originalProperty?.communication_records || originalProperty?.communicationRecords || [],
-                communicationRecords: originalProperty?.communication_records || originalProperty?.communicationRecords || [], // 同时保存为communicationRecords，方便前端使用
                 created_at: originalProperty?.created_at || new Date().toISOString(),
                 updated_at: new Date().toISOString()
             };
