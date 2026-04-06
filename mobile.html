@@ -5612,10 +5612,10 @@
                                                         ${property.wechat ? `微信：<div onclick="copyWeChat('${property.wechat}')" style="color: #07C160; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">${property.wechat}</div>` : ''}
                                                     </div>
                                                 ` : !property.isAgent ? `
-                                                    <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
+                                                    <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                                         ${property.landlordName ? `房东姓名：${property.landlordName} | ` : ''}
-                                                        ${property.landlordPhone ? `房东电话：<a href="tel:${property.landlordPhone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">📞 ${property.landlordPhone}</a> | ` : ''}
-                                                        ${property.landlordWechat ? `房东微信：<div onclick="copyWeChat('${property.landlordWechat}')" style="color: #07C160; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">🌐 ${property.landlordWechat}</div>` : ''}
+                                                        ${property.landlordPhone ? `房东电话：<a href="tel:${property.landlordPhone}" style="color: var(--primary); text-decoration: none; display: inline;">${property.landlordPhone}</a> | ` : ''}
+                                                        ${property.landlordWechat ? `房东微信：<div onclick="copyWeChat('${property.landlordWechat}')" style="color: #07C160; text-decoration: none; display: inline; cursor: pointer;">${property.landlordWechat}</div>` : ''}
                                                     </div>
                                                 ` : ''}
                                             </div>
