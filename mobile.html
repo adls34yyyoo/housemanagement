@@ -7307,7 +7307,7 @@
                 communities.forEach((community, communityIndex) => {
                     const group = propertiesByCommunity[community];
                     
-                    // 显示小区信息和学区信息（只显示一次）
+                    // 显示小区信息
                     if (currentStyle === 'wonderful') {
                         // 精彩风格
                         shareText += `${community}\n`;
@@ -7316,23 +7316,16 @@
                         shareText += `🏘️ ${community}\n`;
                     }
                     
-                    // 显示学区信息
-                    if (group.primarySchool || group.middleSchool) {
-                        if (currentStyle === 'wonderful') {
-                            if (group.primarySchool) {
-                                shareText += `小学学区：${group.primarySchool}\n`;
-                            }
-                            if (group.middleSchool) {
-                                shareText += `初中学区：${group.middleSchool}\n`;
-                            }
-                        } else {
-                            if (group.primarySchool) {
-                                shareText += `🎒 小学学区：${group.primarySchool}\n`;
-                            }
-                            if (group.middleSchool) {
-                                shareText += `📚 初中学区：${group.middleSchool}\n`;
-                            }
+                    // 准备学区信息
+                    let schoolInfo = '';
+                    if (group.primarySchool) {
+                        schoolInfo += group.primarySchool;
+                    }
+                    if (group.middleSchool) {
+                        if (schoolInfo) {
+                            schoolInfo += '、';
                         }
+                        schoolInfo += group.middleSchool;
                     }
                     
                     // 显示该小区的所有房源
@@ -7343,14 +7336,22 @@
                         
                         if (currentStyle === 'wonderful') {
                             // 精彩风格
-                            shareText += `${property.type === 'sale' ? '出售:' : '出租:'} ${property.layout || '未知'}\n`;
+                            let propertyTypeText = property.type === 'sale' ? '出售:' : '出租:';
+                            if (schoolInfo) {
+                                propertyTypeText += ` 学区显示：${schoolInfo}`;
+                            }
+                            shareText += `${propertyTypeText} ${property.layout || '未知'}\n`;
                             shareText += `面积：${property.area || '未知'}平\n`;
                             shareText += `价格：${property.price || '面议'}${property.type === 'sale' ? '万元' : '元/月'}\n`;
                             shareText += `装修：${property.decoration || '未知'}\n`;
                             shareText += `楼层：${property.floor || '未知'}楼\n`;
                         } else {
                             // 简洁风格
-                            shareText += `🏠 ${property.type === 'sale' ? '出售:' : '出租:'} ${property.layout || '未知'}\n`;
+                            let propertyTypeText = property.type === 'sale' ? '出售:' : '出租:';
+                            if (schoolInfo) {
+                                propertyTypeText += ` 学区显示：${schoolInfo}`;
+                            }
+                            shareText += `🏠 ${propertyTypeText} ${property.layout || '未知'}\n`;
                             shareText += `📏 面积：${property.area || '未知'}平\n`;
                             shareText += `💰 价格：${property.price || '面议'}${property.type === 'sale' ? '万元' : '元/月'}\n`;
                             shareText += `🎨 装修：${property.decoration || '未知'}\n`;
