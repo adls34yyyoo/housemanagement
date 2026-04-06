@@ -9137,7 +9137,9 @@
                             // 确保 changeHistory 字段存在
                             changeHistory: c.changeHistory || c.change_history || [],
                             // 确保 communicationRecords 字段存在
-                            communicationRecords: c.communicationRecords || c.communication_records || []
+                            communicationRecords: c.communicationRecords || c.communication_records || [],
+                            // 确保 viewedProperties 字段存在
+                            viewedProperties: c.viewedProperties || c.viewed_properties || []
                         }));
                         console.log(`成功加载 ${customers.length} 条客户数据`);
                     } else if (customersError) {
