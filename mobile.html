@@ -5611,10 +5611,11 @@
                                                         ${property.phone ? `电话：<a href="tel:${property.phone}" style="color: var(--primary); text-decoration: none;">${property.phone}</a> | ` : ''}
                                                         ${property.wechat ? `微信：<div onclick="copyWeChat('${property.wechat}')" style="color: #07C160; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">${property.wechat}</div>` : ''}
                                                     </div>
-                                                ` : property.isOwner || !property.isAgent ? `
+                                                ` : !property.isAgent ? `
                                                     <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
-                                                        ${property.ownerPhone ? `房东电话：<a href="tel:${property.ownerPhone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">📞 ${property.ownerPhone}</a> | ` : ''}
-                                                        ${property.ownerWechat ? `房东微信：<div onclick="copyWeChat('${property.ownerWechat}')" style="color: #07C160; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">🌐 ${property.ownerWechat}</div>` : ''}
+                                                        ${property.landlordName ? `房东姓名：${property.landlordName} | ` : ''}
+                                                        ${property.landlordPhone ? `房东电话：<a href="tel:${property.landlordPhone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">📞 ${property.landlordPhone}</a> | ` : ''}
+                                                        ${property.landlordWechat ? `房东微信：<div onclick="copyWeChat('${property.landlordWechat}')" style="color: #07C160; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">🌐 ${property.landlordWechat}</div>` : ''}
                                                     </div>
                                                 ` : ''}
                                             </div>
