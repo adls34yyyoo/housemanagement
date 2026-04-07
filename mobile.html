@@ -2103,6 +2103,9 @@
                         <div class="filter-label">类型</div>
                         <div class="filter-checkbox-group">
                             <label class="filter-checkbox-item">
+                                <input type="checkbox" value="all" onchange="applyFilters()"> 全部
+                            </label>
+                            <label class="filter-checkbox-item">
                                 <input type="checkbox" value="rent" onchange="applyFilters()"> 租房
                             </label>
                             <label class="filter-checkbox-item">
@@ -2113,6 +2116,9 @@
                     <div class="filter-section">
                         <div class="filter-label">状态</div>
                         <div class="filter-checkbox-group">
+                            <label class="filter-checkbox-item">
+                                <input type="checkbox" value="all" onchange="applyFilters()"> 全部
+                            </label>
                             <label class="filter-checkbox-item">
                                 <input type="checkbox" value="pending" onchange="applyFilters()"> 待发布
                             </label>
@@ -2214,6 +2220,9 @@
                         <div class="filter-label">状态</div>
                         <div class="filter-checkbox-group">
                             <label class="filter-checkbox-item">
+                                <input type="checkbox" value="all" class="agent-filter-status" onchange="applyAgentFilters()"> 全部
+                            </label>
+                            <label class="filter-checkbox-item">
                                 <input type="checkbox" value="pending" class="agent-filter-status" onchange="applyAgentFilters()"> 待发布
                             </label>
                             <label class="filter-checkbox-item">
@@ -2279,6 +2288,9 @@
                     <div class="filter-section">
                         <div class="filter-label">状态</div>
                         <div class="filter-checkbox-group">
+                            <label class="filter-checkbox-item">
+                                <input type="checkbox" value="all" class="coop-filter-status" onchange="applyCoopFilters()"> 全部
+                            </label>
                             <label class="filter-checkbox-item">
                                 <input type="checkbox" value="pending" class="coop-filter-status" onchange="applyCoopFilters()"> 待发布
                             </label>
@@ -5200,7 +5212,7 @@
 
             filteredAgentProperties = agentProperties.filter(p => {
                 const matchType = selectedTypes.length === 0 || selectedTypes.includes(p.type);
-                const matchStatus = selectedStatuses.length === 0 || selectedStatuses.includes(p.status);
+                const matchStatus = selectedStatuses.length === 0 || selectedStatuses.includes('all') || selectedStatuses.includes(p.status);
                 const matchRegion = !selectedRegion || p.region === selectedRegion;
                 const matchCommunity = !selectedCommunity || p.community === selectedCommunity;
 
@@ -5271,7 +5283,7 @@
             filteredCoopProperties = agentProperties.filter(p => {
                 if (!p.isCoop) return false;
                 const matchType = selectedTypes.length === 0 || selectedTypes.includes(p.type);
-                const matchStatus = selectedStatuses.length === 0 || selectedStatuses.includes(p.status);
+                const matchStatus = selectedStatuses.length === 0 || selectedStatuses.includes('all') || selectedStatuses.includes(p.status);
                 const matchRegion = !selectedRegion || p.region === selectedRegion;
                 const matchCommunity = !selectedCommunity || p.community === selectedCommunity;
 
@@ -5982,7 +5994,7 @@
                 let match = true;
                 
                 // 类型和状态筛选（多选）
-                if (selectedValues.length > 0 && match) {
+                if (selectedValues.length > 0 && match && !selectedValues.includes('all')) {
                     match = selectedValues.includes(property.type) || selectedValues.includes(property.status);
                 }
                 
