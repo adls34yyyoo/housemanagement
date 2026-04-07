@@ -4412,6 +4412,10 @@
                                 <input type="number" id="editPriceInput" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 16px;" value="${property.price || ''}" placeholder="请输入价格">
                                 <div style="margin-top: 4px; font-size: 14px; color: var(--text-secondary);">单位：${priceUnit}</div>
                             </div>
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 500;">备注：</label>
+                                <textarea id="editPriceRemark" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 14px; resize: vertical; min-height: 80px;" placeholder="请输入修改备注"></textarea>
+                            </div>
                             <div style="display: flex; gap: 12px; margin-top: 24px;">
                                 <button onclick="document.getElementById('editPriceModal').classList.remove('active')" style="flex: 1; padding: 12px; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; font-weight: 500;">
                                     取消
@@ -4440,14 +4444,34 @@
                 return;
             }
 
+            const remark = document.getElementById('editPriceRemark').value;
+
             let property = properties.find(p => String(p.id) === String(propertyId));
             if (!property) {
                 property = agentProperties.find(p => String(p.id) === String(propertyId));
             }
 
             if (property) {
+                const oldPrice = property.price;
                 property.price = price;
                 property.updated_at = new Date().toISOString();
+
+                // 添加更改记录
+                if (!property.changeHistory) {
+                    property.changeHistory = [];
+                }
+                property.changeHistory.push({
+                    action: '修改价格',
+                    timestamp: new Date().toISOString(),
+                    user: currentUser || '管理员',
+                    changes: {
+                        price: {
+                            oldValue: oldPrice,
+                            newValue: price
+                        }
+                    },
+                    remark: remark
+                });
 
                 // 保存到本地存储
                 localStorage.setItem('properties', JSON.stringify(properties));
@@ -4458,7 +4482,11 @@
                     const table = property.isAgent ? 'agent_properties' : 'properties';
                     supabaseClient
                         .from(table)
-                        .update({ price: price, updated_at: property.updated_at })
+                        .update({ 
+                            price: price, 
+                            updated_at: property.updated_at,
+                            change_history: property.changeHistory
+                        })
                         .eq('id', property.id)
                         .then(({ error }) => {
                             if (error) {
