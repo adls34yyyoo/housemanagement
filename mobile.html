@@ -3074,7 +3074,7 @@
                         </div>
                         <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; color: var(--danger);">
                             <span>价格</span>
-                            <span>${property.price || '面议'}${priceUnit}</span>
+                            <span style="cursor: pointer;" onclick="openEditPriceModal('${property.id}');">${property.price || '面议'}${priceUnit}</span>
                         </div>
                     </div>
                     
@@ -4393,6 +4393,88 @@
         // 渲染最新房源
 
 
+        // 打开修改价格对话框
+        function openEditPriceModal(propertyId) {
+            const property = properties.find(p => String(p.id) === String(propertyId)) || agentProperties.find(p => String(p.id) === String(propertyId));
+            if (!property) return;
+
+            const priceUnit = property.type === 'sale' ? '万元' : '元/月';
+            const modalHtml = `
+                <div class="modal" id="editPriceModal" onclick="if (event.target === this) document.getElementById('editPriceModal').classList.remove('active')">
+                    <div class="modal-content" style="max-width: 90%;">
+                        <div class="modal-header">
+                            <span class="modal-title">修改价格</span>
+                            <button class="modal-close" onclick="document.getElementById('editPriceModal').classList.remove('active')">×</button>
+                        </div>
+                        <div class="modal-body" style="padding: 20px;">
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 500;">当前价格：</label>
+                                <input type="number" id="editPriceInput" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 16px;" value="${property.price || ''}" placeholder="请输入价格">
+                                <div style="margin-top: 4px; font-size: 14px; color: var(--text-secondary);">单位：${priceUnit}</div>
+                            </div>
+                            <div style="display: flex; gap: 12px; margin-top: 24px;">
+                                <button onclick="document.getElementById('editPriceModal').classList.remove('active')" style="flex: 1; padding: 12px; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; font-weight: 500;">
+                                    取消
+                                </button>
+                                <button onclick="savePropertyPrice('${propertyId}')" style="flex: 1; padding: 12px; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
+                                    保存
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (!document.getElementById('editPriceModal')) {
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+            }
+
+            document.getElementById('editPriceModal').classList.add('active');
+        }
+
+        // 保存房源价格
+        function savePropertyPrice(propertyId) {
+            const price = document.getElementById('editPriceInput').value;
+            if (!price) {
+                showToast('请输入价格');
+                return;
+            }
+
+            let property = properties.find(p => String(p.id) === String(propertyId));
+            if (!property) {
+                property = agentProperties.find(p => String(p.id) === String(propertyId));
+            }
+
+            if (property) {
+                property.price = price;
+                property.updated_at = new Date().toISOString();
+
+                // 保存到本地存储
+                localStorage.setItem('properties', JSON.stringify(properties));
+                localStorage.setItem('agentProperties', JSON.stringify(agentProperties));
+
+                // 保存到 Supabase
+                if (supabaseClient) {
+                    const table = property.isAgent ? 'agent_properties' : 'properties';
+                    supabaseClient
+                        .from(table)
+                        .update({ price: price, updated_at: property.updated_at })
+                        .eq('id', property.id)
+                        .then(({ error }) => {
+                            if (error) {
+                                console.error('保存价格失败:', error);
+                            }
+                        });
+                }
+
+                // 关闭模态框并刷新列表
+                document.getElementById('editPriceModal').classList.remove('active');
+                renderPropertyList();
+                renderAgentPropertyList();
+                showToast('✅ 价格已更新');
+            }
+        }
+
         // 创建房源卡片HTML
         function createPropertyCard(property) {
             const statusClass = {
@@ -4428,11 +4510,11 @@
                         <div style="flex: 1; min-width: 0;" onclick="openPropertyDetailModal('${property.id}')">
                             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
                                 <span style="font-weight: 500; color: var(--text);">${property.community || '未知小区'}</span>
-                                <span class="property-status ${statusClass}" style="font-size: 12px;">${statusText}</span>
+                                <span class="property-status ${statusClass}" style="font-size: 12px; cursor: pointer;" onclick="event.stopPropagation(); if ('${statusText}' === '待发布') { switchPage('share'); }">${statusText}</span>
                             </div>
                             <div style="font-size: 14px; color: var(--text-secondary); display: flex; justify-content: space-between;">
                                 <span>${property.layout || ''} ${property.area ? property.area + '平' : ''} ${property.floor ? property.floor + '楼' : ''} ${property.decoration || ''}</span>
-                                <span style="font-weight: 500; color: ${property.type === 'sale' ? '#ef4444' : '#22c55e'};">${property.price || '面议'}${priceUnit}</span>
+                                <span style="font-weight: 500; color: ${property.type === 'sale' ? '#ef4444' : '#22c55e'}; cursor: pointer;" onclick="event.stopPropagation(); openEditPriceModal('${property.id}');">${property.price || '面议'}${priceUnit}</span>
                             </div>
                         </div>
                     </div>
