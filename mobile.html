@@ -721,15 +721,14 @@
         /* 筛选菜单样式 */
         .filter-menu {
             position: fixed;
-            bottom: 0;
+            top: 0;
             left: 0;
             right: 0;
+            bottom: 0;
             background: var(--surface);
-            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
             box-shadow: var(--shadow-lg);
             z-index: 99;
             display: none;
-            max-height: 70vh;
             overflow-y: auto;
             animation: slideUp 0.3s ease;
         }
@@ -2175,6 +2174,12 @@
                     <div class="filter-section">
                         <div class="filter-label">装修</div>
                         <select class="filter-select" id="filterDecoration" onchange="applyFilters()">
+                            <option value="">全部</option>
+                        </select>
+                    </div>
+                    <div class="filter-section">
+                        <div class="filter-label">楼层</div>
+                        <select class="filter-select" id="filterFloor" onchange="applyFilters()">
                             <option value="">全部</option>
                         </select>
                     </div>
@@ -5985,13 +5990,14 @@
 
         // 初始化筛选选项
         function initFilterRegions() {
-            // 从所有房源中提取唯一的区域、小区、户型和装修类型
+            // 从所有房源中提取唯一的区域、小区、户型、装修类型和楼层
             const allProperties = [...properties, ...agentProperties];
             
             const regions = [...new Set(allProperties.map(p => p.region).filter(Boolean))];
             const communities = [...new Set(allProperties.map(p => p.community).filter(Boolean))];
             const layouts = [...new Set(allProperties.map(p => p.layout).filter(Boolean))];
             const decorations = [...new Set(allProperties.map(p => p.decoration).filter(Boolean))];
+            const floors = [...new Set(allProperties.map(p => p.floor).filter(Boolean))];
             
             // 初始化区域下拉框
             const regionSelect = document.getElementById('filterRegion');
@@ -6026,6 +6032,15 @@
                 decorationSelect.innerHTML = '<option value="">全部</option>';
                 decorations.forEach(decoration => {
                     decorationSelect.innerHTML += `<option value="${decoration}">${decoration}</option>`;
+                });
+            }
+            
+            // 初始化楼层下拉框
+            const floorSelect = document.getElementById('filterFloor');
+            if (floorSelect) {
+                floorSelect.innerHTML = '<option value="">全部</option>';
+                floors.forEach(floor => {
+                    floorSelect.innerHTML += `<option value="${floor}">${floor}</option>`;
                 });
             }
             
@@ -6074,6 +6089,7 @@
             const communityValue = document.getElementById('filterCommunity').value;
             const layoutValue = document.getElementById('filterLayout').value;
             const decorationValue = document.getElementById('filterDecoration').value;
+            const floorValue = document.getElementById('filterFloor').value;
             const areaValue = document.getElementById('filterArea').value;
             const priceValue = document.getElementById('filterPrice').value;
             
@@ -6103,6 +6119,11 @@
                 // 装修筛选
                 if (decorationValue && match) {
                     match = property.decoration === decorationValue;
+                }
+                
+                // 楼层筛选
+                if (floorValue && match) {
+                    match = property.floor === floorValue;
                 }
                 
                 // 面积筛选
@@ -6141,6 +6162,7 @@
             document.getElementById('filterCommunity').value = '';
             document.getElementById('filterLayout').value = '';
             document.getElementById('filterDecoration').value = '';
+            document.getElementById('filterFloor').value = '';
             document.getElementById('filterArea').value = '';
             document.getElementById('filterPrice').value = '';
             
