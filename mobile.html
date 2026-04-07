@@ -5985,11 +5985,19 @@
 
         // 初始化筛选选项
         function initFilterRegions() {
+            // 从所有房源中提取唯一的区域、小区、户型和装修类型
+            const allProperties = [...properties, ...agentProperties];
+            
+            const regions = [...new Set(allProperties.map(p => p.region).filter(Boolean))];
+            const communities = [...new Set(allProperties.map(p => p.community).filter(Boolean))];
+            const layouts = [...new Set(allProperties.map(p => p.layout).filter(Boolean))];
+            const decorations = [...new Set(allProperties.map(p => p.decoration).filter(Boolean))];
+            
             // 初始化区域下拉框
             const regionSelect = document.getElementById('filterRegion');
             if (regionSelect) {
                 regionSelect.innerHTML = '<option value="">全部</option>';
-                optionsData.region.forEach(region => {
+                regions.forEach(region => {
                     regionSelect.innerHTML += `<option value="${region}">${region}</option>`;
                 });
             }
@@ -5998,7 +6006,7 @@
             const communitySelect = document.getElementById('filterCommunity');
             if (communitySelect) {
                 communitySelect.innerHTML = '<option value="">全部</option>';
-                optionsData.community.forEach(community => {
+                communities.forEach(community => {
                     communitySelect.innerHTML += `<option value="${community}">${community}</option>`;
                 });
             }
@@ -6007,7 +6015,7 @@
             const layoutSelect = document.getElementById('filterLayout');
             if (layoutSelect) {
                 layoutSelect.innerHTML = '<option value="">全部</option>';
-                optionsData.layout.forEach(layout => {
+                layouts.forEach(layout => {
                     layoutSelect.innerHTML += `<option value="${layout}">${layout}</option>`;
                 });
             }
@@ -6016,8 +6024,42 @@
             const decorationSelect = document.getElementById('filterDecoration');
             if (decorationSelect) {
                 decorationSelect.innerHTML = '<option value="">全部</option>';
-                optionsData.decoration.forEach(decoration => {
+                decorations.forEach(decoration => {
                     decorationSelect.innerHTML += `<option value="${decoration}">${decoration}</option>`;
+                });
+            }
+            
+            // 初始化代理房源筛选选项
+            const agentRegionSelect = document.getElementById('agentFilterRegion');
+            if (agentRegionSelect) {
+                agentRegionSelect.innerHTML = '<option value="">全部</option>';
+                regions.forEach(region => {
+                    agentRegionSelect.innerHTML += `<option value="${region}">${region}</option>`;
+                });
+            }
+            
+            const agentCommunitySelect = document.getElementById('agentFilterCommunity');
+            if (agentCommunitySelect) {
+                agentCommunitySelect.innerHTML = '<option value="">全部</option>';
+                communities.forEach(community => {
+                    agentCommunitySelect.innerHTML += `<option value="${community}">${community}</option>`;
+                });
+            }
+            
+            // 初始化合作房源筛选选项
+            const coopRegionSelect = document.getElementById('coopFilterRegion');
+            if (coopRegionSelect) {
+                coopRegionSelect.innerHTML = '<option value="">全部</option>';
+                regions.forEach(region => {
+                    coopRegionSelect.innerHTML += `<option value="${region}">${region}</option>`;
+                });
+            }
+            
+            const coopCommunitySelect = document.getElementById('coopFilterCommunity');
+            if (coopCommunitySelect) {
+                coopCommunitySelect.innerHTML = '<option value="">全部</option>';
+                communities.forEach(community => {
+                    coopCommunitySelect.innerHTML += `<option value="${community}">${community}</option>`;
                 });
             }
         }
