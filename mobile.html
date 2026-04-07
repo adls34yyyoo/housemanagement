@@ -720,22 +720,31 @@
 
         /* 筛选菜单样式 */
         .filter-menu {
-            position: fixed;
-            top: 20%;
-            left: 10%;
-            right: 10%;
-            bottom: 20%;
-            background: var(--surface);
-            box-shadow: var(--shadow-lg);
-            z-index: 99;
             display: none;
-            overflow-y: auto;
-            animation: slideUp 0.3s ease;
-            border-radius: var(--radius-lg);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            z-index: 200;
+            align-items: flex-end;
+            animation: fadeIn 0.2s ease;
         }
 
         .filter-menu.active {
-            display: block;
+            display: flex;
+        }
+
+        .filter-content {
+            background: var(--surface);
+            width: 100%;
+            max-height: 92vh;
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+            overflow: hidden;
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: var(--shadow-xl);
         }
 
         .filter-header {
@@ -2101,9 +2110,10 @@
             </div>
             
             <div class="search-bar">
-                <div class="search-container">
-                    <input type="text" class="search-input" id="propertySearch" placeholder="搜索房源...">
+                <div class="search-container" style="position: relative;">
+                    <input type="text" class="search-input" id="propertySearch" placeholder="搜索房源..." onfocus="showSearchHistory('propertySearch')" onblur="hideSearchHistory('propertySearch')">
                     <button class="search-button" onclick="searchProperties()">搜索</button>
+                    <div id="propertySearchHistory" class="search-history" style="position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border-radius: 0 0 var(--radius) var(--radius); box-shadow: var(--shadow); z-index: 10; max-height: 200px; overflow-y: auto; display: none;"></div>
                 </div>
             </div>
             
@@ -2120,95 +2130,97 @@
             <div class="content-section" id="propertyList"></div>
             
             <!-- 筛选菜单 -->
-            <div class="filter-menu" id="filterMenu">
-                <div class="filter-header">
-                    <span class="filter-title">筛选条件</span>
-                    <button class="filter-close" onclick="toggleFilterMenu()">×</button>
-                </div>
-                <div class="filter-body">
-                    <div class="filter-section">
-                        <div class="filter-label">类型</div>
-                        <div class="filter-checkbox-group">
-                            <label class="filter-checkbox-item">
-                                <input type="checkbox" value="all"> 全部
-                            </label>
-                            <label class="filter-checkbox-item">
-                                <input type="checkbox" value="rent"> 租房
-                            </label>
-                            <label class="filter-checkbox-item">
-                                <input type="checkbox" value="sale"> 卖房
-                            </label>
+            <div class="filter-menu" id="filterMenu" onclick="if (event.target === this) toggleFilterMenu()">
+                <div class="filter-content">
+                    <div class="filter-header">
+                        <span class="filter-title">筛选条件</span>
+                        <button class="filter-close" onclick="toggleFilterMenu()">×</button>
+                    </div>
+                    <div class="filter-body">
+                        <div class="filter-section">
+                            <div class="filter-label">类型</div>
+                            <div class="filter-checkbox-group">
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="all"> 全部
+                                </label>
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="rent"> 租房
+                                </label>
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="sale"> 卖房
+                                </label>
+                            </div>
                         </div>
-                    </div>
-                    <div class="filter-section">
-                        <div class="filter-label">状态</div>
-                        <div class="filter-checkbox-group">
-                            <label class="filter-checkbox-item">
-                                <input type="checkbox" value="all"> 全部
-                            </label>
-                            <label class="filter-checkbox-item">
-                                <input type="checkbox" value="pending"> 待发布
-                            </label>
-                            <label class="filter-checkbox-item">
-                                <input type="checkbox" value="off_shelf"> 已下架
-                            </label>
+                        <div class="filter-section">
+                            <div class="filter-label">状态</div>
+                            <div class="filter-checkbox-group">
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="all"> 全部
+                                </label>
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="pending"> 待发布
+                                </label>
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="off_shelf"> 已下架
+                                </label>
+                            </div>
                         </div>
-                    </div>
-                    <div class="filter-section">
-                        <div class="filter-label">区域</div>
-                        <select class="filter-select" id="filterRegion">
-                            <option value="">全部</option>
-                        </select>
-                    </div>
-                    <div class="filter-section">
-                        <div class="filter-label">小区</div>
-                        <select class="filter-select" id="filterCommunity">
-                            <option value="">全部</option>
-                        </select>
-                    </div>
-                    <div class="filter-section">
-                        <div class="filter-label">户型</div>
-                        <select class="filter-select" id="filterLayout">
-                            <option value="">全部</option>
-                        </select>
-                    </div>
-                    <div class="filter-section">
-                        <div class="filter-label">装修</div>
-                        <select class="filter-select" id="filterDecoration">
-                            <option value="">全部</option>
-                        </select>
-                    </div>
-                    <div class="filter-section">
-                        <div class="filter-label">楼层</div>
-                        <select class="filter-select" id="filterFloor">
-                            <option value="">全部</option>
-                        </select>
-                    </div>
-                    <div class="filter-section">
-                        <div class="filter-label">面积</div>
-                        <select class="filter-select" id="filterArea">
-                            <option value="">全部</option>
-                            <option value="0-50">50平以下</option>
-                            <option value="50-80">50-80平</option>
-                            <option value="80-100">80-100平</option>
-                            <option value="100-120">100-120平</option>
-                            <option value="120+">120平以上</option>
-                        </select>
-                    </div>
-                    <div class="filter-section">
-                        <div class="filter-label">价格</div>
-                        <select class="filter-select" id="filterPrice">
-                            <option value="">全部</option>
-                            <option value="0-100">100万以下</option>
-                            <option value="100-200">100-200万</option>
-                            <option value="200-300">200-300万</option>
-                            <option value="300-500">300-500万</option>
-                            <option value="500+">500万以上</option>
-                        </select>
-                    </div>
-                    <div class="filter-actions">
-                        <button class="filter-btn filter-btn-clear" onclick="clearFilters()">清除筛选</button>
-                        <button class="filter-btn filter-btn-confirm" onclick="applyFilters(); toggleFilterMenu()">确定</button>
+                        <div class="filter-section">
+                            <div class="filter-label">区域</div>
+                            <select class="filter-select" id="filterRegion">
+                                <option value="">全部</option>
+                            </select>
+                        </div>
+                        <div class="filter-section">
+                            <div class="filter-label">小区</div>
+                            <select class="filter-select" id="filterCommunity">
+                                <option value="">全部</option>
+                            </select>
+                        </div>
+                        <div class="filter-section">
+                            <div class="filter-label">户型</div>
+                            <select class="filter-select" id="filterLayout">
+                                <option value="">全部</option>
+                            </select>
+                        </div>
+                        <div class="filter-section">
+                            <div class="filter-label">装修</div>
+                            <select class="filter-select" id="filterDecoration">
+                                <option value="">全部</option>
+                            </select>
+                        </div>
+                        <div class="filter-section">
+                            <div class="filter-label">楼层</div>
+                            <select class="filter-select" id="filterFloor">
+                                <option value="">全部</option>
+                            </select>
+                        </div>
+                        <div class="filter-section">
+                            <div class="filter-label">面积</div>
+                            <select class="filter-select" id="filterArea">
+                                <option value="">全部</option>
+                                <option value="0-50">50平以下</option>
+                                <option value="50-80">50-80平</option>
+                                <option value="80-100">80-100平</option>
+                                <option value="100-120">100-120平</option>
+                                <option value="120+">120平以上</option>
+                            </select>
+                        </div>
+                        <div class="filter-section">
+                            <div class="filter-label">价格</div>
+                            <select class="filter-select" id="filterPrice">
+                                <option value="">全部</option>
+                                <option value="0-100">100万以下</option>
+                                <option value="100-200">100-200万</option>
+                                <option value="200-300">200-300万</option>
+                                <option value="300-500">300-500万</option>
+                                <option value="500+">500万以上</option>
+                            </select>
+                        </div>
+                        <div class="filter-actions">
+                            <button class="filter-btn filter-btn-clear" onclick="clearFilters()">清除筛选</button>
+                            <button class="filter-btn filter-btn-confirm" onclick="applyFilters(); toggleFilterMenu()">确定</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2224,9 +2236,10 @@
             </div>
             
             <div class="search-bar">
-                <div class="search-container">
-                    <input type="text" class="search-input" id="agentPropertySearch" placeholder="搜索可代理房源...">
+                <div class="search-container" style="position: relative;">
+                    <input type="text" class="search-input" id="agentPropertySearch" placeholder="搜索可代理房源..." onfocus="showSearchHistory('agentPropertySearch')" onblur="hideSearchHistory('agentPropertySearch')">
                     <button class="search-button" onclick="searchAgentProperties()">搜索</button>
+                    <div id="agentPropertySearchHistory" class="search-history" style="position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border-radius: 0 0 var(--radius) var(--radius); box-shadow: var(--shadow); z-index: 10; max-height: 200px; overflow-y: auto; display: none;"></div>
                 </div>
             </div>
             
@@ -2238,49 +2251,51 @@
             <div class="content-section" id="agentPropertyList"></div>
             
             <!-- 筛选菜单 -->
-            <div class="filter-menu" id="agentFilterMenu">
-                <div class="filter-header">
-                    <span class="filter-title">筛选条件</span>
-                    <button class="filter-close" onclick="toggleAgentFilterMenu()">×</button>
-                </div>
-                <div class="filter-body">
-                    <div class="filter-section">
-                        <div class="filter-label">类型</div>
-                        <div class="filter-checkbox-group">
-                            <label class="filter-checkbox-item">
-                                <input type="checkbox" value="sale" class="agent-filter-type" onchange="applyAgentFilters()" checked disabled> 卖房
-                            </label>
+            <div class="filter-menu" id="agentFilterMenu" onclick="if (event.target === this) toggleAgentFilterMenu()">
+                <div class="filter-content">
+                    <div class="filter-header">
+                        <span class="filter-title">筛选条件</span>
+                        <button class="filter-close" onclick="toggleAgentFilterMenu()">×</button>
+                    </div>
+                    <div class="filter-body">
+                        <div class="filter-section">
+                            <div class="filter-label">类型</div>
+                            <div class="filter-checkbox-group">
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="sale" class="agent-filter-type" checked disabled> 卖房
+                                </label>
+                            </div>
                         </div>
-                    </div>
-                    <div class="filter-section">
-                        <div class="filter-label">状态</div>
-                        <div class="filter-checkbox-group">
-                            <label class="filter-checkbox-item">
-                                <input type="checkbox" value="all" class="agent-filter-status" onchange="applyAgentFilters()"> 全部
-                            </label>
-                            <label class="filter-checkbox-item">
-                                <input type="checkbox" value="pending" class="agent-filter-status" onchange="applyAgentFilters()"> 待发布
-                            </label>
-                            <label class="filter-checkbox-item">
-                                <input type="checkbox" value="off_shelf" class="agent-filter-status" onchange="applyAgentFilters()"> 已下架
-                            </label>
+                        <div class="filter-section">
+                            <div class="filter-label">状态</div>
+                            <div class="filter-checkbox-group">
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="all" class="agent-filter-status"> 全部
+                                </label>
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="pending" class="agent-filter-status"> 待发布
+                                </label>
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="off_shelf" class="agent-filter-status"> 已下架
+                                </label>
+                            </div>
                         </div>
-                    </div>
-                    <div class="filter-section">
-                        <div class="filter-label">区域</div>
-                        <select class="filter-select" id="agentFilterRegion" onchange="applyAgentFilters()">
-                            <option value="">全部</option>
-                        </select>
-                    </div>
-                    <div class="filter-section">
-                        <div class="filter-label">小区</div>
-                        <select class="filter-select" id="agentFilterCommunity" onchange="applyAgentFilters()">
-                            <option value="">全部</option>
-                        </select>
-                    </div>
-                    <div class="filter-actions">
-                        <button class="filter-btn filter-btn-clear" onclick="clearAgentFilters()">清除筛选</button>
-                        <button class="filter-btn filter-btn-confirm" onclick="toggleAgentFilterMenu()">确定</button>
+                        <div class="filter-section">
+                            <div class="filter-label">区域</div>
+                            <select class="filter-select" id="agentFilterRegion">
+                                <option value="">全部</option>
+                            </select>
+                        </div>
+                        <div class="filter-section">
+                            <div class="filter-label">小区</div>
+                            <select class="filter-select" id="agentFilterCommunity">
+                                <option value="">全部</option>
+                            </select>
+                        </div>
+                        <div class="filter-actions">
+                            <button class="filter-btn filter-btn-clear" onclick="clearAgentFilters()">清除筛选</button>
+                            <button class="filter-btn filter-btn-confirm" onclick="applyAgentFilters(); toggleAgentFilterMenu()">确定</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2296,9 +2311,10 @@
             </div>
             
             <div class="search-bar">
-                <div class="search-container">
-                    <input type="text" class="search-input" id="coopPropertySearch" placeholder="搜索合作房源...">
+                <div class="search-container" style="position: relative;">
+                    <input type="text" class="search-input" id="coopPropertySearch" placeholder="搜索合作房源..." onfocus="showSearchHistory('coopPropertySearch')" onblur="hideSearchHistory('coopPropertySearch')">
                     <button class="search-button" onclick="searchCoopProperties()">搜索</button>
+                    <div id="coopPropertySearchHistory" class="search-history" style="position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border-radius: 0 0 var(--radius) var(--radius); box-shadow: var(--shadow); z-index: 10; max-height: 200px; overflow-y: auto; display: none;"></div>
                 </div>
             </div>
             
@@ -2310,49 +2326,51 @@
             <div class="content-section" id="coopPropertyList"></div>
             
             <!-- 筛选菜单 -->
-            <div class="filter-menu" id="coopFilterMenu">
-                <div class="filter-header">
-                    <span class="filter-title">筛选条件</span>
-                    <button class="filter-close" onclick="toggleCoopFilterMenu()">×</button>
-                </div>
-                <div class="filter-body">
-                    <div class="filter-section">
-                        <div class="filter-label">类型</div>
-                        <div class="filter-checkbox-group">
-                            <label class="filter-checkbox-item">
-                                <input type="checkbox" value="sale" class="coop-filter-type" onchange="applyCoopFilters()" checked disabled> 卖房
-                            </label>
+            <div class="filter-menu" id="coopFilterMenu" onclick="if (event.target === this) toggleCoopFilterMenu()">
+                <div class="filter-content">
+                    <div class="filter-header">
+                        <span class="filter-title">筛选条件</span>
+                        <button class="filter-close" onclick="toggleCoopFilterMenu()">×</button>
+                    </div>
+                    <div class="filter-body">
+                        <div class="filter-section">
+                            <div class="filter-label">类型</div>
+                            <div class="filter-checkbox-group">
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="sale" class="coop-filter-type" checked disabled> 卖房
+                                </label>
+                            </div>
                         </div>
-                    </div>
-                    <div class="filter-section">
-                        <div class="filter-label">状态</div>
-                        <div class="filter-checkbox-group">
-                            <label class="filter-checkbox-item">
-                                <input type="checkbox" value="all" class="coop-filter-status" onchange="applyCoopFilters()"> 全部
-                            </label>
-                            <label class="filter-checkbox-item">
-                                <input type="checkbox" value="pending" class="coop-filter-status" onchange="applyCoopFilters()"> 待发布
-                            </label>
-                            <label class="filter-checkbox-item">
-                                <input type="checkbox" value="off_shelf" class="coop-filter-status" onchange="applyCoopFilters()"> 已下架
-                            </label>
+                        <div class="filter-section">
+                            <div class="filter-label">状态</div>
+                            <div class="filter-checkbox-group">
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="all" class="coop-filter-status"> 全部
+                                </label>
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="pending" class="coop-filter-status"> 待发布
+                                </label>
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="off_shelf" class="coop-filter-status"> 已下架
+                                </label>
+                            </div>
                         </div>
-                    </div>
-                    <div class="filter-section">
-                        <div class="filter-label">区域</div>
-                        <select class="filter-select" id="coopFilterRegion" onchange="applyCoopFilters()">
-                            <option value="">全部</option>
-                        </select>
-                    </div>
-                    <div class="filter-section">
-                        <div class="filter-label">小区</div>
-                        <select class="filter-select" id="coopFilterCommunity" onchange="applyCoopFilters()">
-                            <option value="">全部</option>
-                        </select>
-                    </div>
-                    <div class="filter-actions">
-                        <button class="filter-btn filter-btn-clear" onclick="clearCoopFilters()">清除筛选</button>
-                        <button class="filter-btn filter-btn-confirm" onclick="toggleCoopFilterMenu()">确定</button>
+                        <div class="filter-section">
+                            <div class="filter-label">区域</div>
+                            <select class="filter-select" id="coopFilterRegion">
+                                <option value="">全部</option>
+                            </select>
+                        </div>
+                        <div class="filter-section">
+                            <div class="filter-label">小区</div>
+                            <select class="filter-select" id="coopFilterCommunity">
+                                <option value="">全部</option>
+                            </select>
+                        </div>
+                        <div class="filter-actions">
+                            <button class="filter-btn filter-btn-clear" onclick="clearCoopFilters()">清除筛选</button>
+                            <button class="filter-btn filter-btn-confirm" onclick="applyCoopFilters(); toggleCoopFilterMenu()">确定</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2368,9 +2386,10 @@
             </div>
             
             <div class="search-bar">
-                <div class="search-container">
-                    <input type="text" class="search-input" id="customerSearch" placeholder="搜索客户...">
+                <div class="search-container" style="position: relative;">
+                    <input type="text" class="search-input" id="customerSearch" placeholder="搜索客户..." onfocus="showSearchHistory('customerSearch')" onblur="hideSearchHistory('customerSearch')">
                     <button class="search-button" onclick="searchCustomers()">搜索</button>
+                    <div id="customerSearchHistory" class="search-history" style="position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border-radius: 0 0 var(--radius) var(--radius); box-shadow: var(--shadow); z-index: 10; max-height: 200px; overflow-y: auto; display: none;"></div>
                 </div>
             </div>
             
@@ -5216,18 +5235,22 @@
 
         // 搜索可代理房源
         function searchAgentProperties() {
-            const keyword = document.getElementById('agentPropertySearch').value.toLowerCase();
+            const keyword = document.getElementById('agentPropertySearch').value.trim();
             if (!keyword) {
                 filteredAgentProperties = [];
                 renderAgentPropertyList();
                 return;
             }
 
+            // 保存搜索历史
+            saveSearchHistory('agentPropertySearch', keyword);
+
+            const lowerKeyword = keyword.toLowerCase();
             filteredAgentProperties = agentProperties.filter(p =>
-                (p.community && p.community.toLowerCase().includes(keyword)) ||
-                (p.region && p.region.toLowerCase().includes(keyword)) ||
-                (p.layout && p.layout.toLowerCase().includes(keyword)) ||
-                (p.agentName && p.agentName.toLowerCase().includes(keyword))
+                (p.community && p.community.toLowerCase().includes(lowerKeyword)) ||
+                (p.region && p.region.toLowerCase().includes(lowerKeyword)) ||
+                (p.layout && p.layout.toLowerCase().includes(lowerKeyword)) ||
+                (p.agentName && p.agentName.toLowerCase().includes(lowerKeyword))
             );
             renderAgentPropertyList();
         }
@@ -5287,19 +5310,23 @@
 
         // 搜索合作房源
         function searchCoopProperties() {
-            const keyword = document.getElementById('coopPropertySearch').value.toLowerCase();
+            const keyword = document.getElementById('coopPropertySearch').value.trim();
             if (!keyword) {
                 filteredCoopProperties = [];
                 renderCoopPropertyList();
                 return;
             }
 
+            // 保存搜索历史
+            saveSearchHistory('coopPropertySearch', keyword);
+
+            const lowerKeyword = keyword.toLowerCase();
             filteredCoopProperties = agentProperties.filter(p =>
                 p.isCoop && (
-                    (p.community && p.community.toLowerCase().includes(keyword)) ||
-                    (p.region && p.region.toLowerCase().includes(keyword)) ||
-                    (p.layout && p.layout.toLowerCase().includes(keyword)) ||
-                    (p.agentName && p.agentName.toLowerCase().includes(keyword))
+                    (p.community && p.community.toLowerCase().includes(lowerKeyword)) ||
+                    (p.region && p.region.toLowerCase().includes(lowerKeyword)) ||
+                    (p.layout && p.layout.toLowerCase().includes(lowerKeyword)) ||
+                    (p.agentName && p.agentName.toLowerCase().includes(lowerKeyword))
                 )
             );
             renderCoopPropertyList();
@@ -5573,19 +5600,96 @@
 
 
         // 搜索房源
+        // 搜索历史功能
+        function saveSearchHistory(key, value) {
+            if (!value || value.trim() === '') return;
+            
+            let history = JSON.parse(localStorage.getItem(`searchHistory_${key}`) || '[]');
+            history = history.filter(item => item !== value);
+            history.unshift(value);
+            if (history.length > 10) {
+                history = history.slice(0, 10);
+            }
+            localStorage.setItem(`searchHistory_${key}`, JSON.stringify(history));
+        }
+
+        function showSearchHistory(key) {
+            const history = JSON.parse(localStorage.getItem(`searchHistory_${key}`) || '[]');
+            const historyElement = document.getElementById(`${key}History`);
+            if (!historyElement) return;
+            
+            if (history.length === 0) {
+                historyElement.style.display = 'none';
+                return;
+            }
+            
+            let html = '<div style="padding: 8px 16px; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--text-secondary);">最近搜索</div>';
+            history.forEach(item => {
+                html += `
+                    <div style="padding: 12px 16px; cursor: pointer; border-bottom: 1px solid var(--border); transition: var(--transition);" 
+                         onclick="selectSearchHistory('${key}', '${item}');"
+                         onmouseover="this.style.background = 'var(--background)';"
+                         onmouseout="this.style.background = 'transparent';">
+                        ${item}
+                    </div>
+                `;
+            });
+            html += `
+                <div style="padding: 12px 16px; cursor: pointer; text-align: center; font-size: 14px; color: var(--primary);" 
+                     onclick="clearSearchHistory('${key}');">
+                    清除历史
+                </div>
+            `;
+            
+            historyElement.innerHTML = html;
+            historyElement.style.display = 'block';
+        }
+
+        function hideSearchHistory(key) {
+            setTimeout(() => {
+                const historyElement = document.getElementById(`${key}History`);
+                if (historyElement) {
+                    historyElement.style.display = 'none';
+                }
+            }, 200);
+        }
+
+        function selectSearchHistory(key, value) {
+            const inputElement = document.getElementById(key);
+            if (inputElement) {
+                inputElement.value = value;
+            }
+            const historyElement = document.getElementById(`${key}History`);
+            if (historyElement) {
+                historyElement.style.display = 'none';
+            }
+        }
+
+        function clearSearchHistory(key) {
+            localStorage.removeItem(`searchHistory_${key}`);
+            const historyElement = document.getElementById(`${key}History`);
+            if (historyElement) {
+                historyElement.style.display = 'none';
+            }
+        }
+
         function searchProperties() {
-            const keyword = document.getElementById('propertySearch').value.toLowerCase();
+            const keyword = document.getElementById('propertySearch').value.trim();
             if (!keyword) {
                 filteredProperties = [];
                 renderPropertyList();
                 return;
             }
 
+            // 保存搜索历史
+            saveSearchHistory('propertySearch', keyword);
+
+            const lowerKeyword = keyword.toLowerCase();
             filteredProperties = properties.filter(p =>
-                (p.community && p.community.toLowerCase().includes(keyword)) ||
-                (p.region && p.region.toLowerCase().includes(keyword)) ||
-                (p.layout && p.layout.toLowerCase().includes(keyword)) ||
-                (p.landlordName && p.landlordName.toLowerCase().includes(keyword))
+                (p.community && p.community.toLowerCase().includes(lowerKeyword)) ||
+                (p.region && p.region.toLowerCase().includes(lowerKeyword)) ||
+                (p.layout && p.layout.toLowerCase().includes(lowerKeyword)) ||
+                (p.landlordName && p.landlordName.toLowerCase().includes(lowerKeyword))
             );
             renderPropertyList();
         }
@@ -5846,16 +5950,20 @@
 
         // 搜索客户
         function searchCustomers() {
-            const keyword = document.getElementById('customerSearch').value.toLowerCase();
+            const keyword = document.getElementById('customerSearch').value.trim();
             if (!keyword) {
                 filteredCustomers = [];
                 renderCustomerList();
                 return;
             }
 
+            // 保存搜索历史
+            saveSearchHistory('customerSearch', keyword);
+
+            const lowerKeyword = keyword.toLowerCase();
             filteredCustomers = customers.filter(c =>
-                (c.name && c.name.toLowerCase().includes(keyword)) ||
-                (c.phone && c.phone.includes(keyword))
+                (c.name && c.name.toLowerCase().includes(lowerKeyword)) ||
+                (c.phone && c.phone.includes(lowerKeyword))
             );
             renderCustomerList();
         }
@@ -10541,6 +10649,78 @@
 
 
 
+        // 模拟获取最新的小区价格数据
+        function fetchLatestCommunityPrices() {
+            // 模拟数据 - 实际项目中应该从API获取
+            const communities = [
+                { name: '金地城', listingPrice: 72000, transactionPrice: 69500, change: 1.2 },
+                { name: '一方新城', listingPrice: 75000, transactionPrice: 73200, change: 2.1 },
+                { name: '惠康苑', listingPrice: 68000, transactionPrice: 66500, change: 0.8 },
+                { name: '申云小区', listingPrice: 65000, transactionPrice: 63800, change: 0.5 }
+            ];
+            
+            // 随机生成一些波动，模拟价格变化
+            return communities.map(community => {
+                const priceChange = (Math.random() - 0.5) * 2; // -1% 到 1%
+                return {
+                    name: community.name,
+                    listingPrice: Math.round(community.listingPrice * (1 + priceChange / 100)),
+                    transactionPrice: Math.round(community.transactionPrice * (1 + priceChange / 100)),
+                    change: (community.change + priceChange).toFixed(1)
+                };
+            });
+        }
+        
+        // 模拟获取最新的上海政策数据
+        function fetchLatestPolicies() {
+            // 模拟数据 - 实际项目中应该从API获取
+            return [
+                { id: 'loan-rate', date: '2026-03-15', title: '房贷利率下调政策' },
+                { id: 'purchase-limit', date: '2026-02-28', title: '限购政策调整' },
+                { id: 'tax-reduction', date: '2026-02-15', title: '购房税费减免政策' },
+                { id: 'housing-supply', date: '2026-01-30', title: '增加保障性住房供应' }
+            ];
+        }
+        
+        // 更新小区价格数据
+        function updateCommunityPrices() {
+            const prices = fetchLatestCommunityPrices();
+            const marketTrendsElement = document.getElementById('marketTrends');
+            
+            if (marketTrendsElement) {
+                marketTrendsElement.innerHTML = prices.map(community => `
+                    <div class="community-price-item" style="padding: 12px 0; border-bottom: 1px solid var(--border);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="font-weight: 500; color: var(--text);">${community.name}</span>
+                            <span style="color: #ef4444; font-weight: 500;">挂牌价: ${community.listingPrice.toLocaleString()} 元/㎡</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="font-size: 14px; color: var(--text-secondary);">成交均价: ${community.transactionPrice.toLocaleString()} 元/㎡</span>
+                            <span style="font-size: 14px; color: ${parseFloat(community.change) >= 0 ? '#10b981' : '#ef4444'};">${parseFloat(community.change) >= 0 ? '↑' : '↓'} ${Math.abs(community.change)}%</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        // 更新上海政策数据
+        function updatePolicies() {
+            const policies = fetchLatestPolicies();
+            const latestPoliciesElement = document.getElementById('latestPolicies');
+            
+            if (latestPoliciesElement) {
+                latestPoliciesElement.innerHTML = policies.map(policy => `
+                    <div class="policy-item" onclick="showPolicyDetail('${policy.id}')" style="padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: background-color 0.2s;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span class="policy-date">${policy.date}</span>
+                            <span class="policy-title">${policy.title}</span>
+                            <span style="color: var(--text-secondary);">›</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+        
         // 延迟初始化函数
         async function delayedInit() {
             console.log('页面加载完成，开始初始化...');
@@ -10560,6 +10740,17 @@
             renderPropertyList();
             renderCustomerList();
             initFilterRegions();
+            
+            // 更新小区价格和政策数据
+            updateCommunityPrices();
+            updatePolicies();
+            
+            // 每天自动更新数据 (24小时)
+            setInterval(() => {
+                updateCommunityPrices();
+                updatePolicies();
+                console.log('数据已自动更新');
+            }, 24 * 60 * 60 * 1000);
             
             // 延迟初始化Supabase，确保库已加载
             let supabaseInitialized = false;
