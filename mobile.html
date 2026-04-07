@@ -8539,23 +8539,24 @@
                 const hasSale = selectedProps.some(p => p.type === 'sale');
                 const hasRent = selectedProps.some(p => p.type === 'rent');
                 
-                // 只在第一行显示出售或出租
-                if (hasSale && hasRent) {
-                    content += '出售/出租\n\n';
-                } else if (hasSale) {
-                    content += '出售\n\n';
-                } else if (hasRent) {
-                    content += '出租\n\n';
+                // 按类型分组生成内容
+                if (hasSale) {
+                    content += '出售： \n';
+                    typeGroups['sale'].forEach(property => {
+                        const priceText = property.price || '面议';
+                        const priceUnit = '万';
+                        content += ` ${property.community || '未知小区'}${property.floor ? property.floor + '楼' : ''} ${property.area || '未知'}平 ${property.layout || '未知'} ${property.decoration || '普通装修'} ${priceText}${priceUnit}\n`;
+                    });
                 }
                 
-                Object.entries(groupedProps).forEach(([community, group]) => {
-                    group.properties.forEach(property => {
+                if (hasRent) {
+                    content += '出租： \n';
+                    typeGroups['rent'].forEach(property => {
                         const priceText = property.price || '面议';
-                        const priceUnit = property.type === 'sale' ? '万' : '元/月';
-                        const propertyText = `${property.community || '未知小区'}${property.floor ? property.floor + '楼' : ''} ${property.area || '未知'}平 ${property.layout || '未知'} ${property.decoration || '普通装修'} ${priceText}${priceUnit}${property.ownership ? ' ' + property.ownership : ''}`;
-                        content += `${propertyText}\n`;
+                        const priceUnit = '元/月';
+                        content += ` ${property.community || '未知小区'}${property.floor ? property.floor + '楼' : ''} ${property.area || '未知'}平 ${property.layout || '未知'} ${property.decoration || '普通装修'} ${priceText}${priceUnit}\n`;
                     });
-                });
+                }
                 
                 // 末尾可自行设置固定添加
                 content += '合作热线：18019166290';
