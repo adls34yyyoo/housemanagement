@@ -5194,6 +5194,9 @@
         function toggleAgentFilterMenu() {
             const menu = document.getElementById('agentFilterMenu');
             if (menu) {
+                if (menu.classList.contains('active')) {
+                    applyAgentFilters();
+                }
                 menu.classList.toggle('active');
             }
         }
@@ -5264,6 +5267,9 @@
         function toggleCoopFilterMenu() {
             const menu = document.getElementById('coopFilterMenu');
             if (menu) {
+                if (menu.classList.contains('active')) {
+                    applyCoopFilters();
+                }
                 menu.classList.toggle('active');
             }
         }
@@ -5935,6 +5941,9 @@
         // 切换筛选菜单
         function toggleFilterMenu() {
             const menu = document.getElementById('filterMenu');
+            if (menu.classList.contains('active')) {
+                applyFilters();
+            }
             menu.classList.toggle('active');
         }
 
