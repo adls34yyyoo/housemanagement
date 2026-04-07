@@ -721,16 +721,17 @@
         /* 筛选菜单样式 */
         .filter-menu {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 20%;
+            left: 10%;
+            right: 10%;
+            bottom: 20%;
             background: var(--surface);
             box-shadow: var(--shadow-lg);
             z-index: 99;
             display: none;
             overflow-y: auto;
             animation: slideUp 0.3s ease;
+            border-radius: var(--radius-lg);
         }
 
         .filter-menu.active {
@@ -2129,13 +2130,13 @@
                         <div class="filter-label">类型</div>
                         <div class="filter-checkbox-group">
                             <label class="filter-checkbox-item">
-                                <input type="checkbox" value="all" onchange="applyFilters()"> 全部
+                                <input type="checkbox" value="all"> 全部
                             </label>
                             <label class="filter-checkbox-item">
-                                <input type="checkbox" value="rent" onchange="applyFilters()"> 租房
+                                <input type="checkbox" value="rent"> 租房
                             </label>
                             <label class="filter-checkbox-item">
-                                <input type="checkbox" value="sale" onchange="applyFilters()"> 卖房
+                                <input type="checkbox" value="sale"> 卖房
                             </label>
                         </div>
                     </div>
@@ -2143,49 +2144,49 @@
                         <div class="filter-label">状态</div>
                         <div class="filter-checkbox-group">
                             <label class="filter-checkbox-item">
-                                <input type="checkbox" value="all" onchange="applyFilters()"> 全部
+                                <input type="checkbox" value="all"> 全部
                             </label>
                             <label class="filter-checkbox-item">
-                                <input type="checkbox" value="pending" onchange="applyFilters()"> 待发布
+                                <input type="checkbox" value="pending"> 待发布
                             </label>
                             <label class="filter-checkbox-item">
-                                <input type="checkbox" value="off_shelf" onchange="applyFilters()"> 已下架
+                                <input type="checkbox" value="off_shelf"> 已下架
                             </label>
                         </div>
                     </div>
                     <div class="filter-section">
                         <div class="filter-label">区域</div>
-                        <select class="filter-select" id="filterRegion" onchange="applyFilters()">
+                        <select class="filter-select" id="filterRegion">
                             <option value="">全部</option>
                         </select>
                     </div>
                     <div class="filter-section">
                         <div class="filter-label">小区</div>
-                        <select class="filter-select" id="filterCommunity" onchange="applyFilters()">
+                        <select class="filter-select" id="filterCommunity">
                             <option value="">全部</option>
                         </select>
                     </div>
                     <div class="filter-section">
                         <div class="filter-label">户型</div>
-                        <select class="filter-select" id="filterLayout" onchange="applyFilters()">
+                        <select class="filter-select" id="filterLayout">
                             <option value="">全部</option>
                         </select>
                     </div>
                     <div class="filter-section">
                         <div class="filter-label">装修</div>
-                        <select class="filter-select" id="filterDecoration" onchange="applyFilters()">
+                        <select class="filter-select" id="filterDecoration">
                             <option value="">全部</option>
                         </select>
                     </div>
                     <div class="filter-section">
                         <div class="filter-label">楼层</div>
-                        <select class="filter-select" id="filterFloor" onchange="applyFilters()">
+                        <select class="filter-select" id="filterFloor">
                             <option value="">全部</option>
                         </select>
                     </div>
                     <div class="filter-section">
                         <div class="filter-label">面积</div>
-                        <select class="filter-select" id="filterArea" onchange="applyFilters()">
+                        <select class="filter-select" id="filterArea">
                             <option value="">全部</option>
                             <option value="0-50">50平以下</option>
                             <option value="50-80">50-80平</option>
@@ -2196,7 +2197,7 @@
                     </div>
                     <div class="filter-section">
                         <div class="filter-label">价格</div>
-                        <select class="filter-select" id="filterPrice" onchange="applyFilters()">
+                        <select class="filter-select" id="filterPrice">
                             <option value="">全部</option>
                             <option value="0-100">100万以下</option>
                             <option value="100-200">100-200万</option>
@@ -2207,7 +2208,7 @@
                     </div>
                     <div class="filter-actions">
                         <button class="filter-btn filter-btn-clear" onclick="clearFilters()">清除筛选</button>
-                        <button class="filter-btn filter-btn-confirm" onclick="toggleFilterMenu()">确定</button>
+                        <button class="filter-btn filter-btn-confirm" onclick="applyFilters(); toggleFilterMenu()">确定</button>
                     </div>
                 </div>
             </div>
