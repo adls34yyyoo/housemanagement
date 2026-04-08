@@ -5188,9 +5188,13 @@
                         }
                     }
 
-                    // 重新加载数据
-                    await loadData();
+                    // 从本地数据中移除房源
+                    properties = properties.filter(p => !selectedProperties.includes(String(p.id)));
+                    agentProperties = properties.filter(p => p.is_agent === true);
                     
+                    // 更新本地存储
+                    localStorage.setItem('properties', JSON.stringify(properties));
+
                     // 清空选中列表
                     selectedProperties = [];
                     
@@ -5534,8 +5538,12 @@
                     return;
                 }
 
-                // 重新加载数据
-                await loadData();
+                // 从本地数据中移除房源
+                properties = properties.filter(p => String(p.id) !== String(propertyId));
+                agentProperties = properties.filter(p => p.is_agent === true);
+                
+                // 更新本地存储
+                localStorage.setItem('properties', JSON.stringify(properties));
                 
                 renderAgentPropertyList();
                 showToast('✅ 可代理房源已删除');
@@ -7094,8 +7102,12 @@
                     return;
                 }
 
-                // 重新加载数据
-                await loadData();
+                // 从本地数据中移除房源
+                properties = properties.filter(p => String(p.id) !== String(id));
+                agentProperties = properties.filter(p => p.is_agent === true);
+                
+                // 更新本地存储
+                localStorage.setItem('properties', JSON.stringify(properties));
                 
                 // 清理 selectedProperties 数组，移除已删除的房源 ID
                 selectedProperties = selectedProperties.filter(selectedId => 
@@ -10753,13 +10765,18 @@
                         }
                     }
 
+                    // 从本地数据中移除房源
+                    properties = properties.filter(p => !selectedProperties.includes(String(p.id)));
+                    agentProperties = properties.filter(p => p.is_agent === true);
+                    
+                    // 更新本地存储
+                    localStorage.setItem('properties', JSON.stringify(properties));
+
                     // 清空选中列表
                     selectedProperties = [];
 
-                    // 重新加载数据
-                    await loadData();
-                    
                     // 刷新UI
+                    updateStats();
                     renderPropertyList();
                     updateStats();
                     
