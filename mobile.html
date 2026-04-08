@@ -8863,6 +8863,234 @@
             }
         }
 
+        // 显示小区详情
+        function showCommunityDetail(communityName) {
+            showToast(`正在加载${communityName}小区详情...`);
+            // 模拟小区详情数据
+            const communityDetails = {
+                '百乐公寓': {
+                    name: '百乐公寓',
+                    address: '上海市浦东新区惠南镇',
+                    averagePrice: 72000,
+                    transactionPrice: 69500,
+                    change: 0.8,
+                    description: '百乐公寓位于惠南镇中心地带，交通便利，周边配套完善，是惠南镇的优质小区之一。',
+                    facilities: ['地铁16号线惠南站', '惠南镇中心医院', '惠南镇小学', '惠南镇中学', '南汇步行街'],
+                    houses: [
+                        { type: '出售', area: 89, price: 650, layout: '2-2-1' },
+                        { type: '出售', area: 120, price: 850, layout: '3-2-2' },
+                        { type: '出租', area: 60, price: 3500, layout: '1-1-1' }
+                    ]
+                },
+                '锦园': {
+                    name: '锦园',
+                    address: '上海市浦东新区惠南镇',
+                    averagePrice: 75000,
+                    transactionPrice: 73200,
+                    change: 1.2,
+                    description: '锦园是惠南镇的高档小区，环境优美，绿化率高，物业管理完善。',
+                    facilities: ['地铁16号线惠南站', '惠南镇中心医院', '惠南镇小学', '惠南镇中学', '南汇步行街'],
+                    houses: [
+                        { type: '出售', area: 117, price: 880, layout: '3-2-2' },
+                        { type: '出租', area: 90, price: 4500, layout: '2-2-1' }
+                    ]
+                },
+                '申云小区': {
+                    name: '申云小区',
+                    address: '上海市浦东新区惠南镇',
+                    averagePrice: 65000,
+                    transactionPrice: 63800,
+                    change: 0.5,
+                    description: '申云小区是惠南镇的成熟小区，配套齐全，生活便利。',
+                    facilities: ['地铁16号线惠南站', '惠南镇中心医院', '惠南镇小学', '惠南镇中学', '南汇步行街'],
+                    houses: [
+                        { type: '出售', area: 75, price: 480, layout: '2-1-1' },
+                        { type: '出租', area: 80, price: 3800, layout: '2-1-1' }
+                    ]
+                },
+                '金地城': {
+                    name: '金地城',
+                    address: '上海市浦东新区惠南镇',
+                    averagePrice: 78000,
+                    transactionPrice: 76500,
+                    change: 1.5,
+                    description: '金地城是惠南镇的高端小区，由知名开发商建造，品质保证。',
+                    facilities: ['地铁16号线惠南站', '惠南镇中心医院', '惠南镇小学', '惠南镇中学', '南汇步行街'],
+                    houses: [
+                        { type: '出售', area: 130, price: 1020, layout: '3-2-2' },
+                        { type: '出租', area: 100, price: 5000, layout: '3-1-1' }
+                    ]
+                },
+                '一方新城': {
+                    name: '一方新城',
+                    address: '上海市浦东新区惠南镇',
+                    averagePrice: 70000,
+                    transactionPrice: 68500,
+                    change: 0.3,
+                    description: '一方新城是惠南镇的新兴小区，设施现代化，居住环境舒适。',
+                    facilities: ['地铁16号线惠南站', '惠南镇中心医院', '惠南镇小学', '惠南镇中学', '南汇步行街'],
+                    houses: [
+                        { type: '出售', area: 95, price: 665, layout: '2-2-1' },
+                        { type: '出租', area: 70, price: 3600, layout: '2-1-1' }
+                    ]
+                }
+            };
+
+            const detail = communityDetails[communityName] || {
+                name: communityName,
+                address: '上海市浦东新区惠南镇',
+                averagePrice: 68000,
+                transactionPrice: 66500,
+                change: 0.5,
+                description: '该小区暂无详细信息',
+                facilities: ['地铁16号线惠南站', '惠南镇中心医院', '惠南镇小学', '惠南镇中学', '南汇步行街'],
+                houses: []
+            };
+
+            // 创建详情弹窗
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+            `;
+
+            const content = document.createElement('div');
+            content.style.cssText = `
+                background: var(--surface);
+                padding: 24px;
+                border-radius: var(--radius-xl);
+                width: 90%;
+                max-width: 420px;
+                max-height: 85vh;
+                overflow-y: auto;
+                box-shadow: var(--shadow-xl);
+            `;
+
+            content.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="margin: 0; color: var(--text); font-size: 18px;">${detail.name} 小区详情</h3>
+                    <button onclick="this.parentElement.parentElement.parentElement.remove()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-secondary);">×</button>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <p style="margin: 8px 0; color: var(--text-secondary);">📍 ${detail.address}</p>
+                    <p style="margin: 8px 0;">🏠 挂牌均价: <span style="color: #ef4444; font-weight: 500;">${detail.averagePrice.toLocaleString()} 元/㎡</span></p>
+                    <p style="margin: 8px 0;">📊 成交均价: <span style="color: #10b981; font-weight: 500;">${detail.transactionPrice.toLocaleString()} 元/㎡</span></p>
+                    <p style="margin: 8px 0;">📈 环比变化: <span style="color: ${parseFloat(detail.change) >= 0 ? '#10b981' : '#ef4444'};">${parseFloat(detail.change) >= 0 ? '↑' : '↓'} ${Math.abs(detail.change)}%</span></p>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <h4 style="margin: 12px 0; font-size: 16px; color: var(--text);">小区介绍</h4>
+                    <p style="margin: 8px 0; color: var(--text-secondary); line-height: 1.5;">${detail.description}</p>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <h4 style="margin: 12px 0; font-size: 16px; color: var(--text);">周边配套</h4>
+                    <ul style="margin: 8px 0; padding-left: 20px; color: var(--text-secondary);">
+                        ${detail.facilities.map(facility => `<li style="margin: 4px 0;">${facility}</li>`).join('')}
+                    </ul>
+                </div>
+                ${detail.houses.length > 0 ? `
+                <div style="margin-bottom: 16px;">
+                    <h4 style="margin: 12px 0; font-size: 16px; color: var(--text);">在售/在租房源</h4>
+                    ${detail.houses.map(house => `
+                        <div style="padding: 12px; background: var(--background); border-radius: var(--radius); margin: 8px 0;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="font-weight: 500; color: ${house.type === '出售' ? '#ef4444' : '#10b981'};">${house.type === '出售' ? '出售' : '出租'}</span>
+                                <span style="font-weight: 500;">${house.area}㎡ ${house.layout}</span>
+                                <span style="font-weight: 500; color: var(--text);">${house.type === '出售' ? house.price + '万元' : house.price + '元/月'}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                ` : ''}
+            `;
+
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+        }
+
+        // 显示政策详情
+        function showPolicyDetail(policyId) {
+            showToast('正在加载政策详情...');
+            // 模拟政策详情数据
+            const policyDetails = {
+                'purchase-restriction': {
+                    title: '优化购房资格审核流程',
+                    date: '2026-04-05',
+                    content: '为进一步便利居民购房，上海市住房城乡建设管理委员会发布通知，优化购房资格审核流程，将审核时间缩短至3个工作日，同时简化审核材料，提高审核效率。\n\n此次优化主要包括：\n1. 简化审核材料，减少不必要的证明文件\n2. 优化审核流程，实现线上线下同步审核\n3. 建立快速通道，为特殊群体提供优先服务\n4. 加强信息公开，提高审核透明度\n\n这一举措将有效缩短居民购房的等待时间，提高购房体验。'
+                },
+                'mortgage-rate': {
+                    title: '调整首套房贷款利率',
+                    date: '2026-03-20',
+                    content: '中国人民银行上海分行发布通知，调整首套房贷款利率，将利率下调0.2个百分点，以支持居民合理住房需求。\n\n此次调整后，首套房贷款利率将从之前的4.2%降至4.0%，二套房贷款利率保持不变。这一举措旨在减轻购房者的还款压力，促进房地产市场的平稳健康发展。\n\n同时，银行也将加强对贷款资金的监管，确保资金用于合理住房需求，防止资金违规流入房地产市场。'
+                },
+                'tax-reduction': {
+                    title: '实施房地产交易税费减免',
+                    date: '2026-02-15',
+                    content: '上海市税务局发布通知，实施房地产交易税费减免政策，以减轻居民购房负担。\n\n具体减免政策包括：\n1. 对购买首套房的居民，减半征收契税\n2. 对出售自有住房并在1年内重新购房的居民，免征个人所得税\n3. 对符合条件的保障性住房，免征增值税\n\n这一政策的实施将有效降低居民的购房成本，促进房地产市场的活跃。'
+                },
+                'housing-supply': {
+                    title: '增加保障性住房供应',
+                    date: '2026-01-30',
+                    content: '上海市住房城乡建设管理委员会发布规划，2026年将增加保障性住房供应，计划新建保障性住房5万套，以满足中低收入家庭的住房需求。\n\n此次增加的保障性住房包括：\n1. 公共租赁住房2万套\n2. 保障性租赁住房2万套\n3. 经济适用住房1万套\n\n同时，政府将加强对保障性住房的管理，确保住房资源分配公平合理，真正惠及中低收入家庭。'
+                }
+            };
+
+            const detail = policyDetails[policyId] || {
+                title: '政策详情',
+                date: '2026-04-01',
+                content: '该政策暂无详细信息'
+            };
+
+            // 创建详情弹窗
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+            `;
+
+            const content = document.createElement('div');
+            content.style.cssText = `
+                background: var(--surface);
+                padding: 24px;
+                border-radius: var(--radius-xl);
+                width: 90%;
+                max-width: 420px;
+                max-height: 85vh;
+                overflow-y: auto;
+                box-shadow: var(--shadow-xl);
+            `;
+
+            content.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="margin: 0; color: var(--text); font-size: 18px;">政策详情</h3>
+                    <button onclick="this.parentElement.parentElement.parentElement.remove()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-secondary);">×</button>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <h4 style="margin: 0 0 8px 0; font-size: 16px; color: var(--text);">${detail.title}</h4>
+                    <p style="margin: 0 0 16px 0; color: var(--text-secondary); font-size: 14px;">发布日期: ${detail.date}</p>
+                    <div style="line-height: 1.6; color: var(--text-secondary); white-space: pre-line;">${detail.content}</div>
+                </div>
+            `;
+
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+        }
+
 
 
         // 全盘数据导出
@@ -10767,7 +10995,7 @@
             
             if (marketTrendsElement) {
                 marketTrendsElement.innerHTML = prices.map(community => `
-                    <div class="community-price-item" style="padding: 12px 0; border-bottom: 1px solid var(--border);">
+                    <div class="community-price-item" onclick="showCommunityDetail('${community.name}')" style="padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: background-color 0.2s;">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                             <span style="font-weight: 500; color: var(--text);">${community.name}</span>
                             <span style="color: #ef4444; font-weight: 500;">挂牌价: ${community.listingPrice.toLocaleString()} 元/㎡</span>
