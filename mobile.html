@@ -8857,90 +8857,13 @@
             }
         }
 
-        // 显示小区详情
+        // 全局变量，存储小区详情弹窗的搜索关键词
+        let communitySearchKeyword = '';
+        
         function showCommunityDetail(communityName) {
-            showToast(`正在加载${communityName}小区详情...`);
-            // 模拟小区详情数据
-            const communityDetails = {
-                '百乐公寓': {
-                    name: '百乐公寓',
-                    address: '上海市浦东新区惠南镇',
-                    averagePrice: 72000,
-                    transactionPrice: 69500,
-                    change: 0.8,
-                    description: '百乐公寓位于惠南镇中心地带，交通便利，周边配套完善，是惠南镇的优质小区之一。',
-                    facilities: ['地铁16号线惠南站', '惠南镇中心医院', '惠南镇小学', '惠南镇中学', '南汇步行街'],
-                    houses: [
-                        { type: '出售', area: 89, price: 650, layout: '2-2-1' },
-                        { type: '出售', area: 120, price: 850, layout: '3-2-2' },
-                        { type: '出租', area: 60, price: 3500, layout: '1-1-1' }
-                    ]
-                },
-                '锦园': {
-                    name: '锦园',
-                    address: '上海市浦东新区惠南镇',
-                    averagePrice: 75000,
-                    transactionPrice: 73200,
-                    change: 1.2,
-                    description: '锦园是惠南镇的高档小区，环境优美，绿化率高，物业管理完善。',
-                    facilities: ['地铁16号线惠南站', '惠南镇中心医院', '惠南镇小学', '惠南镇中学', '南汇步行街'],
-                    houses: [
-                        { type: '出售', area: 117, price: 880, layout: '3-2-2' },
-                        { type: '出租', area: 90, price: 4500, layout: '2-2-1' }
-                    ]
-                },
-                '申云小区': {
-                    name: '申云小区',
-                    address: '上海市浦东新区惠南镇',
-                    averagePrice: 65000,
-                    transactionPrice: 63800,
-                    change: 0.5,
-                    description: '申云小区是惠南镇的成熟小区，配套齐全，生活便利。',
-                    facilities: ['地铁16号线惠南站', '惠南镇中心医院', '惠南镇小学', '惠南镇中学', '南汇步行街'],
-                    houses: [
-                        { type: '出售', area: 75, price: 480, layout: '2-1-1' },
-                        { type: '出租', area: 80, price: 3800, layout: '2-1-1' }
-                    ]
-                },
-                '金地城': {
-                    name: '金地城',
-                    address: '上海市浦东新区惠南镇',
-                    averagePrice: 78000,
-                    transactionPrice: 76500,
-                    change: 1.5,
-                    description: '金地城是惠南镇的高端小区，由知名开发商建造，品质保证。',
-                    facilities: ['地铁16号线惠南站', '惠南镇中心医院', '惠南镇小学', '惠南镇中学', '南汇步行街'],
-                    houses: [
-                        { type: '出售', area: 130, price: 1020, layout: '3-2-2' },
-                        { type: '出租', area: 100, price: 5000, layout: '3-1-1' }
-                    ]
-                },
-                '一方新城': {
-                    name: '一方新城',
-                    address: '上海市浦东新区惠南镇',
-                    averagePrice: 70000,
-                    transactionPrice: 68500,
-                    change: 0.3,
-                    description: '一方新城是惠南镇的新兴小区，设施现代化，居住环境舒适。',
-                    facilities: ['地铁16号线惠南站', '惠南镇中心医院', '惠南镇小学', '惠南镇中学', '南汇步行街'],
-                    houses: [
-                        { type: '出售', area: 95, price: 665, layout: '2-2-1' },
-                        { type: '出租', area: 70, price: 3600, layout: '2-1-1' }
-                    ]
-                }
-            };
-
-            const detail = communityDetails[communityName] || {
-                name: communityName,
-                address: '上海市浦东新区惠南镇',
-                averagePrice: 68000,
-                transactionPrice: 66500,
-                change: 0.5,
-                description: '该小区暂无详细信息',
-                facilities: ['地铁16号线惠南站', '惠南镇中心医院', '惠南镇小学', '惠南镇中学', '南汇步行街'],
-                houses: []
-            };
-
+            // 获取所有小区行情数据
+            const allPrices = fetchLatestCommunityPrices();
+            
             // 创建详情弹窗
             const modal = document.createElement('div');
             modal.style.cssText = `
@@ -8962,48 +8885,85 @@
                 padding: 24px;
                 border-radius: var(--radius-xl);
                 width: 90%;
-                max-width: 420px;
-                max-height: 85vh;
+                max-width: 500px;
+                max-height: 90vh;
                 overflow-y: auto;
                 box-shadow: var(--shadow-xl);
             `;
 
-            content.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3 style="margin: 0; color: var(--text); font-size: 18px;">${detail.name} 小区详情</h3>
-                    <button onclick="this.parentElement.parentElement.parentElement.remove()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-secondary);">×</button>
-                </div>
-                <div style="margin-bottom: 16px;">
-                    <p style="margin: 8px 0; color: var(--text-secondary);">📍 ${detail.address}</p>
-                    <p style="margin: 8px 0;">🏠 挂牌均价: <span style="color: #ef4444; font-weight: 500;">${detail.averagePrice.toLocaleString()} 元/㎡</span></p>
-                    <p style="margin: 8px 0;">📊 成交均价: <span style="color: #10b981; font-weight: 500;">${detail.transactionPrice.toLocaleString()} 元/㎡</span></p>
-                    <p style="margin: 8px 0;">📈 环比变化: <span style="color: ${parseFloat(detail.change) >= 0 ? '#10b981' : '#ef4444'};">${parseFloat(detail.change) >= 0 ? '↑' : '↓'} ${Math.abs(detail.change)}%</span></p>
-                </div>
-                <div style="margin-bottom: 16px;">
-                    <h4 style="margin: 12px 0; font-size: 16px; color: var(--text);">小区介绍</h4>
-                    <p style="margin: 8px 0; color: var(--text-secondary); line-height: 1.5;">${detail.description}</p>
-                </div>
-                <div style="margin-bottom: 16px;">
-                    <h4 style="margin: 12px 0; font-size: 16px; color: var(--text);">周边配套</h4>
-                    <ul style="margin: 8px 0; padding-left: 20px; color: var(--text-secondary);">
-                        ${detail.facilities.map(facility => `<li style="margin: 4px 0;">${facility}</li>`).join('')}
-                    </ul>
-                </div>
-                ${detail.houses.length > 0 ? `
-                <div style="margin-bottom: 16px;">
-                    <h4 style="margin: 12px 0; font-size: 16px; color: var(--text);">在售/在租房源</h4>
-                    ${detail.houses.map(house => `
-                        <div style="padding: 12px; background: var(--background); border-radius: var(--radius); margin: 8px 0;">
-                            <div style="display: flex; justify-content: space-between;">
-                                <span style="font-weight: 500; color: ${house.type === '出售' ? '#ef4444' : '#10b981'};">${house.type === '出售' ? '出售' : '出租'}</span>
-                                <span style="font-weight: 500;">${house.area}㎡ ${house.layout}</span>
-                                <span style="font-weight: 500; color: var(--text);">${house.type === '出售' ? house.price + '万元' : house.price + '元/月'}</span>
-                            </div>
+            // 渲染弹窗内容
+            function renderModalContent() {
+                // 根据搜索关键词过滤小区
+                const filteredPrices = allPrices.filter(p => 
+                    !communitySearchKeyword || 
+                    p.name.toLowerCase().includes(communitySearchKeyword.toLowerCase())
+                );
+
+                // 按小区名称和类型分组
+                const groupedByCommunity = {};
+                filteredPrices.forEach(price => {
+                    if (!groupedByCommunity[price.name]) {
+                        groupedByCommunity[price.name] = [];
+                    }
+                    groupedByCommunity[price.name].push(price);
+                });
+
+                content.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="margin: 0; color: var(--text); font-size: 18px;">📊 小区行情</h3>
+                        <button onclick="this.parentElement.parentElement.parentElement.remove()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-secondary);">×</button>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <div style="position: relative;">
+                            <input 
+                                type="text" 
+                                id="communitySearchInput"
+                                placeholder="搜索小区名称..." 
+                                value="${communitySearchKeyword}"
+                                style="width: 100%; padding: 14px 44px 14px 16px; border: 2px solid var(--border); border-radius: var(--radius); font-size: 16px; background: var(--background);"
+                            >
+                            <span style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 20px;">🔍</span>
+                        </div>
+                    </div>
+                    
+                    ${Object.keys(groupedByCommunity).length === 0 ? `
+                        <div style="text-align: center; padding: 40px 20px; color: var(--text-tertiary);">
+                            <div style="font-size: 48px; margin-bottom: 12px;">🏠</div>
+                            <div>暂无小区行情数据</div>
+                        </div>
+                    ` : Object.keys(groupedByCommunity).map(communityName => `
+                        <div style="margin-bottom: 16px; padding: 16px; background: var(--background); border-radius: var(--radius);">
+                            <h4 style="margin: 0 0 12px 0; color: var(--text); font-size: 16px; font-weight: 600;">${communityName}</h4>
+                            ${groupedByCommunity[communityName].map(price => `
+                                <div style="margin-bottom: 12px; padding: 12px; background: var(--surface); border-radius: var(--radius-sm);">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                        <span style="font-weight: 500; color: ${price.type === 'sale' ? '#ef4444' : '#10b981'};">${price.type === 'sale' ? '🏠 售房' : '🏢 租房'}</span>
+                                        <span style="font-size: 14px; color: ${parseFloat(price.change) >= 0 ? '#10b981' : '#ef4444'};">${parseFloat(price.change) >= 0 ? '↑' : '↓'} ${Math.abs(price.change)}%</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between;">
+                                        <span style="color: #ef4444; font-weight: 500;">挂牌价: ${price.listingPrice.toLocaleString()} ${price.type === 'sale' ? '元/㎡' : '元/㎡·月'}</span>
+                                        <span style="color: #10b981; font-weight: 500;">成交均价: ${price.transactionPrice.toLocaleString()} ${price.type === 'sale' ? '元/㎡' : '元/㎡·月'}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
                         </div>
                     `).join('')}
-                </div>
-                ` : ''}
-            `;
+                `;
+
+                // 添加搜索事件监听
+                const searchInput = document.getElementById('communitySearchInput');
+                if (searchInput) {
+                    searchInput.addEventListener('input', function(e) {
+                        communitySearchKeyword = e.target.value;
+                        renderModalContent();
+                    });
+                    searchInput.focus();
+                }
+            }
+
+            // 初始渲染
+            renderModalContent();
 
             modal.appendChild(content);
             document.body.appendChild(modal);
@@ -11095,24 +11055,78 @@
 
         // 模拟获取最新的小区价格数据
         function fetchLatestCommunityPrices() {
-            // 模拟数据 - 实际项目中应该从API获取
-            const communities = [
-                { name: '金地城', listingPrice: 72000, transactionPrice: 69500, change: 1.2 },
-                { name: '一方新城', listingPrice: 75000, transactionPrice: 73200, change: 2.1 },
-                { name: '惠康苑', listingPrice: 68000, transactionPrice: 66500, change: 0.8 },
-                { name: '申云小区', listingPrice: 65000, transactionPrice: 63800, change: 0.5 }
-            ];
+            // 从实际房源数据计算挂牌价和成交均价
+            const communityPrices = {};
             
-            // 随机生成一些波动，模拟价格变化
-            return communities.map(community => {
-                const priceChange = (Math.random() - 0.5) * 2; // -1% 到 1%
-                return {
-                    name: community.name,
-                    listingPrice: Math.round(community.listingPrice * (1 + priceChange / 100)),
-                    transactionPrice: Math.round(community.transactionPrice * (1 + priceChange / 100)),
-                    change: (community.change + priceChange).toFixed(1)
-                };
+            // 遍历所有房源，按小区和类型统计
+            properties.forEach(property => {
+                const community = property.community || '未知小区';
+                const type = property.type || 'sale'; // 'sale' 或 'rent'
+                const key = `${community}_${type}`;
+                
+                if (!communityPrices[key]) {
+                    communityPrices[key] = {
+                        name: community,
+                        type: type,
+                        prices: [],
+                        transactionPrices: []
+                    };
+                }
+                
+                // 计算单价（元/㎡）
+                if (property.price && property.area) {
+                    const price = parseFloat(property.price);
+                    const area = parseFloat(property.area);
+                    if (price > 0 && area > 0) {
+                        let unitPrice;
+                        if (type === 'sale') {
+                            // 出售：价格是万元，转换为元/㎡
+                            unitPrice = Math.round(price * 10000 / area);
+                        } else {
+                            // 出租：价格是元/月，直接计算单价
+                            unitPrice = Math.round(price / area);
+                        }
+                        communityPrices[key].prices.push(unitPrice);
+                        
+                        // 模拟成交价（在挂牌价基础上打个折扣）
+                        const transactionUnitPrice = Math.round(unitPrice * (type === 'sale' ? 0.96 : 0.98));
+                        communityPrices[key].transactionPrices.push(transactionUnitPrice);
+                    }
+                }
             });
+            
+            // 计算每个小区的平均价格
+            const result = [];
+            Object.values(communityPrices).forEach(community => {
+                if (community.prices.length > 0) {
+                    const avgListingPrice = Math.round(community.prices.reduce((a, b) => a + b, 0) / community.prices.length);
+                    const avgTransactionPrice = Math.round(community.transactionPrices.reduce((a, b) => a + b, 0) / community.transactionPrices.length);
+                    
+                    // 模拟价格变化
+                    const change = (Math.random() * 4 - 2).toFixed(1); // -2% 到 2%
+                    
+                    result.push({
+                        name: community.name,
+                        type: community.type,
+                        listingPrice: avgListingPrice,
+                        transactionPrice: avgTransactionPrice,
+                        change: change
+                    });
+                }
+            });
+            
+            // 如果没有数据，使用默认数据
+            if (result.length === 0) {
+                return [
+                    { name: '金地城', type: 'sale', listingPrice: 72000, transactionPrice: 69500, change: 1.2 },
+                    { name: '金地城', type: 'rent', listingPrice: 80, transactionPrice: 78, change: 0.5 },
+                    { name: '一方新城', type: 'sale', listingPrice: 75000, transactionPrice: 73200, change: 2.1 },
+                    { name: '惠康苑', type: 'sale', listingPrice: 68000, transactionPrice: 66500, change: 0.8 },
+                    { name: '申云小区', type: 'sale', listingPrice: 65000, transactionPrice: 63800, change: 0.5 }
+                ];
+            }
+            
+            return result;
         }
         
         // 模拟获取最新的上海政策数据
@@ -11126,25 +11140,47 @@
             ];
         }
         
+        // 全局变量，存储当前显示的价格类型（'sale' 或 'rent'）
+        let currentPriceType = 'sale';
+        
         // 更新小区价格数据
         function updateCommunityPrices() {
             const prices = fetchLatestCommunityPrices();
             const marketTrendsElement = document.getElementById('marketTrends');
             
             if (marketTrendsElement) {
-                marketTrendsElement.innerHTML = prices.map(community => `
-                    <div class="community-price-item" onclick="showCommunityDetail('${community.name}')" style="padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: background-color 0.2s;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                            <span style="font-weight: 500; color: var(--text);">${community.name}</span>
-                            <span style="color: #ef4444; font-weight: 500;">挂牌价: ${community.listingPrice.toLocaleString()} 元/㎡</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between;">
-                            <span style="font-size: 14px; color: var(--text-secondary);">成交均价: ${community.transactionPrice.toLocaleString()} 元/㎡</span>
-                            <span style="font-size: 14px; color: ${parseFloat(community.change) >= 0 ? '#10b981' : '#ef4444'};">${parseFloat(community.change) >= 0 ? '↑' : '↓'} ${Math.abs(community.change)}%</span>
-                        </div>
+                // 按类型筛选价格数据
+                const filteredPrices = prices.filter(p => p.type === currentPriceType);
+                
+                marketTrendsElement.innerHTML = `
+                    <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                        <button onclick="switchPriceType('sale')" style="flex: 1; padding: 10px; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500; transition: var(--transition); ${currentPriceType === 'sale' ? 'background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white;' : 'background: var(--background); color: var(--text);'}">
+                            🏠 售房行情
+                        </button>
+                        <button onclick="switchPriceType('rent')" style="flex: 1; padding: 10px; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500; transition: var(--transition); ${currentPriceType === 'rent' ? 'background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white;' : 'background: var(--background); color: var(--text);'}">
+                            🏢 租房行情
+                        </button>
                     </div>
-                `).join('');
+                    ${filteredPrices.map(community => `
+                        <div class="community-price-item" onclick="showCommunityDetail('${community.name}')" style="padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: background-color 0.2s;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <span style="font-weight: 500; color: var(--text);">${community.name}</span>
+                                <span style="color: #ef4444; font-weight: 500;">挂牌价: ${community.listingPrice.toLocaleString()} ${community.type === 'sale' ? '元/㎡' : '元/㎡·月'}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="font-size: 14px; color: var(--text-secondary);">成交均价: ${community.transactionPrice.toLocaleString()} ${community.type === 'sale' ? '元/㎡' : '元/㎡·月'}</span>
+                                <span style="font-size: 14px; color: ${parseFloat(community.change) >= 0 ? '#10b981' : '#ef4444'};">${parseFloat(community.change) >= 0 ? '↑' : '↓'} ${Math.abs(community.change)}%</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                `;
             }
+        }
+        
+        // 切换价格类型
+        function switchPriceType(type) {
+            currentPriceType = type;
+            updateCommunityPrices();
         }
         
         // 更新上海政策数据
