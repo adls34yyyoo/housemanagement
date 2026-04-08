@@ -9780,8 +9780,8 @@
                             // 确保 viewedProperties 字段存在
                             viewedProperties: c.viewedProperties || c.viewed_properties || []
                         })).filter(c => {
-                            // 如果当前用户没有客户列表，或者客户ID在列表中，则显示
-                            return currentUserCustomerIds.length === 0 || currentUserCustomerIds.includes(String(c.id));
+                            // 只有当客户ID在当前用户的客户列表中时才显示
+                            return currentUserCustomerIds.includes(String(c.id));
                         });
                         console.log(`成功加载 ${customers.length} 条客户数据`);
                         console.log('当前用户客户ID列表:', currentUserCustomerIds);
