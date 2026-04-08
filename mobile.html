@@ -9810,6 +9810,8 @@
         function handleLogout() {
             if (confirm('确定要退出登录吗？')) {
                 currentUser = '';
+                // 清除登录状态
+                localStorage.removeItem('loggedInUser');
                 document.getElementById('appContainer').style.display = 'none';
                 document.getElementById('loginPage').style.display = 'flex';
                 document.getElementById('username').value = '';
@@ -9832,6 +9834,8 @@
             
             if (validUsers[username] === password) {
                 currentUser = username;
+                // 保存登录状态到localStorage
+                localStorage.setItem('loggedInUser', username);
                 document.getElementById('loginPage').style.display = 'none';
                 document.getElementById('appContainer').style.display = 'block';
                 
@@ -9854,6 +9858,34 @@
                 showToast('✅ 登录成功');
             } else {
                 showToast('❌ 用户名或密码错误');
+            }
+        }
+
+        // 自动登录
+        async function autoLogin() {
+            const loggedInUser = localStorage.getItem('loggedInUser');
+            if (loggedInUser) {
+                currentUser = loggedInUser;
+                document.getElementById('loginPage').style.display = 'none';
+                document.getElementById('appContainer').style.display = 'block';
+                
+                // 安全设置用户名显示，检查元素是否存在
+                const userElements = ['headerUser', 'headerUser2', 'headerUser3', 'headerUser4', 'profileUsername'];
+                userElements.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.textContent = loggedInUser;
+                    }
+                });
+
+                // 初始化
+                initSelectOptions();
+                initVoiceRecognition();
+                
+                // 加载数据
+                await loadData();
+
+                showToast('✅ 自动登录成功');
             }
         }
 
@@ -11131,6 +11163,9 @@
             
             // 初始化主题
             initTheme();
+            
+            // 尝试自动登录
+            await autoLogin();
             
             // 初始化UI
             initSelectOptions();
