@@ -1982,16 +1982,14 @@
             <h1 class="login-title">房源管理系统</h1>
             <div class="input-group">
                 <label>用户名</label>
-                <input type="text" id="username" placeholder="请输入用户名" value="admin">
+                <input type="text" id="username" placeholder="请输入用户名">
             </div>
             <div class="input-group">
                 <label>密码</label>
-                <input type="password" id="password" placeholder="请输入密码" value="admin123">
+                <input type="password" id="password" placeholder="请输入密码">
             </div>
             <button class="login-btn" onclick="handleLogin()">登录</button>
             <div class="login-tips">
-                <p>默认用户名: admin</p>
-                <p>默认密码: admin123</p>
             </div>
         </div>
     </div>
@@ -3173,8 +3171,8 @@
                             <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">房东信息</h4>
                             <div style="background: var(--background); border-radius: var(--radius); padding: 16px;">
                                 ${(property.landlordName || property.landlord_name) ? `<div style="margin-bottom: 8px;"><strong>姓名：</strong>${property.landlordName || property.landlord_name}</div>` : ''}
-                                ${(property.landlordPhone || property.landlord_phone) ? `<div style="margin-bottom: 8px;"><strong>电话：</strong><a href="tel:${property.landlordPhone || property.landlord_phone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 24px;">📞</a></div>` : ''}
-                                ${(property.landlordWechat || property.landlord_wechat) ? `<div><strong>微信：</strong><div onclick="copyWeChat('${property.landlordWechat || property.landlord_wechat}')" style="color: #07C160; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 24px;">🌐</div></div>` : ''}
+                                ${(property.landlordPhone || property.landlord_phone) ? `<div style="margin-bottom: 8px;"><strong>电话：</strong><a href="tel:${property.landlordPhone || property.landlord_phone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 24px;">📞 ${property.landlordPhone || property.landlord_phone}</a></div>` : ''}
+                                ${(property.landlordWechat || property.landlord_wechat) ? `<div><strong>微信：</strong><div onclick="copyWeChat(\'${(property.landlordWechat || property.landlord_wechat).replace(/'/g, "\\'")}\')" style="color: #07C160; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 24px;">🌐 ${property.landlordWechat || property.landlord_wechat}</div></div>` : ''}
                             </div>
                         </div>
                     ` : ''}
@@ -3501,33 +3499,14 @@
         let editingPropertyId = null;
         let editingCustomerId = null;
 
-        // 从本地存储加载数据
-        const savedProperties = localStorage.getItem('properties');
-        if (savedProperties) {
-            try {
-                properties = JSON.parse(savedProperties);
-                // 更新agentProperties数组
-                agentProperties = properties.filter(p => p.is_agent === true);
-                // 初始化筛选选项
-                initFilterRegions();
-            } catch (error) {
-                console.error('解析本地存储的房源数据失败:', error);
-                properties = [];
-                agentProperties = [];
-            }
-        }
+        // 初始化数据数组
+        properties = [];
+        agentProperties = [];
+        customers = [];
+        console.log('初始化数据数组完成');
 
-        const savedCustomers = localStorage.getItem('customers');
-        if (savedCustomers) {
-            try {
-                customers = JSON.parse(savedCustomers);
-            } catch (error) {
-                console.error('解析本地存储的客户数据失败:', error);
-                customers = [];
-            }
-        }
-
-        console.log('从本地存储加载数据完成:', properties.length, '条房源,', customers.length, '条客户');
+        // 直接从云数据库加载数据
+        loadData();
 
 
 
@@ -3537,7 +3516,7 @@
 
 
         // 小区与学区的映射关系
-        let communitySchoolMapping = JSON.parse(localStorage.getItem('communitySchoolMapping')) || {};
+        let communitySchoolMapping = {};
         
         // 选项数据存储
         let optionsData = {
@@ -4581,9 +4560,7 @@
                     remark: remark
                 });
 
-                // 保存到本地存储
-                localStorage.setItem('properties', JSON.stringify(properties));
-                localStorage.setItem('agentProperties', JSON.stringify(agentProperties));
+                // 数据已从云数据库加载，无需保存到本地存储
 
                 // 保存到 Supabase
                 if (supabaseClient) {
@@ -5188,12 +5165,9 @@
                         }
                     }
 
-                    // 从本地数据中移除房源
-                    properties = properties.filter(p => !selectedProperties.includes(String(p.id)));
-                    agentProperties = properties.filter(p => p.is_agent === true);
-                    
-                    // 更新本地存储
-                    localStorage.setItem('properties', JSON.stringify(properties));
+                    // 重新从云数据库加载数据，确保数据一致性
+                    console.log('重新从云数据库加载数据...');
+                    await loadData();
 
                     // 清空选中列表
                     selectedProperties = [];
@@ -5538,12 +5512,9 @@
                     return;
                 }
 
-                // 从本地数据中移除房源
-                properties = properties.filter(p => String(p.id) !== String(propertyId));
-                agentProperties = properties.filter(p => p.is_agent === true);
-                
-                // 更新本地存储
-                localStorage.setItem('properties', JSON.stringify(properties));
+                // 重新从云数据库加载数据，确保数据一致性
+                console.log('重新从云数据库加载数据...');
+                await loadData();
                 
                 renderAgentPropertyList();
                 showToast('✅ 可代理房源已删除');
@@ -6092,8 +6063,7 @@
             // 添加到看过的房源列表
             customer.viewedProperties.push(propertyId);
 
-            // 保存到本地存储
-            localStorage.setItem('customers', JSON.stringify(customers));
+            // 数据已保存到云数据库，无需保存到本地存储
 
             // 保存到 Supabase
             if (supabaseClient) {
@@ -6644,7 +6614,7 @@
                     primarySchool: primarySchool,
                     middleSchool: middleSchool
                 };
-                localStorage.setItem('communitySchoolMapping', JSON.stringify(communitySchoolMapping));
+                // 小区与学区的映射关系已更新
             }
 
             // 对于卖房，价格单位为万元
@@ -7074,6 +7044,7 @@
 
         // 删除房源
         async function deleteProperty(id) {
+            console.log('开始删除房源:', id);
             const password = prompt('请输入删除密码：');
             if (password !== '123456') {
                 showToast('密码错误，删除失败');
@@ -7091,6 +7062,7 @@
                 }
 
                 // 从云数据库删除
+                console.log('从云数据库删除房源:', id);
                 const { error } = await supabaseClient
                     .from('properties')
                     .delete()
@@ -7102,12 +7074,10 @@
                     return;
                 }
 
-                // 从本地数据中移除房源
-                properties = properties.filter(p => String(p.id) !== String(id));
-                agentProperties = properties.filter(p => p.is_agent === true);
-                
-                // 更新本地存储
-                localStorage.setItem('properties', JSON.stringify(properties));
+                console.log('删除前的房源数量:', properties.length);
+                // 重新从云数据库加载数据，确保数据一致性
+                console.log('重新从云数据库加载数据...');
+                await loadData();
                 
                 // 清理 selectedProperties 数组，移除已删除的房源 ID
                 selectedProperties = selectedProperties.filter(selectedId => 
@@ -7970,7 +7940,7 @@
         }
 
         // 存储训练数据
-        let trainingData = JSON.parse(localStorage.getItem('trainingData')) || {
+        let trainingData = {
             community: [],
             layout: [],
             area: [],
@@ -7980,9 +7950,9 @@
             landlordPhone: []
         };
 
-        // 保存训练数据到本地存储
+        // 保存训练数据
         function saveTrainingData() {
-            localStorage.setItem('trainingData', JSON.stringify(trainingData));
+            // 训练数据已更新，无需保存到本地存储
         }
 
         // 训练模型（实际应用）
@@ -9739,75 +9709,63 @@
                 });
 
                 try {
-                    // 只有当本地没有房源数据时才从网络加载
-                    if (properties.length === 0) {
-                        // 加载房源数据（带超时）
-                        const propertiesPromise = supabaseClient
-                            .from('properties')
-                            .select('*')
-                            .order('created_at', { ascending: false });
+                    // 从网络加载房源数据
+                    console.log('从网络加载房源数据...');
+                    const propertiesPromise = supabaseClient
+                        .from('properties')
+                        .select('*')
+                        .order('created_at', { ascending: false });
 
-                        const { data: propertiesData, error: propertiesError } = await Promise.race([
-                            propertiesPromise,
-                            timeoutPromise
-                        ]);
+                    const { data: propertiesData, error: propertiesError } = await Promise.race([
+                        propertiesPromise,
+                        timeoutPromise
+                    ]);
 
-                        if (!propertiesError && propertiesData) {
-                            properties = propertiesData.map(p => ({
-                                ...p,
-                                // 确保 type 字段存在，默认为 'rent'
-                                type: p.type || 'rent',
-                                // 确保 changeHistory 字段存在
-                                changeHistory: p.changeHistory || p.change_history || [],
-                                // 确保 communicationRecords 字段存在
-                                communicationRecords: p.communicationRecords || p.communication_records || [],
-                                // 确保 landlordWechat 字段存在
-                                landlordWechat: p.landlordWechat || p.landlord_wechat || ''
-                            }));
-                            // 更新agentProperties数组，包含所有is_agent: true的房源
-                            agentProperties = properties.filter(p => p.is_agent === true);
-                            console.log(`成功加载 ${properties.length} 条房源数据`);
-                            console.log(`成功加载 ${agentProperties.length} 条代理房源数据`);
-                            // 保存到本地存储
-                            localStorage.setItem('properties', JSON.stringify(properties));
-                        } else if (propertiesError) {
-                            console.warn('加载房源数据失败:', propertiesError);
-                        }
-                    } else {
-                        console.log('本地已有房源数据，跳过网络同步');
+                    if (!propertiesError && propertiesData) {
+                        properties = propertiesData.map(p => ({
+                            ...p,
+                            // 确保 type 字段存在，默认为 'rent'
+                            type: p.type || 'rent',
+                            // 确保 changeHistory 字段存在
+                            changeHistory: p.changeHistory || p.change_history || [],
+                            // 确保 communicationRecords 字段存在
+                            communicationRecords: p.communicationRecords || p.communication_records || [],
+                            // 确保 landlordWechat 字段存在
+                            landlordWechat: p.landlordWechat || p.landlord_wechat || ''
+                        }));
+                        // 更新agentProperties数组，包含所有is_agent: true的房源
+                        agentProperties = properties.filter(p => p.is_agent === true);
+                        console.log(`成功加载 ${properties.length} 条房源数据`);
+                        console.log(`成功加载 ${agentProperties.length} 条代理房源数据`);
+                    } else if (propertiesError) {
+                        console.warn('加载房源数据失败:', propertiesError);
                     }
 
-                    // 只有当本地没有客户数据时才从网络加载
-                    if (customers.length === 0) {
-                        // 加载客户数据（带超时）
-                        const customersPromise = supabaseClient
-                            .from('customers')
-                            .select('*')
-                            .order('createdat', { ascending: false });
+                    // 从网络加载客户数据
+                    console.log('从网络加载客户数据...');
+                    const customersPromise = supabaseClient
+                        .from('customers')
+                        .select('*')
+                        .order('createdat', { ascending: false });
 
-                        const { data: customersData, error: customersError } = await Promise.race([
-                            customersPromise,
-                            new Promise((_, reject) => setTimeout(() => reject(new Error('请求超时')), 10000))
-                        ]);
+                    const { data: customersData, error: customersError } = await Promise.race([
+                        customersPromise,
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('请求超时')), 10000))
+                    ]);
 
-                        if (!customersError && customersData) {
-                            customers = customersData.map(c => ({
-                                ...c,
-                                // 确保 changeHistory 字段存在
-                                changeHistory: c.changeHistory || c.change_history || [],
-                                // 确保 communicationRecords 字段存在
-                                communicationRecords: c.communicationRecords || c.communication_records || [],
-                                // 确保 viewedProperties 字段存在
-                                viewedProperties: c.viewedProperties || c.viewed_properties || []
-                            }));
-                            console.log(`成功加载 ${customers.length} 条客户数据`);
-                            // 保存到本地存储
-                            localStorage.setItem('customers', JSON.stringify(customers));
-                        } else if (customersError) {
-                            console.warn('加载客户数据失败:', customersError);
-                        }
-                    } else {
-                        console.log('本地已有客户数据，跳过网络同步');
+                    if (!customersError && customersData) {
+                        customers = customersData.map(c => ({
+                            ...c,
+                            // 确保 changeHistory 字段存在
+                            changeHistory: c.changeHistory || c.change_history || [],
+                            // 确保 communicationRecords 字段存在
+                            communicationRecords: c.communicationRecords || c.communication_records || [],
+                            // 确保 viewedProperties 字段存在
+                            viewedProperties: c.viewedProperties || c.viewed_properties || []
+                        }));
+                        console.log(`成功加载 ${customers.length} 条客户数据`);
+                    } else if (customersError) {
+                        console.warn('加载客户数据失败:', customersError);
                     }
 
                     // 刷新UI
@@ -9845,7 +9803,15 @@
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             
-            if (username === 'admin' && password === 'admin123') {
+            // 验证用户名和密码
+            const validUsers = {
+                'admin': '371f2F94D7',
+                'Wang': 'Wyd123456',
+                'Sue': 'Slq123456',
+                'Niflat': '371f2F94D7'
+            };
+            
+            if (validUsers[username] === password) {
                 currentUser = username;
                 document.getElementById('loginPage').style.display = 'none';
                 document.getElementById('appContainer').style.display = 'block';
@@ -10681,7 +10647,7 @@
             document.body.classList.add(theme);
             // 保存主题设置
             try {
-                localStorage.setItem('theme', theme);
+                // 主题已更新
             } catch (e) {
                 console.error('保存主题设置失败:', e);
             }
@@ -10700,7 +10666,7 @@
 
         function initTheme() {
             try {
-                const savedTheme = localStorage.getItem('theme');
+                const savedTheme = null;
                 if (savedTheme) {
                     setTheme(savedTheme);
                 }
@@ -10752,7 +10718,10 @@
                     }
 
                     // 批量删除房源
+                    console.log('开始批量删除房源，数量:', selectedProperties.length);
+                    console.log('删除前的房源数量:', properties.length);
                     for (const id of selectedProperties) {
+                        console.log('从云数据库删除房源:', id);
                         const { error } = await supabaseClient
                             .from('properties')
                             .delete()
@@ -10765,12 +10734,9 @@
                         }
                     }
 
-                    // 从本地数据中移除房源
-                    properties = properties.filter(p => !selectedProperties.includes(String(p.id)));
-                    agentProperties = properties.filter(p => p.is_agent === true);
-                    
-                    // 更新本地存储
-                    localStorage.setItem('properties', JSON.stringify(properties));
+                    // 重新从云数据库加载数据，确保数据一致性
+                    console.log('重新从云数据库加载数据...');
+                    await loadData();
 
                     // 清空选中列表
                     selectedProperties = [];
