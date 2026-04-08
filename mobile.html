@@ -9798,6 +9798,14 @@
                 currentUser = username;
                 // 保存登录状态到localStorage
                 localStorage.setItem('loggedInUser', username);
+                
+                // 确保用户有客户列表，如果没有则初始化为空数组
+                const userCustomerKey = `customer_${username}`;
+                if (!localStorage.getItem(userCustomerKey)) {
+                    localStorage.setItem(userCustomerKey, JSON.stringify([]));
+                    console.log('为新用户初始化客户列表为空数组');
+                }
+                
                 document.getElementById('loginPage').style.display = 'none';
                 document.getElementById('appContainer').style.display = 'block';
                 
@@ -9828,6 +9836,14 @@
             const loggedInUser = localStorage.getItem('loggedInUser');
             if (loggedInUser) {
                 currentUser = loggedInUser;
+                
+                // 确保用户有客户列表，如果没有则初始化为空数组
+                const userCustomerKey = `customer_${loggedInUser}`;
+                if (!localStorage.getItem(userCustomerKey)) {
+                    localStorage.setItem(userCustomerKey, JSON.stringify([]));
+                    console.log('为自动登录用户初始化客户列表为空数组');
+                }
+                
                 document.getElementById('loginPage').style.display = 'none';
                 document.getElementById('appContainer').style.display = 'block';
                 
@@ -9919,22 +9935,34 @@
             if (!customer) return;
 
             try {
+                console.log('开始转让客户:', { customerId, currentUser, newOwner });
+                
                 // 从当前用户的客户列表中移除
                 const currentUserKey = `customer_${currentUser || 'admin'}`;
-                const currentUserCustomers = JSON.parse(localStorage.getItem(currentUserKey) || '[]');
+                let currentUserCustomers = JSON.parse(localStorage.getItem(currentUserKey) || '[]');
+                console.log('转让前当前用户客户列表:', currentUserCustomers);
+                
+                // 确保使用字符串进行比较
                 const updatedCurrentCustomers = currentUserCustomers.filter(id => String(id) !== String(customerId));
                 localStorage.setItem(currentUserKey, JSON.stringify(updatedCurrentCustomers));
+                console.log('转让后当前用户客户列表:', updatedCurrentCustomers);
 
                 // 添加到新用户的客户列表
                 const newUserKey = `customer_${newOwner}`;
-                const newUserCustomers = JSON.parse(localStorage.getItem(newUserKey) || '[]');
-                if (!newUserCustomers.includes(String(customerId))) {
+                let newUserCustomers = JSON.parse(localStorage.getItem(newUserKey) || '[]');
+                console.log('新用户当前客户列表:', newUserCustomers);
+                
+                if (!newUserCustomers.some(id => String(id) === String(customerId))) {
                     newUserCustomers.push(String(customerId));
                     localStorage.setItem(newUserKey, JSON.stringify(newUserCustomers));
+                    console.log('添加后新用户客户列表:', newUserCustomers);
                 }
 
                 // 重新加载数据
                 await loadData();
+                
+                // 直接更新客户数组，而不是依赖loadData
+                customers = customers.filter(c => String(c.id) !== String(customerId));
 
                 // 重新渲染客户列表
                 renderCustomerList();
