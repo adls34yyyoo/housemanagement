@@ -9767,7 +9767,8 @@
 
                     if (!customersError && customersData) {
                         // 获取当前用户的客户ID列表
-                        const currentUserCustomerIds = JSON.parse(localStorage.getItem(`customer_${currentUser || 'admin'}`) || '[]');
+                        const currentUserKey = `customer_${currentUser || 'admin'}`;
+                        const currentUserCustomerIds = JSON.parse(localStorage.getItem(currentUserKey) || '[]');
                         
                         // 过滤出当前用户的客户
                         customers = customersData.map(c => ({
@@ -9783,6 +9784,7 @@
                             return currentUserCustomerIds.length === 0 || currentUserCustomerIds.includes(String(c.id));
                         });
                         console.log(`成功加载 ${customers.length} 条客户数据`);
+                        console.log('当前用户客户ID列表:', currentUserCustomerIds);
                     } else if (customersError) {
                         console.warn('加载客户数据失败:', customersError);
                     }
@@ -9958,23 +9960,33 @@
 
             try {
                 // 从当前用户的客户列表中移除
-                const currentUserCustomers = JSON.parse(localStorage.getItem(`customer_${currentUser || 'admin'}`) || '[]');
-                const updatedCurrentCustomers = currentUserCustomers.filter(id => id !== customerId);
-                localStorage.setItem(`customer_${currentUser || 'admin'}`, JSON.stringify(updatedCurrentCustomers));
+                const currentUserKey = `customer_${currentUser || 'admin'}`;
+                const currentUserCustomers = JSON.parse(localStorage.getItem(currentUserKey) || '[]');
+                const updatedCurrentCustomers = currentUserCustomers.filter(id => String(id) !== String(customerId));
+                localStorage.setItem(currentUserKey, JSON.stringify(updatedCurrentCustomers));
 
                 // 添加到新用户的客户列表
-                const newUserCustomers = JSON.parse(localStorage.getItem(`customer_${newOwner}`) || '[]');
-                if (!newUserCustomers.includes(customerId)) {
-                    newUserCustomers.push(customerId);
-                    localStorage.setItem(`customer_${newOwner}`, JSON.stringify(newUserCustomers));
+                const newUserKey = `customer_${newOwner}`;
+                const newUserCustomers = JSON.parse(localStorage.getItem(newUserKey) || '[]');
+                if (!newUserCustomers.includes(String(customerId))) {
+                    newUserCustomers.push(String(customerId));
+                    localStorage.setItem(newUserKey, JSON.stringify(newUserCustomers));
                 }
 
                 // 重新加载数据
                 await loadData();
 
+                // 重新渲染客户列表
+                renderCustomerList();
+
                 showToast('✅ 客户转让成功');
                 closeTransferModal();
-                document.getElementById('customerDetailModal').classList.remove('active');
+                
+                // 关闭客户详情模态框
+                const detailModal = document.getElementById('customerDetailModal');
+                if (detailModal) {
+                    detailModal.classList.remove('active');
+                }
             } catch (error) {
                 console.error('转让客户出错:', error);
                 showToast('❌ 转让客户失败，请检查网络连接');
