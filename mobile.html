@@ -2829,12 +2829,12 @@
                     <label class="form-label">房东电话</label>
                     <input type="tel" class="form-input" id="propLandlordPhone" placeholder="请输入房东电话">
                 </div>
-                <!-- 被代理方区域 -->
+                <!-- 合作方区域 -->
                 <div id="agentPartiesSection" style="display: none;">
                     <div class="form-group">
-                        <label class="form-label">被代理方</label>
+                        <label class="form-label">合作方</label>
                         <div id="agentPartiesList" style="margin-bottom: 12px;"></div>
-                        <button type="button" class="btn btn-primary" onclick="addAgentParty()" style="width: 100%;">添加被代理方</button>
+                        <button type="button" class="btn btn-primary" onclick="addAgentParty()" style="width: 100%;">添加合作方</button>
                     </div>
                 </div>
                 <div class="form-group">
@@ -5263,7 +5263,7 @@
             
             return parties.map((party, index) => `
                 <div style="font-size: 13px; color: var(--text-secondary);">
-                    👤 被代理方${parties.length > 1 ? index + 1 : ''}：${party.name || ''} ${party.phone ? `<a href="tel:${party.phone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">📞</a>` : ''}
+                    👤 合作方${parties.length > 1 ? index + 1 : ''}：${party.name || ''} ${party.phone ? `<a href="tel:${party.phone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">📞</a>` : ''}
                 </div>
             `).join('');
         }
@@ -6424,7 +6424,7 @@
             }
         }
 
-        // 添加被代理方
+        // 添加合作方
         function addAgentParty(name = '', phone = '') {
             const list = document.getElementById('agentPartiesList');
             if (!list) return;
@@ -6434,8 +6434,8 @@
             partyDiv.className = 'agent-party-item';
             partyDiv.style.cssText = 'display: flex; gap: 8px; margin-bottom: 8px; align-items: center;';
             
-            // 生成被代理方选择下拉框
-            let agentPartyOptions = '<option value="">选择被代理方</option>';
+            // 生成合作方选择下拉框
+            let agentPartyOptions = '<option value="">选择合作方</option>';
             agentParties.forEach(party => {
                 agentPartyOptions += `<option value="${party.name}" data-phone="${party.phone}">${party.name} (${party.phone})</option>`;
             });
@@ -6444,14 +6444,14 @@
                 <select class="form-select agent-party-select" style="flex: 1;" onchange="selectAgentParty(this)">
                     ${agentPartyOptions}
                 </select>
-                <input type="text" class="form-input agent-party-name" placeholder="被代理方" style="flex: 1; display: none;" value="${name}">
-                <input type="tel" class="form-input agent-party-phone" placeholder="被代理方电话" style="flex: 1;" value="${phone}">
+                <input type="text" class="form-input agent-party-name" placeholder="合作方" style="flex: 1; display: none;" value="${name}">
+                <input type="tel" class="form-input agent-party-phone" placeholder="合作方电话" style="flex: 1;" value="${phone}">
                 <button type="button" onclick="removeAgentParty(this)" style="padding: 8px 12px; background: #ef4444; color: white; border: none; border-radius: var(--radius); cursor: pointer;">删除</button>
             `;
             list.appendChild(partyDiv);
         }
         
-        // 选择被代理方
+        // 选择合作方
         function selectAgentParty(select) {
             const nameInput = select.nextElementSibling;
             const phoneInput = nameInput.nextElementSibling;
@@ -6471,24 +6471,24 @@
             }
         }
 
-        // 删除被代理方
+        // 删除合作方
         function removeAgentParty(btn) {
             const list = document.getElementById('agentPartiesList');
             const items = list.querySelectorAll('.agent-party-item');
             
-            // 获取要删除的被代理方信息
+            // 获取要删除的合作方信息
             const partyItem = btn.parentElement;
             const name = partyItem.querySelector('.agent-party-name')?.value || '';
             const phone = partyItem.querySelector('.agent-party-phone')?.value || '';
             
-            // 检查该被代理方是否被任何房源使用
+            // 检查该合作方是否被任何房源使用
             const isPartyInUse = agentProperties.some(property => {
                 const parties = property.agentParties || [];
                 return parties.some(party => party.name === name && party.phone === phone);
             });
             
             if (isPartyInUse) {
-                showToast('该被代理方正在被使用，无法删除');
+                showToast('该合作方正在被使用，无法删除');
                 return;
             }
             
@@ -6503,12 +6503,12 @@
                 btn.parentElement.remove();
             } else {
                 btn.parentElement.remove();
-                // 添加一个空的被代理方输入框
+                // 添加一个空的合作方输入框
                 addAgentParty();
             }
         }
 
-        // 获取被代理方列表
+        // 获取合作方列表
         function getAgentParties() {
             const list = document.getElementById('agentPartiesList');
             if (!list) return [];
@@ -7432,11 +7432,11 @@
             }
         }
 
-        // 保存被代理方到数据库
+        // 保存合作方到数据库
         async function saveAgentPartyToDatabase(name, phone) {
             if (!supabaseClient) {
-                console.log('Supabase未连接，无法保存被代理方');
-                showToast('Supabase未连接，无法保存被代理方');
+                console.log('Supabase未连接，无法保存合作方');
+                showToast('Supabase未连接，无法保存合作方');
                 return false;
             }
 
@@ -7451,25 +7451,25 @@
                     }]);
 
                 if (error) {
-                    console.error('保存被代理方失败:', error);
-                    showToast('保存被代理方失败: ' + error.message);
+                    console.error('保存合作方失败:', error);
+                    showToast('保存合作方失败: ' + error.message);
                     return false;
                 }
 
-                console.log('被代理方保存成功:', name, phone);
+                console.log('合作方保存成功:', name, phone);
                 return true;
             } catch (error) {
-                console.error('保存被代理方时发生错误:', error);
-                showToast('保存被代理方时发生错误: ' + error.message);
+                console.error('保存合作方时发生错误:', error);
+                showToast('保存合作方时发生错误: ' + error.message);
                 return false;
             }
         }
 
-        // 从数据库删除被代理方
+        // 从数据库删除合作方
         async function deleteAgentPartyFromDatabase(name, phone) {
             if (!supabaseClient) {
-                console.log('Supabase未连接，无法删除被代理方');
-                showToast('Supabase未连接，无法删除被代理方');
+                console.log('Supabase未连接，无法删除合作方');
+                showToast('Supabase未连接，无法删除合作方');
                 return false;
             }
 
@@ -7481,16 +7481,16 @@
                     .eq('phone', phone);
 
                 if (error) {
-                    console.error('删除被代理方失败:', error);
-                    showToast('删除被代理方失败: ' + error.message);
+                    console.error('删除合作方失败:', error);
+                    showToast('删除合作方失败: ' + error.message);
                     return false;
                 }
 
-                console.log('被代理方删除成功:', name, phone);
+                console.log('合作方删除成功:', name, phone);
                 return true;
             } catch (error) {
-                console.error('删除被代理方时发生错误:', error);
-                showToast('删除被代理方时发生错误: ' + error.message);
+                console.error('删除合作方时发生错误:', error);
+                showToast('删除合作方时发生错误: ' + error.message);
                 return false;
             }
         }
