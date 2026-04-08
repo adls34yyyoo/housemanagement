@@ -4409,7 +4409,7 @@
         }
 
         // 页面切换
-        function switchPage(page) {
+        function switchPage(page, propertyId) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
 
@@ -4466,6 +4466,16 @@
                 selectedProperties = selectedProperties.filter(selectedId => 
                     allProperties.some(p => String(p.id) === String(selectedId))
                 );
+                
+                // 如果传递了房源ID，将其添加到selectedProperties数组中
+                if (propertyId) {
+                    // 确保房源存在
+                    const propertyExists = allProperties.some(p => String(p.id) === String(propertyId));
+                    if (propertyExists && !selectedProperties.includes(propertyId)) {
+                        selectedProperties.push(propertyId);
+                    }
+                }
+                
                 renderSharePropertyList();
                 // 清空分享内容，等待用户点击生成文案
                 document.getElementById('shareContent').value = '';
@@ -4636,7 +4646,7 @@
                         <div style="flex: 1; min-width: 0;" onclick="openPropertyDetailModal('${property.id}')">
                             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
                                 <span style="font-weight: 500; color: var(--text);">${property.community || '未知小区'}</span>
-                                <span class="property-status ${statusClass}" style="font-size: 12px; cursor: pointer;" onclick="event.stopPropagation(); if ('${statusText}' === '待发布') { switchPage('share'); }">${statusText}</span>
+                                <span class="property-status ${statusClass}" style="font-size: 12px; cursor: pointer;" onclick="event.stopPropagation(); if ('${statusText}' === '待发布') { switchPage('share', '${property.id}'); }">${statusText}</span>
                             </div>
                             <div style="font-size: 14px; color: var(--text-secondary); display: flex; justify-content: space-between;">
                                 <span>${property.layout || ''} ${property.area ? property.area + '平' : ''} ${property.floor ? property.floor + '楼' : ''} ${property.decoration || ''}</span>
@@ -5286,6 +5296,9 @@
             if (menu) {
                 if (menu.classList.contains('active')) {
                     applyAgentFilters();
+                } else {
+                    // 打开筛选菜单时重新初始化筛选选项
+                    initFilterRegions();
                 }
                 menu.classList.toggle('active');
             }
@@ -5363,6 +5376,9 @@
             if (menu) {
                 if (menu.classList.contains('active')) {
                     applyCoopFilters();
+                } else {
+                    // 打开筛选菜单时重新初始化筛选选项
+                    initFilterRegions();
                 }
                 menu.classList.toggle('active');
             }
@@ -6118,20 +6134,32 @@
             const menu = document.getElementById('filterMenu');
             if (menu.classList.contains('active')) {
                 applyFilters();
+            } else {
+                // 打开筛选菜单时重新初始化筛选选项
+                initFilterRegions();
             }
             menu.classList.toggle('active');
         }
 
         // 初始化筛选选项
         function initFilterRegions() {
+            console.log('开始初始化筛选选项...');
             // 从所有房源中提取唯一的区域、小区、户型、装修类型和楼层
             const allProperties = [...properties, ...agentProperties];
+            console.log('房源总数:', allProperties.length);
             
             const regions = [...new Set(allProperties.map(p => p.region).filter(Boolean))];
             const communities = [...new Set(allProperties.map(p => p.community).filter(Boolean))];
             const layouts = [...new Set(allProperties.map(p => p.layout).filter(Boolean))];
             const decorations = [...new Set(allProperties.map(p => p.decoration).filter(Boolean))];
             const floors = [...new Set(allProperties.map(p => p.floor).filter(Boolean))];
+            
+            console.log('提取的筛选选项:');
+            console.log('区域:', regions);
+            console.log('小区:', communities);
+            console.log('户型:', layouts);
+            console.log('装修:', decorations);
+            console.log('楼层:', floors);
             
             // 初始化区域下拉框
             const regionSelect = document.getElementById('filterRegion');
@@ -6140,6 +6168,7 @@
                 regions.forEach(region => {
                     regionSelect.innerHTML += `<option value="${region}">${region}</option>`;
                 });
+                console.log('区域下拉框已更新，选项数:', regions.length);
             }
             
             // 初始化小区下拉框
@@ -6149,6 +6178,7 @@
                 communities.forEach(community => {
                     communitySelect.innerHTML += `<option value="${community}">${community}</option>`;
                 });
+                console.log('小区下拉框已更新，选项数:', communities.length);
             }
             
             // 初始化户型下拉框
@@ -6158,6 +6188,7 @@
                 layouts.forEach(layout => {
                     layoutSelect.innerHTML += `<option value="${layout}">${layout}</option>`;
                 });
+                console.log('户型下拉框已更新，选项数:', layouts.length);
             }
             
             // 初始化装修下拉框
@@ -6167,6 +6198,7 @@
                 decorations.forEach(decoration => {
                     decorationSelect.innerHTML += `<option value="${decoration}">${decoration}</option>`;
                 });
+                console.log('装修下拉框已更新，选项数:', decorations.length);
             }
             
             // 初始化楼层下拉框
@@ -6176,6 +6208,7 @@
                 floors.forEach(floor => {
                     floorSelect.innerHTML += `<option value="${floor}">${floor}</option>`;
                 });
+                console.log('楼层下拉框已更新，选项数:', floors.length);
             }
             
             // 初始化代理房源筛选选项
@@ -6185,6 +6218,7 @@
                 regions.forEach(region => {
                     agentRegionSelect.innerHTML += `<option value="${region}">${region}</option>`;
                 });
+                console.log('代理房源区域下拉框已更新，选项数:', regions.length);
             }
             
             const agentCommunitySelect = document.getElementById('agentFilterCommunity');
@@ -6193,6 +6227,7 @@
                 communities.forEach(community => {
                     agentCommunitySelect.innerHTML += `<option value="${community}">${community}</option>`;
                 });
+                console.log('代理房源小区下拉框已更新，选项数:', communities.length);
             }
             
             // 初始化合作房源筛选选项
@@ -6202,6 +6237,7 @@
                 regions.forEach(region => {
                     coopRegionSelect.innerHTML += `<option value="${region}">${region}</option>`;
                 });
+                console.log('合作房源区域下拉框已更新，选项数:', regions.length);
             }
             
             const coopCommunitySelect = document.getElementById('coopFilterCommunity');
@@ -6210,7 +6246,10 @@
                 communities.forEach(community => {
                     coopCommunitySelect.innerHTML += `<option value="${community}">${community}</option>`;
                 });
+                console.log('合作房源小区下拉框已更新，选项数:', communities.length);
             }
+            
+            console.log('筛选选项初始化完成');
         }
 
         // 应用筛选条件
