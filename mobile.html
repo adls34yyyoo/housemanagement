@@ -748,34 +748,40 @@
         }
 
         .filter-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--border);
+            background: var(--background);
             position: sticky;
             top: 0;
-            background: var(--surface);
         }
 
         .filter-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text);
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
         }
 
         .filter-close {
-            background: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--background);
             border: none;
-            font-size: 28px;
-            color: var(--text-secondary);
+            font-size: 20px;
             cursor: pointer;
-            padding: 0;
-            width: 32px;
-            height: 32px;
+            transition: var(--transition);
             display: flex;
             align-items: center;
             justify-content: center;
+            color: var(--text-secondary);
+        }
+
+        .filter-close:hover {
+            background: var(--border);
+            transform: rotate(90deg);
         }
 
         .filter-body {
