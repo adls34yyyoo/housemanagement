@@ -5930,18 +5930,21 @@
                         return '';
                     })()}
                     
-                    <div style="display: flex; gap: 12px; margin-top: 24px;">
-                        <button onclick="showCommunicationModal('${customer.id}')" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #2196F3 0%, #0b7dda 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
+                    <div style="display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap;">
+                        <button onclick="showCommunicationModal('${customer.id}')" style="flex: 1; min-width: 120px; padding: 12px; background: linear-gradient(135deg, #2196F3 0%, #0b7dda 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
                             沟通记录
                         </button>
-                        <button onclick="addViewedProperty('${customer.id}')" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
+                        <button onclick="addViewedProperty('${customer.id}')" style="flex: 1; min-width: 120px; padding: 12px; background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
                             看房记录
                         </button>
-                        <button onclick="editCustomer('${customer.id}'); document.getElementById('customerDetailModal').classList.remove('active')" style="flex: 1; padding: 12px; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
+                        <button onclick="editCustomer('${customer.id}'); document.getElementById('customerDetailModal').classList.remove('active')" style="flex: 1; min-width: 120px; padding: 12px; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
                             编辑
                         </button>
-                        <button onclick="confirmDeleteCustomer('${customer.id}')" style="flex: 1; padding: 12px; background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
+                        <button onclick="confirmDeleteCustomer('${customer.id}')" style="flex: 1; min-width: 120px; padding: 12px; background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
                             删除
+                        </button>
+                        <button onclick="transferCustomer('${customer.id}')" style="flex: 1; min-width: 120px; padding: 12px; background: linear-gradient(135deg, #FF9800 0%, #f57c00 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
+                            转让
                         </button>
                     </div>
                 </div>
@@ -7224,6 +7227,7 @@
                 budget,
                 demand,
                 status,
+                owner: originalCustomer?.owner || currentUser || 'admin',
                 change_history: changeHistoryRecord,
                 communication_records: originalCustomer?.communication_records || originalCustomer?.communicationRecords || [],
                 createdat: originalCustomer?.createdat || new Date().toISOString(),
@@ -9746,6 +9750,7 @@
                     const customersPromise = supabaseClient
                         .from('customers')
                         .select('*')
+                        .eq('owner', currentUser || 'admin')
                         .order('createdat', { ascending: false });
 
                     const { data: customersData, error: customersError } = await Promise.race([
@@ -9835,6 +9840,107 @@
                 showToast('✅ 登录成功');
             } else {
                 showToast('❌ 用户名或密码错误');
+            }
+        }
+
+        // 转让客户
+        function transferCustomer(customerId) {
+            const customer = customers.find(c => String(c.id) === String(customerId));
+            if (!customer) return;
+
+            // 可转让的用户列表
+            const users = ['admin', 'Wang', 'Sue', 'Niflat'];
+            
+            // 过滤掉当前用户
+            const availableUsers = users.filter(user => user !== (currentUser || 'admin'));
+
+            if (availableUsers.length === 0) {
+                showToast('⚠️ 没有其他用户可以转让');
+                return;
+            }
+
+            // 创建转让模态框
+            const modalHTML = `
+                <div class="modal" id="transferModal" style="display: flex; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000;">
+                    <div class="modal-content" style="background: white; border-radius: var(--radius); padding: 20px; width: 90%; max-width: 400px;">
+                        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin: 0; color: var(--text);">转让客户</h3>
+                            <button onclick="closeTransferModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);">&times;</button>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <p style="margin-bottom: 12px; color: var(--text-secondary);">请选择要转让给的用户：</p>
+                            ${availableUsers.map(user => `
+                                <div style="margin-bottom: 8px;">
+                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                        <input type="radio" name="transferTo" value="${user}" style="width: auto;">
+                                        <span>${user}</span>
+                                    </label>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="form-actions" style="display: flex; gap: 12px;">
+                            <button class="btn btn-default" onclick="closeTransferModal()">取消</button>
+                            <button class="btn btn-primary" onclick="confirmTransfer('${customerId}')">确认转让</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 插入模态框到页面
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        // 关闭转让模态框
+        function closeTransferModal() {
+            const modal = document.getElementById('transferModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // 确认转让
+        async function confirmTransfer(customerId) {
+            const selectedUser = document.querySelector('input[name="transferTo"]:checked');
+            if (!selectedUser) {
+                showToast('⚠️ 请选择要转让给的用户');
+                return;
+            }
+
+            const newOwner = selectedUser.value;
+            const customer = customers.find(c => String(c.id) === String(customerId));
+            if (!customer) return;
+
+            try {
+                // 初始化Supabase客户端
+                if (!supabaseClient) {
+                    const initialized = initSupabase();
+                    if (!initialized) {
+                        showToast('❌ 数据库连接失败，请检查网络');
+                        return;
+                    }
+                }
+
+                // 更新客户的所有者
+                const { error } = await supabaseClient
+                    .from('customers')
+                    .update({ owner: newOwner, updatedat: new Date().toISOString() })
+                    .eq('id', String(customerId));
+
+                if (error) {
+                    console.error('转让客户失败:', error);
+                    showToast(`❌ 转让客户失败: ${error.message}`);
+                    return;
+                }
+
+                // 重新加载数据
+                await loadData();
+
+                showToast('✅ 客户转让成功');
+                closeTransferModal();
+                document.getElementById('customerDetailModal').classList.remove('active');
+            } catch (error) {
+                console.error('转让客户出错:', error);
+                showToast('❌ 转让客户失败，请检查网络连接');
             }
         }
 
