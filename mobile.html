@@ -8951,52 +8951,57 @@
             if (searchInput) {
                 communitySearchKeyword = searchInput.value;
                 console.log('执行小区搜索:', communitySearchKeyword);
-                // 重新渲染内容
+                
+                // 直接获取并过滤数据
+                const allPrices = fetchLatestCommunityPrices();
+                console.log('所有小区数据:', allPrices);
+                let filteredPrices = allPrices;
+                
+                if (communitySearchKeyword && communitySearchKeyword.trim() !== '') {
+                    const keyword = communitySearchKeyword.toLowerCase().trim();
+                    // 过滤并排序搜索结果
+                    filteredPrices = allPrices
+                        .filter(p => p.name.toLowerCase().includes(keyword))
+                        .sort((a, b) => {
+                            // 按匹配度排序：完全匹配 > 开头匹配 > 中间匹配
+                            const aMatch = a.name.toLowerCase();
+                            const bMatch = b.name.toLowerCase();
+                            const aExact = aMatch === keyword ? 0 : 1;
+                            const bExact = bMatch === keyword ? 0 : 1;
+                            if (aExact !== bExact) return aExact - bExact;
+                            
+                            const aStartsWith = aMatch.startsWith(keyword) ? 0 : 1;
+                            const bStartsWith = bMatch.startsWith(keyword) ? 0 : 1;
+                            if (aStartsWith !== bStartsWith) return aStartsWith - bStartsWith;
+                            
+                            // 按小区名称长度排序
+                            return a.name.length - b.name.length;
+                        });
+                    console.log('过滤后的数据:', filteredPrices);
+                }
+
+                // 按小区名称分组
+                const groupedByCommunity = {};
+                filteredPrices.forEach(price => {
+                    if (!groupedByCommunity[price.name]) {
+                        groupedByCommunity[price.name] = [];
+                    }
+                    groupedByCommunity[price.name].push(price);
+                });
+
+                // 按小区名称排序
+                const sortedCommunityNames = Object.keys(groupedByCommunity).sort();
+                console.log('排序后的小区名称:', sortedCommunityNames);
+
+                // 找到内容容器并更新
                 const modal = searchInput.closest('.modal');
                 if (modal) {
-                    // 找到渲染函数并重新执行
                     const content = modal.querySelector('.modal-content');
                     if (content) {
-                        // 重新获取所有价格数据并渲染
-                        const allPrices = fetchLatestCommunityPrices();
-                        console.log('所有小区数据:', allPrices);
-                        let filteredPrices = allPrices;
-                        if (communitySearchKeyword && communitySearchKeyword.trim() !== '') {
-                            const keyword = communitySearchKeyword.toLowerCase().trim();
-                            // 过滤并排序搜索结果
-                            filteredPrices = allPrices
-                                .filter(p => p.name.toLowerCase().includes(keyword))
-                                .sort((a, b) => {
-                                    // 按匹配度排序：完全匹配 > 开头匹配 > 中间匹配
-                                    const aMatch = a.name.toLowerCase();
-                                    const bMatch = b.name.toLowerCase();
-                                    const aExact = aMatch === keyword ? 0 : 1;
-                                    const bExact = bMatch === keyword ? 0 : 1;
-                                    if (aExact !== bExact) return aExact - bExact;
-                                    
-                                    const aStartsWith = aMatch.startsWith(keyword) ? 0 : 1;
-                                    const bStartsWith = bMatch.startsWith(keyword) ? 0 : 1;
-                                    if (aStartsWith !== bStartsWith) return aStartsWith - bStartsWith;
-                                    
-                                    // 按小区名称长度排序
-                                    return a.name.length - b.name.length;
-                                });
-                            console.log('过滤后的数据:', filteredPrices);
-                        }
-
-                        // 按小区名称分组
-                        const groupedByCommunity = {};
-                        filteredPrices.forEach(price => {
-                            if (!groupedByCommunity[price.name]) {
-                                groupedByCommunity[price.name] = [];
-                            }
-                            groupedByCommunity[price.name].push(price);
-                        });
-
-                        // 按小区名称排序
-                        const sortedCommunityNames = Object.keys(groupedByCommunity).sort();
-                        console.log('排序后的小区名称:', sortedCommunityNames);
-
+                        // 保存当前滚动位置
+                        const scrollTop = content.scrollTop;
+                        
+                        // 更新内容
                         content.innerHTML = `
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                                 <h3 style="margin: 0; color: var(--text); font-size: 18px;">📊 所有小区行情</h3>
@@ -9040,6 +9045,9 @@
                             `).join('')}
                         `;
 
+                        // 恢复滚动位置
+                        content.scrollTop = scrollTop;
+
                         // 重新添加事件监听器
                         const newSearchInput = document.getElementById('communitySearchInput');
                         if (newSearchInput) {
@@ -9064,7 +9072,12 @@
                             // 添加事件监听器
                             newSearchInput.addEventListener('input', handleSearchInput);
                             newSearchInput.addEventListener('keypress', handleSearchKeyPress);
-                            newSearchInput.focus();
+                            
+                            // 聚焦搜索框并设置光标位置
+                            setTimeout(() => {
+                                newSearchInput.focus();
+                                newSearchInput.setSelectionRange(communitySearchKeyword.length, communitySearchKeyword.length);
+                            }, 100);
                         }
                     }
                 }
