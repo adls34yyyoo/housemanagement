@@ -8937,6 +8937,13 @@
             document.body.appendChild(modal);
         }
         
+        // 高亮显示匹配的关键词
+        function highlightKeyword(text, keyword) {
+            if (!keyword || !text) return text;
+            const regex = new RegExp(`(${keyword})`, 'gi');
+            return text.replace(regex, '<span style="background-color: #fef3c7; color: #92400e; font-weight: 600;">$1</span>');
+        }
+
         // 执行小区搜索
         function performCommunitySearch() {
             const searchInput = document.getElementById('communitySearchInput');
@@ -8955,9 +8962,24 @@
                         let filteredPrices = allPrices;
                         if (communitySearchKeyword && communitySearchKeyword.trim() !== '') {
                             const keyword = communitySearchKeyword.toLowerCase().trim();
-                            filteredPrices = allPrices.filter(p => 
-                                p.name.toLowerCase().includes(keyword)
-                            );
+                            // 过滤并排序搜索结果
+                            filteredPrices = allPrices
+                                .filter(p => p.name.toLowerCase().includes(keyword))
+                                .sort((a, b) => {
+                                    // 按匹配度排序：完全匹配 > 开头匹配 > 中间匹配
+                                    const aMatch = a.name.toLowerCase();
+                                    const bMatch = b.name.toLowerCase();
+                                    const aExact = aMatch === keyword ? 0 : 1;
+                                    const bExact = bMatch === keyword ? 0 : 1;
+                                    if (aExact !== bExact) return aExact - bExact;
+                                    
+                                    const aStartsWith = aMatch.startsWith(keyword) ? 0 : 1;
+                                    const bStartsWith = bMatch.startsWith(keyword) ? 0 : 1;
+                                    if (aStartsWith !== bStartsWith) return aStartsWith - bStartsWith;
+                                    
+                                    // 按小区名称长度排序
+                                    return a.name.length - b.name.length;
+                                });
                             console.log('过滤后的数据:', filteredPrices);
                         }
 
@@ -9000,7 +9022,7 @@
                                 </div>
                             ` : sortedCommunityNames.map(name => `
                                 <div style="margin-bottom: 16px; padding: 16px; background: var(--background); border-radius: var(--radius);">
-                                    <h4 style="margin: 0 0 12px 0; color: var(--text); font-size: 16px; font-weight: 600;">${name}</h4>
+                                    <h4 style="margin: 0 0 12px 0; color: var(--text); font-size: 16px; font-weight: 600;">${communitySearchKeyword ? highlightKeyword(name, communitySearchKeyword) : name}</h4>
                                     ${groupedByCommunity[name].map(price => `
                                         <div style="margin-bottom: 12px; padding: 12px; background: var(--surface); border-radius: var(--radius-sm);">
                                             <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
@@ -9085,9 +9107,25 @@
                 // 根据搜索关键词过滤小区
                 let filteredPrices = allPrices;
                 if (communitySearchKeyword && communitySearchKeyword.trim() !== '') {
-                    filteredPrices = allPrices.filter(p => 
-                        p.name.toLowerCase().includes(communitySearchKeyword.toLowerCase().trim())
-                    );
+                    const keyword = communitySearchKeyword.toLowerCase().trim();
+                    // 过滤并排序搜索结果
+                    filteredPrices = allPrices
+                        .filter(p => p.name.toLowerCase().includes(keyword))
+                        .sort((a, b) => {
+                            // 按匹配度排序：完全匹配 > 开头匹配 > 中间匹配
+                            const aMatch = a.name.toLowerCase();
+                            const bMatch = b.name.toLowerCase();
+                            const aExact = aMatch === keyword ? 0 : 1;
+                            const bExact = bMatch === keyword ? 0 : 1;
+                            if (aExact !== bExact) return aExact - bExact;
+                            
+                            const aStartsWith = aMatch.startsWith(keyword) ? 0 : 1;
+                            const bStartsWith = bMatch.startsWith(keyword) ? 0 : 1;
+                            if (aStartsWith !== bStartsWith) return aStartsWith - bStartsWith;
+                            
+                            // 按小区名称长度排序
+                            return a.name.length - b.name.length;
+                        });
                 }
 
                 // 按小区名称分组
@@ -9128,7 +9166,7 @@
                         </div>
                     ` : sortedCommunityNames.map(name => `
                         <div style="margin-bottom: 16px; padding: 16px; background: var(--background); border-radius: var(--radius);">
-                            <h4 style="margin: 0 0 12px 0; color: var(--text); font-size: 16px; font-weight: 600;">${name}</h4>
+                            <h4 style="margin: 0 0 12px 0; color: var(--text); font-size: 16px; font-weight: 600;">${communitySearchKeyword ? highlightKeyword(name, communitySearchKeyword) : name}</h4>
                             ${groupedByCommunity[name].map(price => `
                                 <div style="margin-bottom: 12px; padding: 12px; background: var(--surface); border-radius: var(--radius-sm);">
                                     <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
