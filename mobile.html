@@ -8782,8 +8782,8 @@
 
         // 显示上海房产最新行情详情
         function showMarketTrends() {
-            showToast('正在加载上海房产最新行情详情...');
-            // 这里可以添加实际的行情数据加载逻辑
+            // 显示所有小区行情
+            showCommunityDetail('');
         }
 
         // 显示上海最新政策详情
@@ -8934,6 +8934,100 @@
             document.body.appendChild(modal);
         }
         
+        // 执行小区搜索
+        function performCommunitySearch() {
+            const searchInput = document.getElementById('communitySearchInput');
+            if (searchInput) {
+                communitySearchKeyword = searchInput.value;
+                // 重新渲染内容
+                const modal = searchInput.closest('.modal');
+                if (modal) {
+                    // 找到渲染函数并重新执行
+                    const content = modal.querySelector('.modal-content');
+                    if (content) {
+                        // 重新获取所有价格数据并渲染
+                        const allPrices = fetchLatestCommunityPrices();
+                        let filteredPrices = allPrices;
+                        if (communitySearchKeyword && communitySearchKeyword.trim() !== '') {
+                            filteredPrices = allPrices.filter(p => 
+                                p.name.toLowerCase().includes(communitySearchKeyword.toLowerCase().trim())
+                            );
+                        }
+
+                        // 按小区名称分组
+                        const groupedByCommunity = {};
+                        filteredPrices.forEach(price => {
+                            if (!groupedByCommunity[price.name]) {
+                                groupedByCommunity[price.name] = [];
+                            }
+                            groupedByCommunity[price.name].push(price);
+                        });
+
+                        // 按小区名称排序
+                        const sortedCommunityNames = Object.keys(groupedByCommunity).sort();
+
+                        content.innerHTML = `
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                <h3 style="margin: 0; color: var(--text); font-size: 18px;">📊 所有小区行情</h3>
+                                <button onclick="this.parentElement.parentElement.parentElement.remove()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-secondary);">×</button>
+                            </div>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <div style="position: relative;">
+                                    <input 
+                                        type="text" 
+                                        id="communitySearchInput"
+                                        placeholder="搜索小区名称..." 
+                                        value="${communitySearchKeyword}"
+                                        style="width: 100%; padding: 14px 44px 14px 16px; border: 2px solid var(--border); border-radius: var(--radius); font-size: 16px; background: var(--background);"
+                                    >
+                                    <span onclick="performCommunitySearch()" style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 20px; cursor: pointer; padding: 4px; border-radius: 4px; transition: background-color 0.2s;">🔍</span>
+                                </div>
+                            </div>
+                            
+                            ${sortedCommunityNames.length === 0 ? `
+                                <div style="text-align: center; padding: 40px 20px; color: var(--text-tertiary);">
+                                    <div style="font-size: 48px; margin-bottom: 12px;">🏠</div>
+                                    <div>${communitySearchKeyword ? '未找到匹配的小区' : '暂无小区行情数据'}</div>
+                                </div>
+                            ` : sortedCommunityNames.map(name => `
+                                <div style="margin-bottom: 16px; padding: 16px; background: var(--background); border-radius: var(--radius);">
+                                    <h4 style="margin: 0 0 12px 0; color: var(--text); font-size: 16px; font-weight: 600;">${name}</h4>
+                                    ${groupedByCommunity[name].map(price => `
+                                        <div style="margin-bottom: 12px; padding: 12px; background: var(--surface); border-radius: var(--radius-sm);">
+                                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                                <span style="font-weight: 500; color: ${price.type === 'sale' ? '#ef4444' : '#10b981'};">${price.type === 'sale' ? '🏠 售房' : '🏢 租房'}</span>
+                                                <span style="font-size: 14px; color: ${parseFloat(price.change) >= 0 ? '#10b981' : '#ef4444'};">${parseFloat(price.change) >= 0 ? '↑' : '↓'} ${Math.abs(price.change)}%</span>
+                                            </div>
+                                            <div style="display: flex; justify-content: space-between;">
+                                                <span style="color: #ef4444; font-weight: 500;">挂牌价: ${price.listingPrice.toLocaleString()} ${price.type === 'sale' ? '元/㎡' : '元/㎡·月'}</span>
+                                                <span style="color: #10b981; font-weight: 500;">成交均价: ${price.transactionPrice.toLocaleString()} ${price.type === 'sale' ? '元/㎡' : '元/㎡·月'}</span>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            `).join('')}
+                        `;
+
+                        // 重新添加事件监听器
+                        const newSearchInput = document.getElementById('communitySearchInput');
+                        if (newSearchInput) {
+                            // 使用防抖，避免频繁渲染
+                            let debounceTimer;
+                            newSearchInput.addEventListener('input', function(e) {
+                                clearTimeout(debounceTimer);
+                                debounceTimer = setTimeout(() => {
+                                    communitySearchKeyword = e.target.value;
+                                    performCommunitySearch();
+                                }, 300);
+                            });
+                            newSearchInput.focus();
+                        }
+                    }
+                }
+            }
+        }
+
         // 显示所有小区行情（点击查看详情时调用）
         function showCommunityDetail(communityName) {
             // 获取所有小区行情数据
@@ -9003,7 +9097,7 @@
                                 value="${communitySearchKeyword}"
                                 style="width: 100%; padding: 14px 44px 14px 16px; border: 2px solid var(--border); border-radius: var(--radius); font-size: 16px; background: var(--background);"
                             >
-                            <span style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 20px;">🔍</span>
+                            <span onclick="performCommunitySearch()" style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 20px; cursor: pointer; padding: 4px; border-radius: 4px; transition: background-color 0.2s;">🔍</span>
                         </div>
                     </div>
                     
@@ -9040,7 +9134,7 @@
                         clearTimeout(debounceTimer);
                         debounceTimer = setTimeout(() => {
                             communitySearchKeyword = e.target.value;
-                            renderModalContent();
+                            performCommunitySearch();
                         }, 300);
                     });
                     searchInput.focus();
@@ -10043,16 +10137,49 @@
                     console.log('添加后新用户客户列表:', newUserCustomers);
                 }
 
-                // 重新加载数据
-                await loadData();
-                
+                // 更新数据库中的客户信息，添加转让记录到变更历史
+                if (supabaseClient) {
+                    try {
+                        // 获取客户的当前变更历史
+                        const currentChangeHistory = customer.changeHistory || customer.change_history || [];
+                        
+                        // 添加转让记录
+                        const transferRecord = {
+                            timestamp: new Date().toISOString(),
+                            field: 'owner',
+                            oldValue: currentUser || 'admin',
+                            newValue: newOwner,
+                            type: 'transfer'
+                        };
+                        
+                        const updatedChangeHistory = [...currentChangeHistory, transferRecord];
+                        
+                        // 更新数据库
+                        const { error } = await supabaseClient
+                            .from('customers')
+                            .update({
+                                change_history: updatedChangeHistory,
+                                updated_at: new Date().toISOString()
+                            })
+                            .eq('id', String(customerId));
+                        
+                        if (error) {
+                            console.error('更新客户转让记录失败:', error);
+                        } else {
+                            console.log('客户转让记录已保存到数据库');
+                        }
+                    } catch (dbError) {
+                        console.error('保存转让记录到数据库时出错:', dbError);
+                    }
+                }
+
                 // 直接更新客户数组，而不是依赖loadData
                 customers = customers.filter(c => String(c.id) !== String(customerId));
 
                 // 重新渲染客户列表
                 renderCustomerList();
 
-                showToast('✅ 客户转让成功');
+                showToast(`✅ 客户转让成功！${newOwner} 需要刷新页面才能看到新客户`);
                 closeTransferModal();
                 
                 // 关闭客户详情模态框
@@ -10811,6 +10938,25 @@
                 console.log('网络已断开');
                 updateConnectionStatus(false);
                 showToast('📵 网络已断开');
+            });
+
+            // 监听 localStorage 变化，用于客户转让通知
+            window.addEventListener('storage', (e) => {
+                console.log('localStorage 变化:', e.key, e.newValue);
+                
+                // 检查是否是客户列表变化
+                if (e.key && e.key.startsWith('customer_')) {
+                    const changedUser = e.key.replace('customer_', '');
+                    console.log(`用户 ${changedUser} 的客户列表发生变化`);
+                    
+                    // 不管是哪个用户的客户列表变化，都刷新当前用户的数据
+                    // 因为当前用户可能是接收方，需要看到新客户
+                    console.log('客户列表发生变化，刷新当前用户数据...');
+                    loadData().then(() => {
+                        renderCustomerList();
+                        showToast('🔄 客户列表已更新');
+                    });
+                }
             });
 
             // 页面可见性变化时的处理 - 添加防抖机制
