@@ -7230,7 +7230,8 @@
                 change_history: changeHistoryRecord,
                 communication_records: originalCustomer?.communication_records || originalCustomer?.communicationRecords || [],
                 createdat: originalCustomer?.createdat || new Date().toISOString(),
-                updatedat: new Date().toISOString()
+                updatedat: new Date().toISOString(),
+                owner: originalCustomer?.owner || currentUser || 'admin' // 添加owner字段，记录客户归属
             };
 
             try {
@@ -9897,6 +9898,7 @@
                     const customersPromise = supabaseClient
                         .from('customers')
                         .select('*')
+                        .eq('owner', currentUser || 'admin') // 根据owner字段过滤
                         .order('createdat', { ascending: false });
 
                     const { data: customersData, error: customersError } = await Promise.race([
@@ -9905,11 +9907,7 @@
                     ]);
 
                     if (!customersError && customersData) {
-                        // 获取当前用户的客户ID列表
-                        const currentUserKey = `customer_${currentUser || 'admin'}`;
-                        const currentUserCustomerIds = JSON.parse(localStorage.getItem(currentUserKey) || '[]');
-                        
-                        // 过滤出当前用户的客户
+                        // 映射客户数据，确保字段一致性
                         customers = customersData.map(c => ({
                             ...c,
                             // 确保 changeHistory 字段存在
@@ -9918,12 +9916,9 @@
                             communicationRecords: c.communicationRecords || c.communication_records || [],
                             // 确保 viewedProperties 字段存在
                             viewedProperties: c.viewedProperties || c.viewed_properties || []
-                        })).filter(c => {
-                            // 只有当客户ID在当前用户的客户列表中时才显示
-                            return currentUserCustomerIds.includes(String(c.id));
-                        });
+                        }));
                         console.log(`成功加载 ${customers.length} 条客户数据`);
-                        console.log('当前用户客户ID列表:', currentUserCustomerIds);
+                        console.log('当前用户:', currentUser || 'admin');
                     } else if (customersError) {
                         console.warn('加载客户数据失败:', customersError);
                     }
@@ -10116,28 +10111,7 @@
             try {
                 console.log('开始转让客户:', { customerId, currentUser, newOwner });
                 
-                // 从当前用户的客户列表中移除
-                const currentUserKey = `customer_${currentUser || 'admin'}`;
-                let currentUserCustomers = JSON.parse(localStorage.getItem(currentUserKey) || '[]');
-                console.log('转让前当前用户客户列表:', currentUserCustomers);
-                
-                // 确保使用字符串进行比较
-                const updatedCurrentCustomers = currentUserCustomers.filter(id => String(id) !== String(customerId));
-                localStorage.setItem(currentUserKey, JSON.stringify(updatedCurrentCustomers));
-                console.log('转让后当前用户客户列表:', updatedCurrentCustomers);
-
-                // 添加到新用户的客户列表
-                const newUserKey = `customer_${newOwner}`;
-                let newUserCustomers = JSON.parse(localStorage.getItem(newUserKey) || '[]');
-                console.log('新用户当前客户列表:', newUserCustomers);
-                
-                if (!newUserCustomers.some(id => String(id) === String(customerId))) {
-                    newUserCustomers.push(String(customerId));
-                    localStorage.setItem(newUserKey, JSON.stringify(newUserCustomers));
-                    console.log('添加后新用户客户列表:', newUserCustomers);
-                }
-
-                // 更新数据库中的客户信息，添加转让记录到变更历史
+                // 更新数据库中的客户信息，添加转让记录到变更历史并更新owner字段
                 if (supabaseClient) {
                     try {
                         // 获取客户的当前变更历史
@@ -10154,22 +10128,27 @@
                         
                         const updatedChangeHistory = [...currentChangeHistory, transferRecord];
                         
-                        // 更新数据库
+                        // 更新数据库，包括owner字段
                         const { error } = await supabaseClient
                             .from('customers')
                             .update({
+                                owner: newOwner,
                                 change_history: updatedChangeHistory,
-                                updated_at: new Date().toISOString()
+                                updatedat: new Date().toISOString()
                             })
                             .eq('id', String(customerId));
                         
                         if (error) {
                             console.error('更新客户转让记录失败:', error);
+                            showToast(`❌ 转让失败: ${error.message}`);
+                            return;
                         } else {
                             console.log('客户转让记录已保存到数据库');
                         }
                     } catch (dbError) {
                         console.error('保存转让记录到数据库时出错:', dbError);
+                        showToast('❌ 转让失败，请检查网络连接');
+                        return;
                     }
                 }
 
@@ -10179,7 +10158,7 @@
                 // 重新渲染客户列表
                 renderCustomerList();
 
-                showToast(`✅ 客户转让成功！${newOwner} 需要刷新页面才能看到新客户`);
+                showToast(`✅ 客户转让成功！${newOwner} 刷新页面后即可看到新客户`);
                 closeTransferModal();
                 
                 // 关闭客户详情模态框
