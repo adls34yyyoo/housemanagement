@@ -8,9 +8,14 @@
     <meta name="theme-color" content="#6366f1">
     <title>房源管理</title>
     <!-- 使用多个CDN源，提高加载成功率 -->
+    <!-- Axios -->
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <!-- TensorFlow -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/4.10.0/tf.min.js"></script>
+    <!-- Supabase (主CDN) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+    <!-- Supabase (备用CDN) -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
     <style>
         /* 现代设计系统 - 2024 */
         :root {
@@ -1988,7 +1993,7 @@
                 <label>密码</label>
                 <input type="password" id="password" placeholder="请输入密码">
             </div>
-            <button class="login-btn" onclick="handleLogin()">登录</button>
+            <button class="login-btn" id="loginButton">登录</button>
             <div class="login-tips">
             </div>
         </div>
@@ -11028,6 +11033,14 @@
         }
 
         // 页面加载完成后初始化
+        // 为登录按钮添加事件监听器
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginButton = document.getElementById('loginButton');
+            if (loginButton) {
+                loginButton.addEventListener('click', handleLogin);
+            }
+        });
+
         // 主题颜色相关函数
         function openThemeModal() {
             document.getElementById('themeModal').classList.add('active');
