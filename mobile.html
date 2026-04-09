@@ -8994,91 +8994,88 @@
                 console.log('排序后的小区名称:', sortedCommunityNames);
 
                 // 找到内容容器并更新
-                const modal = searchInput.closest('.modal');
-                if (modal) {
-                    const content = modal.querySelector('.modal-content');
-                    if (content) {
-                        // 保存当前滚动位置
-                        const scrollTop = content.scrollTop;
+                const parentElement = searchInput.closest('[style*="max-height: 90vh"]');
+                if (parentElement) {
+                    // 保存当前滚动位置
+                    const scrollTop = parentElement.scrollTop;
+                    
+                    // 更新内容
+                    parentElement.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin: 0; color: var(--text); font-size: 18px;">📊 所有小区行情</h3>
+                            <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-secondary);">×</button>
+                        </div>
                         
-                        // 更新内容
-                        content.innerHTML = `
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                                <h3 style="margin: 0; color: var(--text); font-size: 18px;">📊 所有小区行情</h3>
-                                <button onclick="this.parentElement.parentElement.parentElement.remove()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-secondary);">×</button>
+                        <div style="margin-bottom: 20px;">
+                            <div style="position: relative;">
+                                <input 
+                                    type="text" 
+                                    id="communitySearchInput"
+                                    placeholder="搜索小区名称..." 
+                                    value="${communitySearchKeyword}"
+                                    style="width: 100%; padding: 14px 44px 14px 16px; border: 2px solid var(--border); border-radius: var(--radius); font-size: 16px; background: var(--background);"
+                                >
+                                <span onclick="performCommunitySearch()" style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 20px; cursor: pointer; padding: 4px; border-radius: 4px; transition: background-color 0.2s;">🔍</span>
                             </div>
-                            
-                            <div style="margin-bottom: 20px;">
-                                <div style="position: relative;">
-                                    <input 
-                                        type="text" 
-                                        id="communitySearchInput"
-                                        placeholder="搜索小区名称..." 
-                                        value="${communitySearchKeyword}"
-                                        style="width: 100%; padding: 14px 44px 14px 16px; border: 2px solid var(--border); border-radius: var(--radius); font-size: 16px; background: var(--background);"
-                                    >
-                                    <span onclick="performCommunitySearch()" style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 20px; cursor: pointer; padding: 4px; border-radius: 4px; transition: background-color 0.2s;">🔍</span>
-                                </div>
+                        </div>
+                        
+                        ${sortedCommunityNames.length === 0 ? `
+                            <div style="text-align: center; padding: 40px 20px; color: var(--text-tertiary);">
+                                <div style="font-size: 48px; margin-bottom: 12px;">🏠</div>
+                                <div>${communitySearchKeyword ? '未找到匹配的小区' : '暂无小区行情数据'}</div>
                             </div>
-                            
-                            ${sortedCommunityNames.length === 0 ? `
-                                <div style="text-align: center; padding: 40px 20px; color: var(--text-tertiary);">
-                                    <div style="font-size: 48px; margin-bottom: 12px;">🏠</div>
-                                    <div>${communitySearchKeyword ? '未找到匹配的小区' : '暂无小区行情数据'}</div>
-                                </div>
-                            ` : sortedCommunityNames.map(name => `
-                                <div style="margin-bottom: 16px; padding: 16px; background: var(--background); border-radius: var(--radius);">
-                                    <h4 style="margin: 0 0 12px 0; color: var(--text); font-size: 16px; font-weight: 600;">${communitySearchKeyword ? highlightKeyword(name, communitySearchKeyword) : name}</h4>
-                                    ${groupedByCommunity[name].map(price => `
-                                        <div style="margin-bottom: 12px; padding: 12px; background: var(--surface); border-radius: var(--radius-sm);">
-                                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                                                <span style="font-weight: 500; color: ${price.type === 'sale' ? '#ef4444' : '#10b981'};">${price.type === 'sale' ? '🏠 售房' : '🏢 租房'}</span>
-                                                <span style="font-size: 14px; color: ${parseFloat(price.change) >= 0 ? '#10b981' : '#ef4444'};">${parseFloat(price.change) >= 0 ? '↑' : '↓'} ${Math.abs(price.change)}%</span>
-                                            </div>
-                                            <div style="display: flex; justify-content: space-between;">
-                                                <span style="color: #ef4444; font-weight: 500;">挂牌价: ${price.listingPrice.toLocaleString()} ${price.type === 'sale' ? '元/㎡' : '元/㎡·月'}</span>
-                                                <span style="color: #10b981; font-weight: 500;">成交均价: ${price.transactionPrice.toLocaleString()} ${price.type === 'sale' ? '元/㎡' : '元/㎡·月'}</span>
-                                            </div>
+                        ` : sortedCommunityNames.map(name => `
+                            <div style="margin-bottom: 16px; padding: 16px; background: var(--background); border-radius: var(--radius);">
+                                <h4 style="margin: 0 0 12px 0; color: var(--text); font-size: 16px; font-weight: 600;">${communitySearchKeyword ? highlightKeyword(name, communitySearchKeyword) : name}</h4>
+                                ${groupedByCommunity[name].map(price => `
+                                    <div style="margin-bottom: 12px; padding: 12px; background: var(--surface); border-radius: var(--radius-sm);">
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                            <span style="font-weight: 500; color: ${price.type === 'sale' ? '#ef4444' : '#10b981'};">${price.type === 'sale' ? '🏠 售房' : '🏢 租房'}</span>
+                                            <span style="font-size: 14px; color: ${parseFloat(price.change) >= 0 ? '#10b981' : '#ef4444'};">${parseFloat(price.change) >= 0 ? '↑' : '↓'} ${Math.abs(price.change)}%</span>
                                         </div>
-                                    `).join('')}
-                                </div>
-                            `).join('')}
-                        `;
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <span style="color: #ef4444; font-weight: 500;">挂牌价: ${price.listingPrice.toLocaleString()} ${price.type === 'sale' ? '元/㎡' : '元/㎡·月'}</span>
+                                            <span style="color: #10b981; font-weight: 500;">成交均价: ${price.transactionPrice.toLocaleString()} ${price.type === 'sale' ? '元/㎡' : '元/㎡·月'}</span>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `).join('')}
+                    `;
 
-                        // 恢复滚动位置
-                        content.scrollTop = scrollTop;
+                    // 恢复滚动位置
+                    parentElement.scrollTop = scrollTop;
 
-                        // 重新添加事件监听器
-                        const newSearchInput = document.getElementById('communitySearchInput');
-                        if (newSearchInput) {
-                            // 定义事件处理函数
-                            function handleSearchInput(e) {
-                                // 使用防抖，避免频繁渲染
-                                let debounceTimer;
-                                clearTimeout(debounceTimer);
-                                debounceTimer = setTimeout(() => {
-                                    communitySearchKeyword = e.target.value;
-                                    performCommunitySearch();
-                                }, 300);
-                            }
-                            
-                            function handleSearchKeyPress(e) {
-                                if (e.key === 'Enter') {
-                                    communitySearchKeyword = e.target.value;
-                                    performCommunitySearch();
-                                }
-                            }
-                            
-                            // 添加事件监听器
-                            newSearchInput.addEventListener('input', handleSearchInput);
-                            newSearchInput.addEventListener('keypress', handleSearchKeyPress);
-                            
-                            // 聚焦搜索框并设置光标位置
-                            setTimeout(() => {
-                                newSearchInput.focus();
-                                newSearchInput.setSelectionRange(communitySearchKeyword.length, communitySearchKeyword.length);
-                            }, 100);
+                    // 重新添加事件监听器
+                    const newSearchInput = document.getElementById('communitySearchInput');
+                    if (newSearchInput) {
+                        // 定义事件处理函数
+                        function handleSearchInput(e) {
+                            // 使用防抖，避免频繁渲染
+                            let debounceTimer;
+                            clearTimeout(debounceTimer);
+                            debounceTimer = setTimeout(() => {
+                                communitySearchKeyword = e.target.value;
+                                performCommunitySearch();
+                            }, 300);
                         }
+                        
+                        function handleSearchKeyPress(e) {
+                            if (e.key === 'Enter') {
+                                communitySearchKeyword = e.target.value;
+                                performCommunitySearch();
+                            }
+                        }
+                        
+                        // 添加事件监听器
+                        newSearchInput.addEventListener('input', handleSearchInput);
+                        newSearchInput.addEventListener('keypress', handleSearchKeyPress);
+                        
+                        // 聚焦搜索框并设置光标位置
+                        setTimeout(() => {
+                            newSearchInput.focus();
+                            newSearchInput.setSelectionRange(communitySearchKeyword.length, communitySearchKeyword.length);
+                        }, 100);
                     }
                 }
             }
