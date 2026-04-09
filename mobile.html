@@ -11018,7 +11018,8 @@
                     const channelStatus = realtimeChannel.state;
                     console.log('定期检查连接状态:', channelStatus);
                     // 只有当重连计数器未达到最大值时才尝试重连
-                    if (channelStatus !== 'SUBSCRIBED' && reconnectCount < maxReconnectCount) {
+                    // 正常状态包括 'joined'（已加入）和 'SUBSCRIBED'（已订阅）
+                    if (!['joined', 'SUBSCRIBED'].includes(channelStatus) && reconnectCount < maxReconnectCount) {
                         console.log('连接状态异常，重新连接...');
                         initRealtimeConnection();
                     }
