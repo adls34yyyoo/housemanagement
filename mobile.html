@@ -3503,6 +3503,7 @@
         let currentUser = '';
         let editingPropertyId = null;
         let editingCustomerId = null;
+        let communitySearchKeyword = '';
 
         // 初始化数据数组
         properties = [];
@@ -8860,8 +8861,7 @@
             }
         }
 
-        // 全局变量，存储小区详情弹窗的搜索关键词
-        let communitySearchKeyword = '';
+
         
         // 显示单小区行情（点击首页小区时调用）
         function showSingleCommunityDetail(communityName) {
@@ -8942,6 +8942,7 @@
             const searchInput = document.getElementById('communitySearchInput');
             if (searchInput) {
                 communitySearchKeyword = searchInput.value;
+                console.log('执行小区搜索:', communitySearchKeyword);
                 // 重新渲染内容
                 const modal = searchInput.closest('.modal');
                 if (modal) {
@@ -8950,11 +8951,14 @@
                     if (content) {
                         // 重新获取所有价格数据并渲染
                         const allPrices = fetchLatestCommunityPrices();
+                        console.log('所有小区数据:', allPrices);
                         let filteredPrices = allPrices;
                         if (communitySearchKeyword && communitySearchKeyword.trim() !== '') {
+                            const keyword = communitySearchKeyword.toLowerCase().trim();
                             filteredPrices = allPrices.filter(p => 
-                                p.name.toLowerCase().includes(communitySearchKeyword.toLowerCase().trim())
+                                p.name.toLowerCase().includes(keyword)
                             );
+                            console.log('过滤后的数据:', filteredPrices);
                         }
 
                         // 按小区名称分组
@@ -8968,6 +8972,7 @@
 
                         // 按小区名称排序
                         const sortedCommunityNames = Object.keys(groupedByCommunity).sort();
+                        console.log('排序后的小区名称:', sortedCommunityNames);
 
                         content.innerHTML = `
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -9015,15 +9020,27 @@
                         // 重新添加事件监听器
                         const newSearchInput = document.getElementById('communitySearchInput');
                         if (newSearchInput) {
-                            // 使用防抖，避免频繁渲染
-                            let debounceTimer;
-                            newSearchInput.addEventListener('input', function(e) {
+                            // 定义事件处理函数
+                            function handleSearchInput(e) {
+                                // 使用防抖，避免频繁渲染
+                                let debounceTimer;
                                 clearTimeout(debounceTimer);
                                 debounceTimer = setTimeout(() => {
                                     communitySearchKeyword = e.target.value;
                                     performCommunitySearch();
                                 }, 300);
-                            });
+                            }
+                            
+                            function handleSearchKeyPress(e) {
+                                if (e.key === 'Enter') {
+                                    communitySearchKeyword = e.target.value;
+                                    performCommunitySearch();
+                                }
+                            }
+                            
+                            // 添加事件监听器
+                            newSearchInput.addEventListener('input', handleSearchInput);
+                            newSearchInput.addEventListener('keypress', handleSearchKeyPress);
                             newSearchInput.focus();
                         }
                     }
@@ -9131,15 +9148,27 @@
                 // 添加搜索事件监听
                 const searchInput = document.getElementById('communitySearchInput');
                 if (searchInput) {
-                    // 使用防抖，避免频繁渲染
-                    let debounceTimer;
-                    searchInput.addEventListener('input', function(e) {
+                    // 定义事件处理函数
+                    function handleSearchInput(e) {
+                        // 使用防抖，避免频繁渲染
+                        let debounceTimer;
                         clearTimeout(debounceTimer);
                         debounceTimer = setTimeout(() => {
                             communitySearchKeyword = e.target.value;
                             performCommunitySearch();
                         }, 300);
-                    });
+                    }
+                    
+                    function handleSearchKeyPress(e) {
+                        if (e.key === 'Enter') {
+                            communitySearchKeyword = e.target.value;
+                            performCommunitySearch();
+                        }
+                    }
+                    
+                    // 添加事件监听器
+                    searchInput.addEventListener('input', handleSearchInput);
+                    searchInput.addEventListener('keypress', handleSearchKeyPress);
                     searchInput.focus();
                 }
             }
