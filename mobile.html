@@ -7242,6 +7242,7 @@
                 updatedat: new Date().toISOString(),
                 owner: originalCustomer?.owner || currentUser || 'admin' // 添加owner字段，记录客户归属
             };
+            console.log('保存客户数据:', customer);
 
             try {
                 // 初始化Supabase客户端
@@ -9966,10 +9967,13 @@
                     console.log('从网络加载客户数据...');
                     try {
                         const currentUserValue = currentUser || 'admin';
-                        const customersPromise = supabaseClient
+                        console.log('查询客户数据，当前用户:', currentUserValue);
+                        
+                        // 先尝试简单的owner字段查询
+                        let customersPromise = supabaseClient
                             .from('customers')
                             .select('*')
-                            .or(`owner.eq.${currentUserValue},co_owners.cs.{${currentUserValue}}`) // 根据owner或co_owners字段过滤
+                            .eq('owner', currentUserValue)
                             .order('createdat', { ascending: false });
 
                         const { data: customersData, error: customersError } = await Promise.race([
