@@ -8860,6 +8860,81 @@
         // 全局变量，存储小区详情弹窗的搜索关键词
         let communitySearchKeyword = '';
         
+        // 显示单小区行情（点击首页小区时调用）
+        function showSingleCommunityDetail(communityName) {
+            // 获取所有小区行情数据
+            const allPrices = fetchLatestCommunityPrices();
+            
+            // 只显示当前小区的数据
+            const communityPrices = allPrices.filter(p => p.name === communityName);
+            
+            if (communityPrices.length === 0) {
+                showToast('暂无该小区行情数据');
+                return;
+            }
+            
+            // 创建详情弹窗
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+            `;
+
+            const content = document.createElement('div');
+            content.style.cssText = `
+                background: var(--surface);
+                padding: 24px;
+                border-radius: var(--radius-xl);
+                width: 90%;
+                max-width: 500px;
+                max-height: 90vh;
+                overflow-y: auto;
+                box-shadow: var(--shadow-xl);
+            `;
+
+            content.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="margin: 0; color: var(--text); font-size: 18px;">📊 ${communityName} 行情</h3>
+                    <button onclick="this.parentElement.parentElement.parentElement.remove()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-secondary);">×</button>
+                </div>
+                
+                ${communityPrices.map(price => `
+                    <div style="margin-bottom: 16px; padding: 16px; background: var(--background); border-radius: var(--radius);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px; align-items: center;">
+                            <span style="font-weight: 500; color: ${price.type === 'sale' ? '#ef4444' : '#10b981'}; font-size: 16px;">${price.type === 'sale' ? '🏠 售房行情' : '🏢 租房行情'}</span>
+                            <span style="font-size: 14px; color: ${parseFloat(price.change) >= 0 ? '#10b981' : '#ef4444'}; background: ${parseFloat(price.change) >= 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; padding: 4px 8px; border-radius: 4px;">${parseFloat(price.change) >= 0 ? '↑' : '↓'} ${Math.abs(price.change)}%</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: var(--text-secondary);">挂牌均价</span>
+                            <span style="color: #ef4444; font-weight: 600; font-size: 18px;">${price.listingPrice.toLocaleString()} ${price.type === 'sale' ? '元/㎡' : '元/㎡·月'}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-secondary);">成交均价</span>
+                            <span style="color: #10b981; font-weight: 600; font-size: 18px;">${price.transactionPrice.toLocaleString()} ${price.type === 'sale' ? '元/㎡' : '元/㎡·月'}</span>
+                        </div>
+                    </div>
+                `).join('')}
+                
+                <div style="margin-top: 20px; text-align: center;">
+                    <button onclick="this.parentElement.parentElement.parentElement.remove(); showCommunityDetail('');" style="padding: 12px 24px; background: var(--background); color: var(--text); border: 2px solid var(--border); border-radius: var(--radius); cursor: pointer; font-weight: 500;">
+                        查看所有小区
+                    </button>
+                </div>
+            `;
+
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+        }
+        
+        // 显示所有小区行情（点击查看详情时调用）
         function showCommunityDetail(communityName) {
             // 获取所有小区行情数据
             const allPrices = fetchLatestCommunityPrices();
@@ -8894,12 +8969,14 @@
             // 渲染弹窗内容
             function renderModalContent() {
                 // 根据搜索关键词过滤小区
-                const filteredPrices = allPrices.filter(p => 
-                    !communitySearchKeyword || 
-                    p.name.toLowerCase().includes(communitySearchKeyword.toLowerCase())
-                );
+                let filteredPrices = allPrices;
+                if (communitySearchKeyword && communitySearchKeyword.trim() !== '') {
+                    filteredPrices = allPrices.filter(p => 
+                        p.name.toLowerCase().includes(communitySearchKeyword.toLowerCase().trim())
+                    );
+                }
 
-                // 按小区名称和类型分组
+                // 按小区名称分组
                 const groupedByCommunity = {};
                 filteredPrices.forEach(price => {
                     if (!groupedByCommunity[price.name]) {
@@ -8908,9 +8985,12 @@
                     groupedByCommunity[price.name].push(price);
                 });
 
+                // 按小区名称排序
+                const sortedCommunityNames = Object.keys(groupedByCommunity).sort();
+
                 content.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3 style="margin: 0; color: var(--text); font-size: 18px;">📊 小区行情</h3>
+                        <h3 style="margin: 0; color: var(--text); font-size: 18px;">📊 所有小区行情</h3>
                         <button onclick="this.parentElement.parentElement.parentElement.remove()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-secondary);">×</button>
                     </div>
                     
@@ -8927,15 +9007,15 @@
                         </div>
                     </div>
                     
-                    ${Object.keys(groupedByCommunity).length === 0 ? `
+                    ${sortedCommunityNames.length === 0 ? `
                         <div style="text-align: center; padding: 40px 20px; color: var(--text-tertiary);">
                             <div style="font-size: 48px; margin-bottom: 12px;">🏠</div>
-                            <div>暂无小区行情数据</div>
+                            <div>${communitySearchKeyword ? '未找到匹配的小区' : '暂无小区行情数据'}</div>
                         </div>
-                    ` : Object.keys(groupedByCommunity).map(communityName => `
+                    ` : sortedCommunityNames.map(name => `
                         <div style="margin-bottom: 16px; padding: 16px; background: var(--background); border-radius: var(--radius);">
-                            <h4 style="margin: 0 0 12px 0; color: var(--text); font-size: 16px; font-weight: 600;">${communityName}</h4>
-                            ${groupedByCommunity[communityName].map(price => `
+                            <h4 style="margin: 0 0 12px 0; color: var(--text); font-size: 16px; font-weight: 600;">${name}</h4>
+                            ${groupedByCommunity[name].map(price => `
                                 <div style="margin-bottom: 12px; padding: 12px; background: var(--surface); border-radius: var(--radius-sm);">
                                     <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                                         <span style="font-weight: 500; color: ${price.type === 'sale' ? '#ef4444' : '#10b981'};">${price.type === 'sale' ? '🏠 售房' : '🏢 租房'}</span>
@@ -8954,9 +9034,14 @@
                 // 添加搜索事件监听
                 const searchInput = document.getElementById('communitySearchInput');
                 if (searchInput) {
+                    // 使用防抖，避免频繁渲染
+                    let debounceTimer;
                     searchInput.addEventListener('input', function(e) {
-                        communitySearchKeyword = e.target.value;
-                        renderModalContent();
+                        clearTimeout(debounceTimer);
+                        debounceTimer = setTimeout(() => {
+                            communitySearchKeyword = e.target.value;
+                            renderModalContent();
+                        }, 300);
                     });
                     searchInput.focus();
                 }
@@ -11190,7 +11275,7 @@
                         </button>
                     </div>
                     ${filteredPrices.map(community => `
-                        <div class="community-price-item" onclick="showCommunityDetail('${community.name}')" style="padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: background-color 0.2s;">
+                        <div class="community-price-item" onclick="showSingleCommunityDetail('${community.name}')" style="padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: background-color 0.2s;">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                                 <span style="font-weight: 500; color: var(--text);">${community.name}</span>
                                 <span style="color: #ef4444; font-weight: 500;">挂牌价: ${community.listingPrice.toLocaleString()} ${community.type === 'sale' ? '元/㎡' : '元/㎡·月'}</span>
@@ -11201,6 +11286,11 @@
                             </div>
                         </div>
                     `).join('')}
+                    <div style="margin-top: 16px; text-align: center;">
+                        <button onclick="showCommunityDetail('')" style="padding: 12px 24px; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
+                            查看详情
+                        </button>
+                    </div>
                 `;
             }
         }
