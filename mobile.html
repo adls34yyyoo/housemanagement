@@ -9895,32 +9895,55 @@
 
                     // 从网络加载客户数据
                     console.log('从网络加载客户数据...');
-                    const customersPromise = supabaseClient
-                        .from('customers')
-                        .select('*')
-                        .eq('owner', currentUser || 'admin') // 根据owner字段过滤
-                        .order('createdat', { ascending: false });
+                    try {
+                        const customersPromise = supabaseClient
+                            .from('customers')
+                            .select('*')
+                            .eq('owner', currentUser || 'admin') // 根据owner字段过滤
+                            .order('createdat', { ascending: false });
 
-                    const { data: customersData, error: customersError } = await Promise.race([
-                        customersPromise,
-                        new Promise((_, reject) => setTimeout(() => reject(new Error('请求超时')), 10000))
-                    ]);
+                        const { data: customersData, error: customersError } = await Promise.race([
+                            customersPromise,
+                            new Promise((_, reject) => setTimeout(() => reject(new Error('请求超时')), 10000))
+                        ]);
 
-                    if (!customersError && customersData) {
-                        // 映射客户数据，确保字段一致性
-                        customers = customersData.map(c => ({
-                            ...c,
-                            // 确保 changeHistory 字段存在
-                            changeHistory: c.changeHistory || c.change_history || [],
-                            // 确保 communicationRecords 字段存在
-                            communicationRecords: c.communicationRecords || c.communication_records || [],
-                            // 确保 viewedProperties 字段存在
-                            viewedProperties: c.viewedProperties || c.viewed_properties || []
-                        }));
-                        console.log(`成功加载 ${customers.length} 条客户数据`);
-                        console.log('当前用户:', currentUser || 'admin');
-                    } else if (customersError) {
-                        console.warn('加载客户数据失败:', customersError);
+                        if (!customersError && customersData) {
+                            // 映射客户数据，确保字段一致性
+                            customers = customersData.map(c => ({
+                                ...c,
+                                // 确保 changeHistory 字段存在
+                                changeHistory: c.changeHistory || c.change_history || [],
+                                // 确保 communicationRecords 字段存在
+                                communicationRecords: c.communicationRecords || c.communication_records || [],
+                                // 确保 viewedProperties 字段存在
+                                viewedProperties: c.viewedProperties || c.viewed_properties || []
+                            }));
+                            console.log(`成功加载 ${customers.length} 条客户数据`);
+                            console.log('当前用户:', currentUser || 'admin');
+                        } else if (customersError) {
+                            console.warn('加载客户数据失败:', customersError);
+                            // 如果是因为owner列不存在，尝试不带过滤条件加载
+                            if (customersError.code === '42703') {
+                                console.log('owner列不存在，尝试不带过滤条件加载数据');
+                                const fallbackPromise = supabaseClient
+                                    .from('customers')
+                                    .select('*')
+                                    .order('createdat', { ascending: false });
+
+                                const { data: fallbackData, error: fallbackError } = await fallbackPromise;
+                                if (!fallbackError && fallbackData) {
+                                    customers = fallbackData.map(c => ({
+                                        ...c,
+                                        changeHistory: c.changeHistory || c.change_history || [],
+                                        communicationRecords: c.communicationRecords || c.communication_records || [],
+                                        viewedProperties: c.viewedProperties || c.viewed_properties || []
+                                    }));
+                                    console.log(`成功加载 ${customers.length} 条客户数据（无过滤）`);
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.error('加载客户数据时出错:', error);
                     }
 
                     // 刷新UI
@@ -10128,22 +10151,48 @@
                         
                         const updatedChangeHistory = [...currentChangeHistory, transferRecord];
                         
-                        // 更新数据库，包括owner字段
-                        const { error } = await supabaseClient
-                            .from('customers')
-                            .update({
-                                owner: newOwner,
-                                change_history: updatedChangeHistory,
-                                updatedat: new Date().toISOString()
-                            })
-                            .eq('id', String(customerId));
-                        
-                        if (error) {
-                            console.error('更新客户转让记录失败:', error);
-                            showToast(`❌ 转让失败: ${error.message}`);
+                        try {
+                            // 尝试更新数据库，包括owner字段
+                            const { error } = await supabaseClient
+                                .from('customers')
+                                .update({
+                                    owner: newOwner,
+                                    change_history: updatedChangeHistory,
+                                    updatedat: new Date().toISOString()
+                                })
+                                .eq('id', String(customerId));
+                            
+                            if (error) {
+                                console.error('更新客户转让记录失败:', error);
+                                // 如果是因为owner列不存在，尝试只更新change_history
+                                if (error.code === '42703') {
+                                    console.log('owner列不存在，尝试只更新change_history');
+                                    const { error: fallbackError } = await supabaseClient
+                                        .from('customers')
+                                        .update({
+                                            change_history: updatedChangeHistory,
+                                            updatedat: new Date().toISOString()
+                                        })
+                                        .eq('id', String(customerId));
+                                    
+                                    if (fallbackError) {
+                                        console.error('更新change_history失败:', fallbackError);
+                                        showToast(`❌ 转让失败: ${fallbackError.message}`);
+                                        return;
+                                    } else {
+                                        console.log('客户转让记录已保存到数据库（仅change_history）');
+                                    }
+                                } else {
+                                    showToast(`❌ 转让失败: ${error.message}`);
+                                    return;
+                                }
+                            } else {
+                                console.log('客户转让记录已保存到数据库');
+                            }
+                        } catch (dbUpdateError) {
+                            console.error('数据库更新出错:', dbUpdateError);
+                            showToast('❌ 转让失败，请检查网络连接');
                             return;
-                        } else {
-                            console.log('客户转让记录已保存到数据库');
                         }
                     } catch (dbError) {
                         console.error('保存转让记录到数据库时出错:', dbError);
