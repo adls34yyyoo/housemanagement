@@ -8098,15 +8098,6 @@
                 communities.forEach((community, communityIndex) => {
                     const group = propertiesByCommunity[community];
                     
-                    // 显示小区信息
-                    if (currentStyle === 'wonderful') {
-                        // 精彩风格
-                        shareText += `${community}\n`;
-                    } else {
-                        // 简洁风格
-                        shareText += `🏘️ ${community}\n`;
-                    }
-                    
                     // 准备学区信息
                     let schoolInfo = '';
                     if (group.primarySchool) {
@@ -8125,36 +8116,39 @@
                             shareText += '\n';
                         }
                         
-                        if (currentStyle === 'wonderful') {
-                            // 精彩风格
-                            let propertyTypeText = property.type === 'sale' ? '出售:' : '出租:';
-                            if (schoolInfo) {
-                                propertyTypeText += ` 学区显示：${schoolInfo}`;
-                            }
-                            shareText += `${propertyTypeText} ${property.layout || '未知'}\n`;
-                            shareText += `面积：${property.area || '未知'}平\n`;
-                            shareText += `价格：${property.price || '面议'}${property.type === 'sale' ? '万元' : '元/月'}\n`;
-                            shareText += `装修：${property.decoration || '未知'}\n`;
-                            shareText += `楼层：${property.floor || '未知'}楼\n`;
-                        } else {
-                            // 简洁风格
-                            let propertyTypeText = property.type === 'sale' ? '出售:' : '出租:';
-                            if (schoolInfo) {
-                                propertyTypeText += ` 学区显示：${schoolInfo}`;
-                            }
-                            shareText += `🏠 ${propertyTypeText} ${property.layout || '未知'}\n`;
-                            shareText += `📏 面积：${property.area || '未知'}平\n`;
-                            shareText += `💰 价格：${property.price || '面议'}${property.type === 'sale' ? '万元' : '元/月'}\n`;
-                            shareText += `🎨 装修：${property.decoration || '未知'}\n`;
-                            shareText += `🏢 楼层：${property.floor || '未知'}楼\n`;
+                        // 统一使用简洁风格的格式
+                        let propertyTypeText = property.type === 'sale' ? '出售：' : '出租：';
+                        
+                        // 小区名称
+                        shareText += `🏘️ ${propertyTypeText}${community}\n`;
+                        
+                        // 学区信息
+                        if (schoolInfo) {
+                            shareText += `📚 学区：${schoolInfo}\n`;
                         }
+                        
+                        // 面积
+                        shareText += `📏 面积：${property.area || '未知'}平\n`;
+                        
+                        // 户型
+                        shareText += `🏠 户型：${property.layout || '未知'}\n`;
+                        
+                        // 价格
+                        shareText += `💰 价格：${property.price || '面议'}${property.type === 'sale' ? '万元' : '元/月'}\n`;
+                        
+                        // 装修
+                        shareText += `🎨 装修：${property.decoration || '未知'}\n`;
+                        
+                        // 楼层
+                        shareText += `🏢 楼层：${property.floor || '未知'}楼\n`;
+                        
+                        // 合作热线
+                        shareText += `合作热线：18019166290`;
                     });
                     
-                    // 添加合作热线
+                    // 小区之间添加空行
                     if (communityIndex < communities.length - 1) {
-                        shareText += `合作热线：18019166290\n\n`;
-                    } else {
-                        shareText += `合作热线：18019166290`;
+                        shareText += '\n\n';
                     }
                 });
             }
