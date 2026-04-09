@@ -9982,11 +9982,10 @@
                         const currentUserValue = currentUser || 'admin';
                         console.log('查询客户数据，当前用户:', currentUserValue);
                         
-                        // 先尝试简单的owner字段查询
+                        // 尝试查询所有客户，然后在客户端过滤
                         let customersPromise = supabaseClient
                             .from('customers')
                             .select('*')
-                            .eq('owner', currentUserValue)
                             .order('createdat', { ascending: false });
 
                         const { data: customersData, error: customersError } = await Promise.race([
@@ -9995,18 +9994,36 @@
                         ]);
 
                         if (!customersError && customersData) {
+                            const currentUserValue = currentUser || 'admin';
+                            // 过滤数据，只保留当前用户拥有或共同跟进的客户
+                            const filteredData = customersData.filter(c => {
+                                // 检查owner字段
+                                if (c.owner === currentUserValue) {
+                                    return true;
+                                }
+                                // 检查co_owners字段
+                                if (c.co_owners && Array.isArray(c.co_owners) && c.co_owners.includes(currentUserValue)) {
+                                    return true;
+                                }
+                                return false;
+                            });
+                            
                             // 映射客户数据，确保字段一致性
-                            customers = customersData.map(c => ({
+                            customers = filteredData.map(c => ({
                                 ...c,
                                 // 确保 changeHistory 字段存在
                                 changeHistory: c.changeHistory || c.change_history || [],
                                 // 确保 communicationRecords 字段存在
                                 communicationRecords: c.communicationRecords || c.communication_records || [],
                                 // 确保 viewedProperties 字段存在
-                                viewedProperties: c.viewedProperties || c.viewed_properties || []
+                                viewedProperties: c.viewedProperties || c.viewed_properties || [],
+                                // 确保 co_owners 字段存在
+                                co_owners: c.co_owners || []
                             }));
-                            console.log(`成功加载 ${customers.length} 条客户数据`);
-                            console.log('当前用户:', currentUser || 'admin');
+                            console.log(`成功加载 ${customers.length} 条客户数据（过滤后）`);
+                            console.log('当前用户:', currentUserValue);
+                            console.log('原始数据数量:', customersData.length);
+                            console.log('过滤后数据数量:', filteredData.length);
                         } else if (customersError) {
                             console.warn('加载客户数据失败:', customersError);
                             // 如果是因为owner列不存在，尝试不带过滤条件加载
