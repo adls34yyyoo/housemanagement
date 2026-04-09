@@ -5951,6 +5951,9 @@
                         <button onclick="transferCustomer('${customer.id}')" style="flex: 1; min-width: 120px; padding: 12px; background: linear-gradient(135deg, #FF9800 0%, #f57c00 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
                             转让
                         </button>
+                        <button onclick="addCoOwner('${customer.id}')" style="flex: 1; min-width: 120px; padding: 12px; background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
+                            共同跟进
+                        </button>
                     </div>
                 </div>
             `;
@@ -9895,10 +9898,11 @@
                     // 从网络加载客户数据
                     console.log('从网络加载客户数据...');
                     try {
+                        const currentUserValue = currentUser || 'admin';
                         const customersPromise = supabaseClient
                             .from('customers')
                             .select('*')
-                            .eq('owner', currentUser || 'admin') // 根据owner字段过滤
+                            .or(`owner.eq.${currentUserValue},co_owners.cs.{${currentUserValue}}`) // 根据owner或co_owners字段过滤
                             .order('createdat', { ascending: false });
 
                         const { data: customersData, error: customersError } = await Promise.race([
@@ -9931,13 +9935,27 @@
 
                                 const { data: fallbackData, error: fallbackError } = await fallbackPromise;
                                 if (!fallbackError && fallbackData) {
-                                    customers = fallbackData.map(c => ({
+                                    const currentUserValue = currentUser || 'admin';
+                                    // 过滤数据，只保留当前用户拥有或共同跟进的客户
+                                    const filteredData = fallbackData.filter(c => {
+                                        // 检查owner字段
+                                        if (c.owner === currentUserValue) {
+                                            return true;
+                                        }
+                                        // 检查co_owners字段
+                                        if (c.co_owners && Array.isArray(c.co_owners) && c.co_owners.includes(currentUserValue)) {
+                                            return true;
+                                        }
+                                        return false;
+                                    });
+                                    
+                                    customers = filteredData.map(c => ({
                                         ...c,
                                         changeHistory: c.changeHistory || c.change_history || [],
                                         communicationRecords: c.communicationRecords || c.communication_records || [],
                                         viewedProperties: c.viewedProperties || c.viewed_properties || []
                                     }));
-                                    console.log(`成功加载 ${customers.length} 条客户数据（无过滤）`);
+                                    console.log(`成功加载 ${customers.length} 条客户数据（本地过滤）`);
                                 }
                             }
                         }
@@ -10118,6 +10136,61 @@
             }
         }
 
+        // 添加共同跟进人
+        function addCoOwner(customerId) {
+            const customer = customers.find(c => String(c.id) === String(customerId));
+            if (!customer) return;
+
+            // 可选择的用户列表
+            const users = ['admin', 'Wang', 'Sue', 'Niflat'];
+            
+            // 过滤掉当前用户
+            const availableUsers = users.filter(user => user !== (currentUser || 'admin'));
+
+            if (availableUsers.length === 0) {
+                showToast('⚠️ 没有其他用户可以添加');
+                return;
+            }
+
+            // 创建共同跟进模态框
+            const modalHTML = `
+                <div class="modal" id="coOwnerModal" style="display: flex; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000;">
+                    <div class="modal-content" style="background: white; border-radius: var(--radius); padding: 20px; width: 90%; max-width: 400px;">
+                        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin: 0; color: var(--text);">添加共同跟进人</h3>
+                            <button onclick="closeCoOwnerModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);">&times;</button>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <p style="margin-bottom: 12px; color: var(--text-secondary);">请选择要添加的共同跟进人：</p>
+                            ${availableUsers.map(user => `
+                                <div style="margin-bottom: 8px;">
+                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                        <input type="radio" name="coOwner" value="${user}" style="width: auto;">
+                                        <span>${user}</span>
+                                    </label>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="form-actions" style="display: flex; gap: 12px;">
+                            <button class="btn btn-default" onclick="closeCoOwnerModal()">取消</button>
+                            <button class="btn btn-primary" onclick="confirmAddCoOwner('${customerId}')">确认添加</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 插入模态框到页面
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        // 关闭共同跟进模态框
+        function closeCoOwnerModal() {
+            const modal = document.getElementById('coOwnerModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
         // 确认转让
         async function confirmTransfer(customerId) {
             const selectedUser = document.querySelector('input[name="transferTo"]:checked');
@@ -10217,6 +10290,114 @@
             } catch (error) {
                 console.error('转让客户出错:', error);
                 showToast('❌ 转让客户失败，请检查网络连接');
+            }
+        }
+
+        // 确认添加共同跟进人
+        async function confirmAddCoOwner(customerId) {
+            const selectedUser = document.querySelector('input[name="coOwner"]:checked');
+            if (!selectedUser) {
+                showToast('⚠️ 请选择要添加的共同跟进人');
+                return;
+            }
+
+            const coOwner = selectedUser.value;
+            const customer = customers.find(c => String(c.id) === String(customerId));
+            if (!customer) return;
+
+            try {
+                console.log('开始添加共同跟进人:', { customerId, coOwner });
+                
+                // 更新数据库中的客户信息，添加共同跟进人记录
+                if (supabaseClient) {
+                    try {
+                        // 获取客户的当前变更历史
+                        const currentChangeHistory = customer.changeHistory || customer.change_history || [];
+                        
+                        // 添加共同跟进记录
+                        const coOwnerRecord = {
+                            timestamp: new Date().toISOString(),
+                            field: 'co_owners',
+                            oldValue: customer.co_owners || [],
+                            newValue: [...(customer.co_owners || []), coOwner],
+                            type: 'co_owner_add'
+                        };
+                        
+                        const updatedChangeHistory = [...currentChangeHistory, coOwnerRecord];
+                        
+                        try {
+                            // 尝试更新数据库，添加共同跟进人
+                            const { error } = await supabaseClient
+                                .from('customers')
+                                .update({
+                                    co_owners: [...(customer.co_owners || []), coOwner],
+                                    change_history: updatedChangeHistory,
+                                    updatedat: new Date().toISOString()
+                                })
+                                .eq('id', String(customerId));
+                            
+                            if (error) {
+                                console.error('更新客户共同跟进记录失败:', error);
+                                // 如果是因为co_owners列不存在，尝试只更新change_history
+                                if (error.code === '42703') {
+                                    console.log('co_owners列不存在，尝试只更新change_history');
+                                    const { error: fallbackError } = await supabaseClient
+                                        .from('customers')
+                                        .update({
+                                            change_history: updatedChangeHistory,
+                                            updatedat: new Date().toISOString()
+                                        })
+                                        .eq('id', String(customerId));
+                                    
+                                    if (fallbackError) {
+                                        console.error('更新change_history失败:', fallbackError);
+                                        showToast(`❌ 添加失败: ${fallbackError.message}`);
+                                        return;
+                                    } else {
+                                        console.log('客户共同跟进记录已保存到数据库（仅change_history）');
+                                    }
+                                } else {
+                                    showToast(`❌ 添加失败: ${error.message}`);
+                                    return;
+                                }
+                            } else {
+                                console.log('客户共同跟进记录已保存到数据库');
+                            }
+                        } catch (dbUpdateError) {
+                            console.error('数据库更新出错:', dbUpdateError);
+                            showToast('❌ 添加失败，请检查网络连接');
+                            return;
+                        }
+                    } catch (dbError) {
+                        console.error('保存共同跟进记录到数据库时出错:', dbError);
+                        showToast('❌ 添加失败，请检查网络连接');
+                        return;
+                    }
+                }
+
+                // 更新本地客户数据
+                if (!customer.co_owners) {
+                    customer.co_owners = [];
+                }
+                if (!customer.co_owners.includes(coOwner)) {
+                    customer.co_owners.push(coOwner);
+                }
+
+                // 重新渲染客户列表
+                renderCustomerList();
+
+                showToast(`✅ 共同跟进人添加成功！${coOwner} 刷新页面后即可看到该客户`);
+                closeCoOwnerModal();
+                
+                // 关闭客户详情模态框
+                const detailModal = document.getElementById('customerDetailModal');
+                if (detailModal) {
+                    detailModal.classList.remove('active');
+                }
+            } catch (error) {
+                console.error('添加共同跟进人时出错:', error);
+                showToast('❌ 添加失败，请重试');
+                closeCoOwnerModal();
             }
         }
 
