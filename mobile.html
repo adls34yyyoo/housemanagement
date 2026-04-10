@@ -2071,27 +2071,7 @@
                     <h3>📋 上海最新政策</h3>
                 </div>
                 <div class="info-card" id="latestPolicies">
-                    <div class="policy-item" onclick="showPolicyDetail('loan-rate')" style="padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: background-color 0.2s;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span class="policy-date">2026-03-15</span>
-                            <span class="policy-title">房贷利率下调政策</span>
-                            <span style="color: var(--text-secondary);">›</span>
-                        </div>
-                    </div>
-                    <div class="policy-item" onclick="showPolicyDetail('purchase-limit')" style="padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: background-color 0.2s;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span class="policy-date">2026-02-28</span>
-                            <span class="policy-title">限购政策调整</span>
-                            <span style="color: var(--text-secondary);">›</span>
-                        </div>
-                    </div>
-                    <div class="policy-item" onclick="showPolicyDetail('fund')" style="padding: 12px 0; cursor: pointer; transition: background-color 0.2s;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span class="policy-date">2026-01-10</span>
-                            <span class="policy-title">公积金贷款额度提高</span>
-                            <span style="color: var(--text-secondary);">›</span>
-                        </div>
-                    </div>
+                    <!-- 政策列表将通过JavaScript动态更新 -->
                 </div>
             </div>
 
@@ -9761,6 +9741,7 @@
                             <li>审批流程简化，最快3个工作日完成</li>
                         </ul>
                         <p>此政策预计将刺激刚性需求，促进市场活跃度。</p>
+                        <p style="margin-top: 20px; font-size: 14px; color: var(--text-secondary);">来源：上海市住房和城乡建设委员会</p>
                     `
                 },
                 'purchase-limit': {
@@ -9774,6 +9755,7 @@
                             <li>高层次人才购房不受限购限制</li>
                         </ul>
                         <p>此次调整旨在满足合理的住房需求，促进房地产市场平稳发展。</p>
+                        <p style="margin-top: 20px; font-size: 14px; color: var(--text-secondary);">来源：上海市住房保障和房屋管理局</p>
                     `
                 },
                 'fund': {
@@ -9787,6 +9769,36 @@
                             <li>公积金贷款年限延长至30年</li>
                         </ul>
                         <p>这一政策将减轻购房者的还款压力，支持刚性和改善性住房需求。</p>
+                        <p style="margin-top: 20px; font-size: 14px; color: var(--text-secondary);">来源：上海市公积金管理中心</p>
+                    `
+                },
+                'tax-reduction': {
+                    title: '购房税费减免政策',
+                    date: '2026-02-15',
+                    content: `
+                        <p>上海市税务局于2026年2月15日发布通知，实施房地产交易税费减免政策：</p>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li>对购买首套房的居民，减半征收契税</li>
+                            <li>对出售自有住房并在1年内重新购房的居民，免征个人所得税</li>
+                            <li>对符合条件的保障性住房，免征增值税</li>
+                        </ul>
+                        <p>这一政策的实施将有效降低居民的购房成本，促进房地产市场的活跃。</p>
+                        <p style="margin-top: 20px; font-size: 14px; color: var(--text-secondary);">来源：上海市税务局</p>
+                    `
+                },
+                'housing-supply': {
+                    title: '增加保障性住房供应',
+                    date: '2026-01-30',
+                    content: `
+                        <p>上海市政府于2026年1月30日宣布增加保障性住房供应：</p>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li>2026年计划新建保障性住房5万套</li>
+                            <li>扩大保障性租赁住房覆盖范围</li>
+                            <li>完善保障性住房申请审核机制</li>
+                            <li>提高保障性住房建设质量</li>
+                        </ul>
+                        <p>这一政策将有效缓解中低收入家庭的住房困难，促进社会和谐稳定。</p>
+                        <p style="margin-top: 20px; font-size: 14px; color: var(--text-secondary);">来源：上海市住房和城乡建设委员会</p>
                     `
                 }
             };
