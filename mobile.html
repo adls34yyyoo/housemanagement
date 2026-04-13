@@ -8771,6 +8771,47 @@
                 (optionsData.community || []).forEach(community => {
                     communitySelect.innerHTML += `<option value="${community}">${community}</option>`;
                 });
+                
+                // 添加小区选择变化事件监听器，实现小区和学区的关联
+                communitySelect.addEventListener('change', function() {
+                    const selectedCommunity = this.value;
+                    const primarySchoolSelect = document.getElementById('shareFilterPrimarySchool');
+                    const middleSchoolSelect = document.getElementById('shareFilterMiddleSchool');
+                    
+                    if (selectedCommunity === 'all') {
+                        // 选择全部小区时，显示所有小学和初中选项
+                        if (primarySchoolSelect) {
+                            primarySchoolSelect.innerHTML = '<option value="all">全部小学</option>';
+                            (optionsData.primarySchool || []).forEach(school => {
+                                primarySchoolSelect.innerHTML += `<option value="${school}">${school}</option>`;
+                            });
+                        }
+                        if (middleSchoolSelect) {
+                            middleSchoolSelect.innerHTML = '<option value="all">全部初中</option>';
+                            (optionsData.middleSchool || []).forEach(school => {
+                                middleSchoolSelect.innerHTML += `<option value="${school}">${school}</option>`;
+                            });
+                        }
+                    } else if (communitySchoolMapping[selectedCommunity]) {
+                        // 选择特定小区时，只显示该小区对应的小学和初中
+                        const mapping = communitySchoolMapping[selectedCommunity];
+                        if (primarySchoolSelect) {
+                            primarySchoolSelect.innerHTML = '<option value="all">全部小学</option>';
+                            if (mapping.primarySchool) {
+                                primarySchoolSelect.innerHTML += `<option value="${mapping.primarySchool}">${mapping.primarySchool}</option>`;
+                            }
+                        }
+                        if (middleSchoolSelect) {
+                            middleSchoolSelect.innerHTML = '<option value="all">全部初中</option>';
+                            if (mapping.middleSchool) {
+                                middleSchoolSelect.innerHTML += `<option value="${mapping.middleSchool}">${mapping.middleSchool}</option>`;
+                            }
+                        }
+                    }
+                    
+                    // 应用筛选条件
+                    applyShareFilters();
+                });
             }
             
             // 初始化装修选项
