@@ -6962,6 +6962,29 @@
                     }
                 }
 
+                // 同时更新其他同小区房源的小学和初中学区
+                if (community) {
+                    // 查找所有同小区的房源（排除当前正在保存的房源）
+                    const sameCommunityProperties = [...properties, ...agentProperties]
+                        .filter(p => p.community === community && String(p.id) !== String(editingPropertyId));
+                    
+                    // 更新这些房源的小学和初中学区
+                    for (const sameCommunityProp of sameCommunityProperties) {
+                        const updatedProp = {
+                            ...sameCommunityProp,
+                            primary_school: primarySchool,
+                            middle_school: middleSchool,
+                            updated_at: new Date().toISOString()
+                        };
+                        
+                        // 更新到数据库
+                        await supabaseClient
+                            .from('properties')
+                            .update(updatedProp)
+                            .eq('id', sameCommunityProp.id);
+                    }
+                }
+                
                 // 重新加载数据
                 await loadData();
                 
