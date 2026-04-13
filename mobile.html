@@ -2504,6 +2504,14 @@
                             <option value="300-500">300-500万/3-5万</option>
                             <option value="500+">500万以上/5万以上</option>
                         </select>
+                        <select id="shareFilterPrimarySchool" onchange="applyShareFilters()" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius);">
+                            <option value="all">全部小学</option>
+                            ${optionsData.primarySchool.map(s => `<option value="${s}">${s}</option>`).join('')}
+                        </select>
+                        <select id="shareFilterMiddleSchool" onchange="applyShareFilters()" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius);">
+                            <option value="all">全部初中</option>
+                            ${optionsData.middleSchool.map(s => `<option value="${s}">${s}</option>`).join('')}
+                        </select>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <button onclick="toggleShareSelectAll()" style="padding: 8px 16px; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500; white-space: nowrap;">
@@ -8510,6 +8518,8 @@
             const decorationFilter = document.getElementById('shareFilterDecoration').value;
             const areaFilter = document.getElementById('shareFilterArea').value;
             const priceFilter = document.getElementById('shareFilterPrice').value;
+            const primarySchoolFilter = document.getElementById('shareFilterPrimarySchool').value;
+            const middleSchoolFilter = document.getElementById('shareFilterMiddleSchool').value;
 
             // 合并所有房源（普通房源和代理房源）
             const allProperties = [...properties, ...agentProperties];
@@ -8559,6 +8569,16 @@
                         else if (priceFilter === '300-500') match = price >= 30000 && price < 50000;
                         else if (priceFilter === '500+') match = price >= 50000;
                     }
+                }
+                // 小学筛选
+                if (primarySchoolFilter !== 'all' && match) {
+                    const primarySchool = property.primarySchool || property.primary_school;
+                    match = primarySchool === primarySchoolFilter;
+                }
+                // 初中筛选
+                if (middleSchoolFilter !== 'all' && match) {
+                    const middleSchool = property.middleSchool || property.middle_school;
+                    match = middleSchool === middleSchoolFilter;
                 }
                 return match;
             });
@@ -8653,6 +8673,12 @@
         function toggleShareSelectAll() {
             const typeFilter = document.getElementById('shareFilterType').value;
             const statusFilter = document.getElementById('shareFilterStatus').value;
+            const communityFilter = document.getElementById('shareFilterCommunity').value;
+            const decorationFilter = document.getElementById('shareFilterDecoration').value;
+            const areaFilter = document.getElementById('shareFilterArea').value;
+            const priceFilter = document.getElementById('shareFilterPrice').value;
+            const primarySchoolFilter = document.getElementById('shareFilterPrimarySchool').value;
+            const middleSchoolFilter = document.getElementById('shareFilterMiddleSchool').value;
 
             // 合并所有房源（普通房源和代理房源）
             const allProperties = [...properties, ...agentProperties];
@@ -8665,6 +8691,44 @@
                 }
                 if (statusFilter !== 'all' && match) {
                     match = property.status === statusFilter;
+                }
+                if (communityFilter !== 'all' && match) {
+                    match = property.community === communityFilter;
+                }
+                if (decorationFilter !== 'all' && match) {
+                    match = property.decoration === decorationFilter;
+                }
+                if (areaFilter !== 'all' && match && property.area) {
+                    const area = parseFloat(property.area);
+                    if (areaFilter === '0-50') match = area < 50;
+                    else if (areaFilter === '50-80') match = area >= 50 && area < 80;
+                    else if (areaFilter === '80-100') match = area >= 80 && area < 100;
+                    else if (areaFilter === '100-120') match = area >= 100 && area < 120;
+                    else if (areaFilter === '120+') match = area >= 120;
+                }
+                if (priceFilter !== 'all' && match && property.price) {
+                    const price = parseFloat(property.price);
+                    if (property.type === 'sale') {
+                        if (priceFilter === '0-100') match = price < 100;
+                        else if (priceFilter === '100-200') match = price >= 100 && price < 200;
+                        else if (priceFilter === '200-300') match = price >= 200 && price < 300;
+                        else if (priceFilter === '300-500') match = price >= 300 && price < 500;
+                        else if (priceFilter === '500+') match = price >= 500;
+                    } else {
+                        if (priceFilter === '0-100') match = price < 10000;
+                        else if (priceFilter === '100-200') match = price >= 10000 && price < 20000;
+                        else if (priceFilter === '200-300') match = price >= 20000 && price < 30000;
+                        else if (priceFilter === '300-500') match = price >= 30000 && price < 50000;
+                        else if (priceFilter === '500+') match = price >= 50000;
+                    }
+                }
+                if (primarySchoolFilter !== 'all' && match) {
+                    const primarySchool = property.primarySchool || property.primary_school;
+                    match = primarySchool === primarySchoolFilter;
+                }
+                if (middleSchoolFilter !== 'all' && match) {
+                    const middleSchool = property.middleSchool || property.middle_school;
+                    match = middleSchool === middleSchoolFilter;
                 }
                 return match;
             });
