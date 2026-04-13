@@ -6153,6 +6153,12 @@
             console.log('小学:', primarySchools);
             console.log('初中:', middleSchools);
             
+            // 更新optionsData对象，确保一键转发页面能获取到完整的选项数据
+            optionsData.community = communities;
+            optionsData.primarySchool = primarySchools;
+            optionsData.middleSchool = middleSchools;
+            optionsData.decoration = decorations;
+            
             // 初始化区域下拉框
             const regionSelect = document.getElementById('filterRegion');
             if (regionSelect) {
