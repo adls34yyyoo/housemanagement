@@ -2208,6 +2208,18 @@
                                 <option value="500+">500万以上</option>
                             </select>
                         </div>
+                        <div class="filter-section">
+                            <div class="filter-label">小学</div>
+                            <select class="filter-select" id="filterPrimarySchool">
+                                <option value="">全部</option>
+                            </select>
+                        </div>
+                        <div class="filter-section">
+                            <div class="filter-label">初中</div>
+                            <select class="filter-select" id="filterMiddleSchool">
+                                <option value="">全部</option>
+                            </select>
+                        </div>
                         <div class="filter-actions">
                             <button class="filter-btn filter-btn-clear" onclick="clearFilters()">清除筛选</button>
                             <button class="filter-btn filter-btn-confirm" onclick="applyFilters(); toggleFilterMenu()">确定</button>
@@ -6123,6 +6135,8 @@
             const layouts = [...new Set(allProperties.map(p => p.layout).filter(Boolean))];
             const decorations = [...new Set(allProperties.map(p => p.decoration).filter(Boolean))];
             const floors = [...new Set(allProperties.map(p => p.floor).filter(Boolean))];
+            const primarySchools = [...new Set(allProperties.map(p => p.primarySchool || p.primary_school).filter(Boolean))];
+            const middleSchools = [...new Set(allProperties.map(p => p.middleSchool || p.middle_school).filter(Boolean))];
             
             console.log('提取的筛选选项:');
             console.log('区域:', regions);
@@ -6130,6 +6144,8 @@
             console.log('户型:', layouts);
             console.log('装修:', decorations);
             console.log('楼层:', floors);
+            console.log('小学:', primarySchools);
+            console.log('初中:', middleSchools);
             
             // 初始化区域下拉框
             const regionSelect = document.getElementById('filterRegion');
@@ -6179,6 +6195,26 @@
                     floorSelect.innerHTML += `<option value="${floor}">${floor}</option>`;
                 });
                 console.log('楼层下拉框已更新，选项数:', floors.length);
+            }
+            
+            // 初始化小学下拉框
+            const primarySchoolSelect = document.getElementById('filterPrimarySchool');
+            if (primarySchoolSelect) {
+                primarySchoolSelect.innerHTML = '<option value="">全部</option>';
+                primarySchools.forEach(school => {
+                    primarySchoolSelect.innerHTML += `<option value="${school}">${school}</option>`;
+                });
+                console.log('小学下拉框已更新，选项数:', primarySchools.length);
+            }
+            
+            // 初始化初中下拉框
+            const middleSchoolSelect = document.getElementById('filterMiddleSchool');
+            if (middleSchoolSelect) {
+                middleSchoolSelect.innerHTML = '<option value="">全部</option>';
+                middleSchools.forEach(school => {
+                    middleSchoolSelect.innerHTML += `<option value="${school}">${school}</option>`;
+                });
+                console.log('初中下拉框已更新，选项数:', middleSchools.length);
             }
             
             // 初始化代理房源筛选选项
@@ -6235,6 +6271,8 @@
             const floorValue = document.getElementById('filterFloor').value;
             const areaValue = document.getElementById('filterArea').value;
             const priceValue = document.getElementById('filterPrice').value;
+            const primarySchoolValue = document.getElementById('filterPrimarySchool').value;
+            const middleSchoolValue = document.getElementById('filterMiddleSchool').value;
             
             filteredProperties = properties.filter(property => {
                 let match = true;
@@ -6289,6 +6327,16 @@
                     else if (priceValue === '500+') match = price >= 500;
                 }
                 
+                // 小学筛选
+                if (primarySchoolValue && match && property.primarySchool) {
+                    match = property.primarySchool === primarySchoolValue;
+                }
+                
+                // 初中筛选
+                if (middleSchoolValue && match && property.middleSchool) {
+                    match = property.middleSchool === middleSchoolValue;
+                }
+                
                 return match;
             });
             
@@ -6308,6 +6356,8 @@
             document.getElementById('filterFloor').value = '';
             document.getElementById('filterArea').value = '';
             document.getElementById('filterPrice').value = '';
+            document.getElementById('filterPrimarySchool').value = '';
+            document.getElementById('filterMiddleSchool').value = '';
             
             filteredProperties = [];
             renderPropertyList();
