@@ -2482,11 +2482,9 @@
                         </select>
                         <select id="shareFilterCommunity" onchange="applyShareFilters()" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius);">
                             <option value="all">全部小区</option>
-                            ${optionsData.community.map(c => `<option value="${c}">${c}</option>`).join('')}
                         </select>
                         <select id="shareFilterDecoration" onchange="applyShareFilters()" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius);">
                             <option value="all">全部装修</option>
-                            ${optionsData.decoration.map(d => `<option value="${d}">${d}</option>`).join('')}
                         </select>
                         <select id="shareFilterArea" onchange="applyShareFilters()" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius);">
                             <option value="all">全部面积</option>
@@ -2506,11 +2504,9 @@
                         </select>
                         <select id="shareFilterPrimarySchool" onchange="applyShareFilters()" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius);">
                             <option value="all">全部小学</option>
-                            ${optionsData.primarySchool.map(s => `<option value="${s}">${s}</option>`).join('')}
                         </select>
                         <select id="shareFilterMiddleSchool" onchange="applyShareFilters()" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius);">
                             <option value="all">全部初中</option>
-                            ${optionsData.middleSchool.map(s => `<option value="${s}">${s}</option>`).join('')}
                         </select>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -4461,6 +4457,8 @@
                     }
                 }
                 
+                // 初始化筛选选项
+                initShareFilterOptions();
                 renderSharePropertyList();
                 // 清空分享内容，等待用户点击生成文案
                 document.getElementById('shareContent').value = '';
@@ -8756,6 +8754,45 @@
         // 应用转发页面的筛选条件
         function applyShareFilters() {
             renderSharePropertyList();
+        }
+
+        // 初始化一键转发页面的筛选选项
+        function initShareFilterOptions() {
+            // 初始化小区选项
+            const communitySelect = document.getElementById('shareFilterCommunity');
+            if (communitySelect) {
+                communitySelect.innerHTML = '<option value="all">全部小区</option>';
+                (optionsData.community || []).forEach(community => {
+                    communitySelect.innerHTML += `<option value="${community}">${community}</option>`;
+                });
+            }
+            
+            // 初始化装修选项
+            const decorationSelect = document.getElementById('shareFilterDecoration');
+            if (decorationSelect) {
+                decorationSelect.innerHTML = '<option value="all">全部装修</option>';
+                (optionsData.decoration || []).forEach(decoration => {
+                    decorationSelect.innerHTML += `<option value="${decoration}">${decoration}</option>`;
+                });
+            }
+            
+            // 初始化小学选项
+            const primarySchoolSelect = document.getElementById('shareFilterPrimarySchool');
+            if (primarySchoolSelect) {
+                primarySchoolSelect.innerHTML = '<option value="all">全部小学</option>';
+                (optionsData.primarySchool || []).forEach(school => {
+                    primarySchoolSelect.innerHTML += `<option value="${school}">${school}</option>`;
+                });
+            }
+            
+            // 初始化初中选项
+            const middleSchoolSelect = document.getElementById('shareFilterMiddleSchool');
+            if (middleSchoolSelect) {
+                middleSchoolSelect.innerHTML = '<option value="all">全部初中</option>';
+                (optionsData.middleSchool || []).forEach(school => {
+                    middleSchoolSelect.innerHTML += `<option value="${school}">${school}</option>`;
+                });
+            }
         }
 
 
