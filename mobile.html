@@ -10522,8 +10522,11 @@
 
         // 登录处理
         async function handleLogin() {
+            console.log('登录按钮被点击');
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
+            console.log('用户名:', username);
+            console.log('密码:', password);
             
             // 验证用户名和密码
             const validUsers = {
@@ -10534,10 +10537,12 @@
             };
             
             if (validUsers[username] === password) {
+                console.log('用户名和密码正确');
                 currentUser = username;
                 // 保存登录状态到localStorage
                 try {
                     localStorage.setItem('loggedInUser', username);
+                    console.log('登录状态已保存到localStorage');
                 } catch (e) {
                     console.log('localStorage 访问失败:', e);
                 }
@@ -10553,6 +10558,7 @@
                     console.log('localStorage 访问失败:', e);
                 }
                 
+                console.log('隐藏登录页面，显示主应用');
                 document.getElementById('loginPage').style.display = 'none';
                 document.getElementById('appContainer').style.display = 'block';
                 
@@ -10562,20 +10568,27 @@
                     const element = document.getElementById(id);
                     if (element) {
                         element.textContent = username;
+                        console.log('用户名已设置到元素:', id);
                     }
                 });
 
                 // 初始化
+                console.log('开始初始化');
                 initSelectOptions();
                 initVoiceRecognition();
                 
                 // 加载数据
+                console.log('开始加载数据');
                 await loadData();
+                console.log('数据加载完成');
 
                 showToast('✅ 登录成功');
+                console.log('登录成功');
             } else {
+                console.log('用户名或密码错误');
                 showToast('❌ 用户名或密码错误');
             }
+            console.log('登录处理完成');
         }
 
         // 自动登录
