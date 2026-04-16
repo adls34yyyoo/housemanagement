@@ -11945,7 +11945,7 @@
                         function setPrintOrientation() {
                             const orientation = document.getElementById('printOrientation').value;
                             const style = document.createElement('style');
-                            style.textContent = `@page { size: A4 ${orientation}; margin: 10mm; }`;
+                            style.textContent = '@page { size: A4 ' + orientation + '; margin: 10mm; }';
                             document.head.appendChild(style);
                             alert('打印方向已设置为：' + (orientation === 'portrait' ? '纵向' : '横向'));
                         }
