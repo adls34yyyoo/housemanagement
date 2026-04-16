@@ -10341,151 +10341,160 @@
                     const initialized = initSupabase();
                     if (!initialized) {
                         console.error('未连接到Supabase');
-                        showToast('❌ 数据库连接失败，请检查网络');
-                        return;
+                        showToast('⚠️ 数据库连接失败，使用本地数据');
+                        // 不要return，继续执行，使用本地数据
                     }
                 }
 
-                console.log('开始从服务器加载数据...');
-                updateConnectionStatus(true);
+                // 只有当supabaseClient存在时才从服务器加载数据
+                if (supabaseClient) {
+                    console.log('开始从服务器加载数据...');
+                    updateConnectionStatus(true);
 
-                // 设置超时控制，避免长时间等待
-                const timeoutPromise = new Promise((_, reject) => {
-                    setTimeout(() => reject(new Error('请求超时')), 10000);
-                });
+                    // 设置超时控制，避免长时间等待
+                    const timeoutPromise = new Promise((_, reject) => {
+                        setTimeout(() => reject(new Error('请求超时')), 10000);
+                    });
 
-                try {
-                    // 从网络加载房源数据
-                    console.log('从网络加载房源数据...');
-                    const propertiesPromise = supabaseClient
-                        .from('properties')
-                        .select('*')
-                        .order('created_at', { ascending: false });
-
-                    const { data: propertiesData, error: propertiesError } = await Promise.race([
-                        propertiesPromise,
-                        timeoutPromise
-                    ]);
-
-                    if (!propertiesError && propertiesData) {
-                        properties = propertiesData.map(p => ({
-                            ...p,
-                            // 确保 type 字段存在，默认为 'rent'
-                            type: p.type || 'rent',
-                            // 确保 changeHistory 字段存在
-                            changeHistory: p.changeHistory || p.change_history || [],
-                            // 确保 communicationRecords 字段存在
-                            communicationRecords: p.communicationRecords || p.communication_records || [],
-                            // 确保 landlordWechat 字段存在
-                            landlordWechat: p.landlordWechat || p.landlord_wechat || ''
-                        }));
-                        // 更新agentProperties数组，包含所有is_agent: true的房源
-                        agentProperties = properties.filter(p => p.is_agent === true);
-                        console.log(`成功加载 ${properties.length} 条房源数据`);
-                        console.log(`成功加载 ${agentProperties.length} 条代理房源数据`);
-                    } else if (propertiesError) {
-                        console.warn('加载房源数据失败:', propertiesError);
-                    }
-
-                    // 从网络加载客户数据
-                    console.log('从网络加载客户数据...');
                     try {
-                        const currentUserValue = currentUser || 'admin';
-                        console.log('查询客户数据，当前用户:', currentUserValue);
-                        
-                        // 尝试查询所有客户，然后在客户端过滤
-                        let customersPromise = supabaseClient
-                            .from('customers')
+                        // 从网络加载房源数据
+                        console.log('从网络加载房源数据...');
+                        const propertiesPromise = supabaseClient
+                            .from('properties')
                             .select('*')
-                            .order('createdat', { ascending: false });
+                            .order('created_at', { ascending: false });
 
-                        const { data: customersData, error: customersError } = await Promise.race([
-                            customersPromise,
-                            new Promise((_, reject) => setTimeout(() => reject(new Error('请求超时')), 10000))
+                        const { data: propertiesData, error: propertiesError } = await Promise.race([
+                            propertiesPromise,
+                            timeoutPromise
                         ]);
 
-                        if (!customersError && customersData) {
-                            const currentUserValue = currentUser || 'admin';
-                            // 过滤数据，只保留当前用户拥有或共同跟进的客户
-                            const filteredData = customersData.filter(c => {
-                                // 检查owner字段
-                                if (c.owner === currentUserValue) {
-                                    return true;
-                                }
-                                // 检查co_owners字段
-                                if (c.co_owners && Array.isArray(c.co_owners) && c.co_owners.includes(currentUserValue)) {
-                                    return true;
-                                }
-                                return false;
-                            });
-                            
-                            // 映射客户数据，确保字段一致性
-                            customers = filteredData.map(c => ({
-                                ...c,
+                        if (!propertiesError && propertiesData) {
+                            properties = propertiesData.map(p => ({
+                                ...p,
+                                // 确保 type 字段存在，默认为 'rent'
+                                type: p.type || 'rent',
                                 // 确保 changeHistory 字段存在
-                                changeHistory: c.changeHistory || c.change_history || [],
+                                changeHistory: p.changeHistory || p.change_history || [],
                                 // 确保 communicationRecords 字段存在
-                                communicationRecords: c.communicationRecords || c.communication_records || [],
-                                // 确保 viewedProperties 字段存在
-                                viewedProperties: c.viewedProperties || c.viewed_properties || [],
-                                // 确保 co_owners 字段存在
-                                co_owners: c.co_owners || []
+                                communicationRecords: p.communicationRecords || p.communication_records || [],
+                                // 确保 landlordWechat 字段存在
+                                landlordWechat: p.landlordWechat || p.landlord_wechat || ''
                             }));
-                            console.log(`成功加载 ${customers.length} 条客户数据（过滤后）`);
-                            console.log('当前用户:', currentUserValue);
-                            console.log('原始数据数量:', customersData.length);
-                            console.log('过滤后数据数量:', filteredData.length);
-                        } else if (customersError) {
-                            console.warn('加载客户数据失败:', customersError);
-                            // 如果是因为owner列不存在，尝试不带过滤条件加载
-                            if (customersError.code === '42703') {
-                                console.log('owner列不存在，尝试不带过滤条件加载数据');
-                                const fallbackPromise = supabaseClient
-                                    .from('customers')
-                                    .select('*')
-                                    .order('createdat', { ascending: false });
+                            // 更新agentProperties数组，包含所有is_agent: true的房源
+                            agentProperties = properties.filter(p => p.is_agent === true);
+                            console.log(`成功加载 ${properties.length} 条房源数据`);
+                            console.log(`成功加载 ${agentProperties.length} 条代理房源数据`);
+                        } else if (propertiesError) {
+                            console.warn('加载房源数据失败:', propertiesError);
+                        }
 
-                                const { data: fallbackData, error: fallbackError } = await fallbackPromise;
-                                if (!fallbackError && fallbackData) {
-                                    const currentUserValue = currentUser || 'admin';
-                                    // 过滤数据，只保留当前用户拥有或共同跟进的客户
-                                    const filteredData = fallbackData.filter(c => {
-                                        // 检查owner字段
-                                        if (c.owner === currentUserValue) {
-                                            return true;
-                                        }
-                                        // 检查co_owners字段
-                                        if (c.co_owners && Array.isArray(c.co_owners) && c.co_owners.includes(currentUserValue)) {
-                                            return true;
-                                        }
-                                        return false;
-                                    });
-                                    
-                                    customers = filteredData.map(c => ({
-                                        ...c,
-                                        changeHistory: c.changeHistory || c.change_history || [],
-                                        communicationRecords: c.communicationRecords || c.communication_records || [],
-                                        viewedProperties: c.viewedProperties || c.viewed_properties || []
-                                    }));
-                                    console.log(`成功加载 ${customers.length} 条客户数据（本地过滤）`);
+                        // 从网络加载客户数据
+                        console.log('从网络加载客户数据...');
+                        try {
+                            const currentUserValue = currentUser || 'admin';
+                            console.log('查询客户数据，当前用户:', currentUserValue);
+                            
+                            // 尝试查询所有客户，然后在客户端过滤
+                            let customersPromise = supabaseClient
+                                .from('customers')
+                                .select('*')
+                                .order('createdat', { ascending: false });
+
+                            const { data: customersData, error: customersError } = await Promise.race([
+                                customersPromise,
+                                new Promise((_, reject) => setTimeout(() => reject(new Error('请求超时')), 10000))
+                            ]);
+
+                            if (!customersError && customersData) {
+                                const currentUserValue = currentUser || 'admin';
+                                // 过滤数据，只保留当前用户拥有或共同跟进的客户
+                                const filteredData = customersData.filter(c => {
+                                    // 检查owner字段
+                                    if (c.owner === currentUserValue) {
+                                        return true;
+                                    }
+                                    // 检查co_owners字段
+                                    if (c.co_owners && Array.isArray(c.co_owners) && c.co_owners.includes(currentUserValue)) {
+                                        return true;
+                                    }
+                                    return false;
+                                });
+                                
+                                // 映射客户数据，确保字段一致性
+                                customers = filteredData.map(c => ({
+                                    ...c,
+                                    // 确保 changeHistory 字段存在
+                                    changeHistory: c.changeHistory || c.change_history || [],
+                                    // 确保 communicationRecords 字段存在
+                                    communicationRecords: c.communicationRecords || c.communication_records || [],
+                                    // 确保 viewedProperties 字段存在
+                                    viewedProperties: c.viewedProperties || c.viewed_properties || [],
+                                    // 确保 co_owners 字段存在
+                                    co_owners: c.co_owners || []
+                                }));
+                                console.log(`成功加载 ${customers.length} 条客户数据（过滤后）`);
+                                console.log('当前用户:', currentUserValue);
+                                console.log('原始数据数量:', customersData.length);
+                                console.log('过滤后数据数量:', filteredData.length);
+                            } else if (customersError) {
+                                console.warn('加载客户数据失败:', customersError);
+                                // 如果是因为owner列不存在，尝试不带过滤条件加载
+                                if (customersError.code === '42703') {
+                                    console.log('owner列不存在，尝试不带过滤条件加载数据');
+                                    const fallbackPromise = supabaseClient
+                                        .from('customers')
+                                        .select('*')
+                                        .order('createdat', { ascending: false });
+
+                                    const { data: fallbackData, error: fallbackError } = await fallbackPromise;
+                                    if (!fallbackError && fallbackData) {
+                                        const currentUserValue = currentUser || 'admin';
+                                        // 过滤数据，只保留当前用户拥有或共同跟进的客户
+                                        const filteredData = fallbackData.filter(c => {
+                                            // 检查owner字段
+                                            if (c.owner === currentUserValue) {
+                                                return true;
+                                            }
+                                            // 检查co_owners字段
+                                            if (c.co_owners && Array.isArray(c.co_owners) && c.co_owners.includes(currentUserValue)) {
+                                                return true;
+                                            }
+                                            return false;
+                                        });
+                                        
+                                        customers = filteredData.map(c => ({
+                                            ...c,
+                                            changeHistory: c.changeHistory || c.change_history || [],
+                                            communicationRecords: c.communicationRecords || c.communication_records || [],
+                                            viewedProperties: c.viewedProperties || c.viewed_properties || []
+                                        }));
+                                        console.log(`成功加载 ${customers.length} 条客户数据（本地过滤）`);
+                                    }
                                 }
                             }
+                        } catch (error) {
+                            console.error('加载客户数据时出错:', error);
                         }
-                    } catch (error) {
-                        console.error('加载客户数据时出错:', error);
-                    }
 
-                    // 刷新UI
+                        // 刷新UI
+                        updateStats();
+                        renderPropertyList();
+                        renderCustomerList();
+                        renderAgentPropertyList();
+                        showToast('✅ 数据加载成功');
+                    } catch (e) {
+                        console.warn('加载数据时出错:', e);
+                        showToast('⚠️ 网络加载失败，使用本地数据');
+                    }
+                } else {
+                    console.log('Supabase客户端未初始化，使用本地数据');
+                    // 刷新UI，使用本地数据
                     updateStats();
                     renderPropertyList();
                     renderCustomerList();
                     renderAgentPropertyList();
-                    showToast('✅ 数据加载成功');
-
-                } catch (fetchError) {
-                    console.error('服务器请求失败:', fetchError);
-                    updateConnectionStatus(false);
-                    showToast('❌ 网络连接失败，请检查网络');
+                    showToast('⚠️ 数据库连接失败，使用本地数据');
                 }
 
             } catch (error) {
