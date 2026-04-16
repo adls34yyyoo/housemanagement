@@ -12270,6 +12270,13 @@
             // 初始化主题
             initTheme();
             
+            // 设置登录按钮事件监听器
+            const loginButton = document.getElementById('loginButton');
+            if (loginButton) {
+                loginButton.addEventListener('click', handleLogin);
+                console.log('登录按钮事件监听器已设置');
+            }
+            
             // 尝试自动登录
             await autoLogin();
             
