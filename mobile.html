@@ -5094,7 +5094,7 @@
             if (!container) return;
 
             // 只显示合作房源
-            let allCoopProperties = agentProperties.filter(p => p.isCoop || p.is_coop);
+            let allCoopProperties = agentProperties.filter(p => true);
             let propsToRender = filteredCoopProperties.length ? filteredCoopProperties : allCoopProperties;
 
             if (propsToRender.length === 0) {
@@ -5166,7 +5166,7 @@
 
         // 全选/取消全选合作房源
         window.toggleCoopSelectAll = function() {
-            let allCoopProperties = agentProperties.filter(p => p.isCoop || p.is_coop);
+            let allCoopProperties = agentProperties.filter(p => true);
             const propsToRender = filteredCoopProperties.length ? filteredCoopProperties : allCoopProperties;
             const allSelected = selectedProperties.length === propsToRender.length && propsToRender.length > 0;
             
@@ -6919,7 +6919,6 @@
             // 如果是可代理/合作房源，添加标记和房源方信息
             if (isAgentMode) {
                 property.is_agent = true;
-                property.is_coop = isCoopPropertyMode;
                 property.agent_parties = agentParties;
                 // 兼容旧数据，保留第一个房源方作为agentName/agentPhone
                 if (agentParties.length > 0) {
