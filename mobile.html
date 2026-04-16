@@ -3536,13 +3536,14 @@
         function initSelectOptions() {
             // 初始化小区选择
             const communitySelect = document.getElementById('propCommunity');
-            communitySelect.innerHTML = '<option value="">请选择小区</option>';
-            optionsData.community.forEach(community => {
-                const option = document.createElement('option');
-                option.value = community;
-                option.textContent = community;
-                communitySelect.appendChild(option);
-            });
+            if (communitySelect) {
+                communitySelect.innerHTML = '<option value="">请选择小区</option>';
+                optionsData.community.forEach(community => {
+                    const option = document.createElement('option');
+                    option.value = community;
+                    option.textContent = community;
+                    communitySelect.appendChild(option);
+                });
             
             // 添加小区选择变化事件监听器
             communitySelect.addEventListener('change', function() {
@@ -3592,6 +3593,8 @@
                     }
                 }
             });
+            }
+
 
             // 初始化小学学区选择
             const primarySchoolSelect = document.getElementById('propPrimarySchool');
