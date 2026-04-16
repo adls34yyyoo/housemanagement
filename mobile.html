@@ -11840,16 +11840,16 @@
                 <head>
                     <title>房源打印</title>
                     <style>
-                        @page { size: A4 landscape; margin: 10mm; }
+                        @page { size: A4; margin: 10mm; }
                         body { font-family: Arial, sans-serif; padding: 0; margin: 0; }
-                        .header { text-align: center; margin-bottom: 15mm; border-bottom: 3px solid #333; padding-bottom: 8mm; }
-                        .header h1 { margin: 0; color: #333; font-size: 120pt; }
-                        .header p { margin: 4mm 0 0 0; color: #666; font-size: 60pt; }
+                        .header { text-align: center; margin-bottom: 10mm; border-bottom: 2px solid #333; padding-bottom: 5mm; }
+                        .header h1 { margin: 0; color: #333; font-size: 80pt; }
+                        .header p { margin: 3mm 0 0 0; color: #666; font-size: 40pt; }
                         .property { 
-                            padding: 15mm; 
-                            border: 2px solid #ddd; 
-                            border-radius: 8px; 
-                            height: 250mm; 
+                            padding: 10mm; 
+                            border: 1px solid #ddd; 
+                            border-radius: 6px; 
+                            min-height: 260mm; 
                             display: flex; 
                             flex-direction: column;
                             page-break-after: always;
@@ -11857,20 +11857,20 @@
                         .property-content {
                             display: grid;
                             grid-template-columns: 1fr 1fr;
-                            gap: 10mm;
+                            gap: 6mm;
                             flex: 1;
                         }
                         .property-row {
-                            margin-bottom: 8mm;
-                            padding: 4mm 0;
+                            margin-bottom: 4mm;
+                            padding: 2mm 0;
                             border-bottom: 1px solid #eee;
                         }
                         .property:last-child { page-break-after: avoid; }
-                        .property-title { font-size: 84pt; font-weight: bold; color: #333; margin-bottom: 18mm; text-align: center; }
+                        .property-title { font-size: 60pt; font-weight: bold; color: #333; margin-bottom: 10mm; text-align: center; }
 
-                        .property-label { width: 90mm; font-weight: bold; color: #666; font-size: 64pt; }
-                        .property-value { flex: 1; color: #333; font-size: 64pt; }
-                        .price { color: #ef4444; font-size: 72pt; font-weight: bold; }
+                        .property-label { width: 70mm; font-weight: bold; color: #666; font-size: 44pt; }
+                        .property-value { flex: 1; color: #333; font-size: 44pt; }
+                        .price { color: #ef4444; font-size: 52pt; font-weight: bold; }
                         @media print {
                             .no-print { display: none; }
                             body { -webkit-print-color-adjust: exact; }
@@ -11927,14 +11927,33 @@
             
             printContent += `
                     <div class="no-print" style="text-align: center; margin-top: 30px;">
+                        <div style="margin-bottom: 20px;">
+                            <label style="margin-right: 10px;">打印方向：</label>
+                            <select id="printOrientation" style="padding: 8px; font-size: 14px;">
+                                <option value="portrait">纵向</option>
+                                <option value="landscape">横向</option>
+                            </select>
+                        </div>
+                        <button onclick="setPrintOrientation()" style="padding: 12px 30px; font-size: 16px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; margin-right: 10px;">
+                            设置方向
+                        </button>
                         <button onclick="window.print()" style="padding: 12px 30px; font-size: 16px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer;">
                             🖨️ 打印房源信息
                         </button>
                     </div>
+                    <script>
+                        function setPrintOrientation() {
+                            const orientation = document.getElementById('printOrientation').value;
+                            const style = document.createElement('style');
+                            style.textContent = `@page { size: A4 ${orientation}; margin: 10mm; }`;
+                            document.head.appendChild(style);
+                            alert('打印方向已设置为：' + (orientation === 'portrait' ? '纵向' : '横向'));
+                        }
+                    </script>
                 </body>
                 </html>
             `;
-            
+
             // 打开打印窗口
             const printWindow = window.open('', '_blank');
             printWindow.document.write(printContent);
