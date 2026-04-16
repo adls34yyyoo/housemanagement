@@ -3470,12 +3470,14 @@
         // 更新连接状态显示
         function updateConnectionStatus(isOnline) {
             const statusEl = document.getElementById('connectionStatus');
-            if (isOnline) {
-                statusEl.className = 'connection-status online';
-                statusEl.innerHTML = '<span class="dot"></span><span>已连接</span>';
-            } else {
-                statusEl.className = 'connection-status offline';
-                statusEl.innerHTML = '<span class="dot"></span><span>离线</span>';
+            if (statusEl) {
+                if (isOnline) {
+                    statusEl.className = 'connection-status online';
+                    statusEl.innerHTML = '<span class="dot"></span><span>已连接</span>';
+                } else {
+                    statusEl.className = 'connection-status offline';
+                    statusEl.innerHTML = '<span class="dot"></span><span>离线</span>';
+                }
             }
         }
         
@@ -8180,12 +8182,17 @@
         // 显示提示消息
         function showToast(message) {
             const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.classList.add('show');
+            if (toast) {
+                toast.textContent = message;
+                toast.classList.add('show');
 
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            } else {
+                // 如果没有toast元素，使用alert
+                alert(message);
+            }
         }
 
         // 推送通知功能
