@@ -5681,17 +5681,31 @@
         function saveSearchHistory(key, value) {
             if (!value || value.trim() === '') return;
             
-            let history = JSON.parse(localStorage.getItem(`searchHistory_${key}`) || '[]');
+            let history = [];
+            try {
+                history = JSON.parse(localStorage.getItem(`searchHistory_${key}`) || '[]');
+            } catch (e) {
+                console.log('localStorage 访问失败:', e);
+            }
             history = history.filter(item => item !== value);
             history.unshift(value);
             if (history.length > 10) {
                 history = history.slice(0, 10);
             }
-            localStorage.setItem(`searchHistory_${key}`, JSON.stringify(history));
+            try {
+                localStorage.setItem(`searchHistory_${key}`, JSON.stringify(history));
+            } catch (e) {
+                console.log('localStorage 访问失败:', e);
+            }
         }
 
         function showSearchHistory(key) {
-            const history = JSON.parse(localStorage.getItem(`searchHistory_${key}`) || '[]');
+            let history = [];
+            try {
+                history = JSON.parse(localStorage.getItem(`searchHistory_${key}`) || '[]');
+            } catch (e) {
+                console.log('localStorage 访问失败:', e);
+            }
             const historyElement = document.getElementById(`${key}History`);
             if (!historyElement) return;
             
@@ -5743,7 +5757,11 @@
         }
 
         function clearSearchHistory(key) {
-            localStorage.removeItem(`searchHistory_${key}`);
+            try {
+                localStorage.removeItem(`searchHistory_${key}`);
+            } catch (e) {
+                console.log('localStorage 访问失败:', e);
+            }
             const historyElement = document.getElementById(`${key}History`);
             if (historyElement) {
                 historyElement.style.display = 'none';
@@ -7407,10 +7425,19 @@
 
                 // 将客户ID添加到当前用户的客户列表中
                 if (!editingCustomerId) {
-                    const currentUserCustomers = JSON.parse(localStorage.getItem(`customer_${currentUser || 'admin'}`) || '[]');
+                    let currentUserCustomers = [];
+                    try {
+                        currentUserCustomers = JSON.parse(localStorage.getItem(`customer_${currentUser || 'admin'}`) || '[]');
+                    } catch (e) {
+                        console.log('localStorage 访问失败:', e);
+                    }
                     if (!currentUserCustomers.includes(customer.id)) {
                         currentUserCustomers.push(customer.id);
-                        localStorage.setItem(`customer_${currentUser || 'admin'}`, JSON.stringify(currentUserCustomers));
+                        try {
+                            localStorage.setItem(`customer_${currentUser || 'admin'}`, JSON.stringify(currentUserCustomers));
+                        } catch (e) {
+                            console.log('localStorage 访问失败:', e);
+                        }
                     }
                 }
 
@@ -10456,7 +10483,11 @@
             if (confirm('确定要退出登录吗？')) {
                 currentUser = '';
                 // 清除登录状态
-                localStorage.removeItem('loggedInUser');
+                try {
+                    localStorage.removeItem('loggedInUser');
+                } catch (e) {
+                    console.log('localStorage 访问失败:', e);
+                }
                 document.getElementById('appContainer').style.display = 'none';
                 document.getElementById('loginPage').style.display = 'flex';
                 document.getElementById('username').value = '';
@@ -10480,13 +10511,21 @@
             if (validUsers[username] === password) {
                 currentUser = username;
                 // 保存登录状态到localStorage
-                localStorage.setItem('loggedInUser', username);
+                try {
+                    localStorage.setItem('loggedInUser', username);
+                } catch (e) {
+                    console.log('localStorage 访问失败:', e);
+                }
                 
                 // 确保用户有客户列表，如果没有则初始化为空数组
                 const userCustomerKey = `customer_${username}`;
-                if (!localStorage.getItem(userCustomerKey)) {
-                    localStorage.setItem(userCustomerKey, JSON.stringify([]));
-                    console.log('为新用户初始化客户列表为空数组');
+                try {
+                    if (!localStorage.getItem(userCustomerKey)) {
+                        localStorage.setItem(userCustomerKey, JSON.stringify([]));
+                        console.log('为新用户初始化客户列表为空数组');
+                    }
+                } catch (e) {
+                    console.log('localStorage 访问失败:', e);
                 }
                 
                 document.getElementById('loginPage').style.display = 'none';
@@ -10516,15 +10555,24 @@
 
         // 自动登录
         async function autoLogin() {
-            const loggedInUser = localStorage.getItem('loggedInUser');
+            let loggedInUser = '';
+            try {
+                loggedInUser = localStorage.getItem('loggedInUser');
+            } catch (e) {
+                console.log('localStorage 访问失败:', e);
+            }
             if (loggedInUser) {
                 currentUser = loggedInUser;
                 
                 // 确保用户有客户列表，如果没有则初始化为空数组
                 const userCustomerKey = `customer_${loggedInUser}`;
-                if (!localStorage.getItem(userCustomerKey)) {
-                    localStorage.setItem(userCustomerKey, JSON.stringify([]));
-                    console.log('为自动登录用户初始化客户列表为空数组');
+                try {
+                    if (!localStorage.getItem(userCustomerKey)) {
+                        localStorage.setItem(userCustomerKey, JSON.stringify([]));
+                        console.log('为自动登录用户初始化客户列表为空数组');
+                    }
+                } catch (e) {
+                    console.log('localStorage 访问失败:', e);
                 }
                 
                 document.getElementById('loginPage').style.display = 'none';
@@ -11618,22 +11666,27 @@
             });
 
             // 监听 localStorage 变化，用于客户转让通知
-            window.addEventListener('storage', (e) => {
-                console.log('localStorage 变化:', e.key, e.newValue);
-                
-                // 检查是否是客户列表变化
-                if (e.key && e.key.startsWith('customer_')) {
-                    const changedUser = e.key.replace('customer_', '');
-                    console.log(`用户 ${changedUser} 的客户列表发生变化`);
+            try {
+                window.addEventListener('storage', (e) => {
+                    console.log('localStorage 变化:', e.key, e.newValue);
                     
-                    // 不管是哪个用户的客户列表变化，都刷新当前用户的数据
-                    // 因为当前用户可能是接收方，需要看到新客户
-                    console.log('客户列表发生变化，刷新当前用户数据...');
-                    loadData().then(() => {
-                        renderCustomerList();
-                        showToast('🔄 客户列表已更新');
-                    });
-                }
+                    // 检查是否是客户列表变化
+                    if (e.key && e.key.startsWith('customer_')) {
+                        const changedUser = e.key.replace('customer_', '');
+                        console.log(`用户 ${changedUser} 的客户列表发生变化`);
+                        
+                        // 不管是哪个用户的客户列表变化，都刷新当前用户的数据
+                        // 因为当前用户可能是接收方，需要看到新客户
+                        console.log('客户列表发生变化，刷新当前用户数据...');
+                        loadData().then(() => {
+                            renderCustomerList();
+                            showToast('🔄 客户列表已更新');
+                        });
+                    }
+                });
+            } catch (e) {
+                console.log('localStorage 监听失败:', e);
+            }
             });
 
             // 页面可见性变化时的处理 - 添加防抖机制
