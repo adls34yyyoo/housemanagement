@@ -11854,9 +11854,19 @@
                             flex-direction: column;
                             page-break-after: always;
                         }
+                        .property-content {
+                            display: grid;
+                            grid-template-columns: 1fr 1fr;
+                            gap: 10mm;
+                        }
+                        .property-row {
+                            margin-bottom: 8mm;
+                            padding: 4mm 0;
+                            border-bottom: 1px solid #eee;
+                        }
                         .property:last-child { page-break-after: avoid; }
                         .property-title { font-size: 96pt; font-weight: bold; color: #333; margin-bottom: 20mm; text-align: center; }
-                        .property-row { display: flex; margin-bottom: 10mm; padding: 5mm 0; border-bottom: 1px solid #eee; }
+
                         .property-label { width: 100mm; font-weight: bold; color: #666; font-size: 64pt; }
                         .property-value { flex: 1; color: #333; font-size: 64pt; }
                         .price { color: #ef4444; font-size: 80pt; font-weight: bold; }
@@ -11876,39 +11886,40 @@
                 printContent += `
                     <div class="property">
                         <div class="property-title">${index + 1}. ${property.community || '未知小区'} - ${typeText}</div>
-                        <div class="property-row">
-                            <div class="property-label">面积：</div>
-                            <div class="property-value">${property.area ? property.area + '平方米' : '未知面积'}</div>
+                        <div class="property-content">
+                            <div class="property-row">
+                                <div class="property-label">面积：</div>
+                                <div class="property-value">${property.area ? property.area + '平方米' : '未知面积'}</div>
+                            </div>
+                            <div class="property-row">
+                                <div class="property-label">楼层：</div>
+                                <div class="property-value">${property.floor || '未知楼层'}</div>
+                            </div>
+                            <div class="property-row">
+                                <div class="property-label">户型：</div>
+                                <div class="property-value">${property.layout || '未知户型'}</div>
+                            </div>
+                            <div class="property-row">
+                                <div class="property-label">装修：</div>
+                                <div class="property-value">${property.decoration || '未知装修'}</div>
+                            </div>
+                            <div class="property-row">
+                                <div class="property-label">价格：</div>
+                                <div class="property-value price">${property.price || '面议'}${priceUnit}</div>
+                            </div>
+                            ${property.landlordName ? `
+                            <div class="property-row">
+                                <div class="property-label">房东：</div>
+                                <div class="property-value">${property.landlordName}</div>
+                            </div>
+                            ` : ''}
+                            ${property.landlordPhone ? `
+                            <div class="property-row">
+                                <div class="property-label">电话：</div>
+                                <div class="property-value">${property.landlordPhone}</div>
+                            </div>
+                            ` : ''}
                         </div>
-                        <div class="property-row">
-                            <div class="property-label">楼层：</div>
-                            <div class="property-value">${property.floor || '未知楼层'}</div>
-                        </div>
-                        <div class="property-row">
-                            <div class="property-label">户型：</div>
-                            <div class="property-value">${property.layout || '未知户型'}</div>
-                        </div>
-                        <div class="property-row">
-                            <div class="property-label">装修：</div>
-                            <div class="property-value">${property.decoration || '未知装修'}</div>
-                        </div>
-                        <div class="property-row">
-                            <div class="property-label">价格：</div>
-                            <div class="property-value price">${property.price || '面议'}${priceUnit}</div>
-                        </div>
-                        ${property.landlordName ? `
-                        <div class="property-row">
-                            <div class="property-label">房东：</div>
-                            <div class="property-value">${property.landlordName}</div>
-                        </div>
-                        ` : ''}
-                        ${property.landlordPhone ? `
-                        <div class="property-row">
-                            <div class="property-label">电话：</div>
-                            <div class="property-value">${property.landlordPhone}</div>
-                        </div>
-                        ` : ''}
-
                     </div>
                 `;
             });
