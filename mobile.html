@@ -3678,36 +3678,42 @@
 
             // 初始化装修选择
             const decorationSelect = document.getElementById('propDecoration');
-            decorationSelect.innerHTML = '<option value="">请选择装修</option>';
-            optionsData.decoration.forEach(decoration => {
-                const option = document.createElement('option');
-                option.value = decoration;
-                option.textContent = decoration;
-                decorationSelect.appendChild(option);
-            });
+            if (decorationSelect) {
+                decorationSelect.innerHTML = '<option value="">请选择装修</option>';
+                optionsData.decoration.forEach(decoration => {
+                    const option = document.createElement('option');
+                    option.value = decoration;
+                    option.textContent = decoration;
+                    decorationSelect.appendChild(option);
+                });
+            }
 
             // 初始化户型选择
             const layoutSelect = document.getElementById('propLayout');
-            layoutSelect.innerHTML = '<option value="">请选择户型</option>';
-            optionsData.layout.forEach(layout => {
-                const option = document.createElement('option');
-                option.value = layout;
-                option.textContent = layout;
-                layoutSelect.appendChild(option);
-            });
+            if (layoutSelect) {
+                layoutSelect.innerHTML = '<option value="">请选择户型</option>';
+                optionsData.layout.forEach(layout => {
+                    const option = document.createElement('option');
+                    option.value = layout;
+                    option.textContent = layout;
+                    layoutSelect.appendChild(option);
+                });
+            }
 
             // 初始化地区选择
             const regionSelect = document.getElementById('propRegion');
-            regionSelect.innerHTML = '<option value="">请选择地区</option>';
-            optionsData.region.forEach(region => {
-                const option = document.createElement('option');
-                option.value = region;
-                option.textContent = region;
-                if (region === '惠南镇') {
-                    option.selected = true;
-                }
-                regionSelect.appendChild(option);
-            });
+            if (regionSelect) {
+                regionSelect.innerHTML = '<option value="">请选择地区</option>';
+                optionsData.region.forEach(region => {
+                    const option = document.createElement('option');
+                    option.value = region;
+                    option.textContent = region;
+                    if (region === '惠南镇') {
+                        option.selected = true;
+                    }
+                    regionSelect.appendChild(option);
+                });
+            }
 
             // 初始化房源类型选择
             const propertyTypeSelect = document.getElementById('propPropertyType');
