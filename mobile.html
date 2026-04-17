@@ -11905,13 +11905,16 @@
             selectedProps.forEach((property, index) => {
                 const priceUnit = property.type === 'sale' ? '万元' : '元/月';
                 const typeText = property.type === 'sale' ? '出售' : '出租';
+                // 处理小区名称，去掉括号及其内容
+                let communityName = property.community || '未知小区';
+                communityName = communityName.replace(/\s*\([^()]*\)\s*/g, '');
                 
                 printContent += `
                     <div class="property">
                         <div class="column">
                             <div class="property-row">
                                 <div class="property-label">${typeText}：</div>
-                                <div class="property-value price">${property.community || '未知小区'}</div>
+                                <div class="property-value price">${communityName}</div>
                             </div>
                             <div class="property-row">
                                 <div class="property-label">面积：</div>
