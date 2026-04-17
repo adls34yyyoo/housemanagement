@@ -11925,6 +11925,12 @@
                                 <div class="property-label">楼层：</div>
                                 <div class="property-value">${property.floor || '未知楼层'}</div>
                             </div>
+                        </div>
+                        <div class="column">
+                            <div class="property-row">
+                                <div class="property-label">价格：</div>
+                                <div class="property-value price">${property.price || '面议'}${priceUnit}</div>
+                            </div>
                             <div class="property-row">
                                 <div class="property-label">户型：</div>
                                 <div class="property-value">${property.layout || '未知户型'}</div>
@@ -11933,36 +11939,6 @@
                                 <div class="property-label">装修：</div>
                                 <div class="property-value">${property.decoration || '未知装修'}</div>
                             </div>
-                        </div>
-                        <div class="column">
-                            <div class="property-row">
-                                <div class="property-label">价格：</div>
-                                <div class="property-value price">${property.price || '面议'}${priceUnit}</div>
-                            </div>
-                            ${property.primarySchool ? `
-                            <div class="property-row">
-                                <div class="property-label">小学学区：</div>
-                                <div class="property-value">${property.primarySchool}</div>
-                            </div>
-                            ` : ''}
-                            ${property.middleSchool ? `
-                            <div class="property-row">
-                                <div class="property-label">初中学区：</div>
-                                <div class="property-value">${property.middleSchool}</div>
-                            </div>
-                            ` : ''}
-                            ${property.landlordName ? `
-                            <div class="property-row">
-                                <div class="property-label">房东：</div>
-                                <div class="property-value">${property.landlordName}</div>
-                            </div>
-                            ` : ''}
-                            ${property.landlordPhone ? `
-                            <div class="property-row">
-                                <div class="property-label">电话：</div>
-                                <div class="property-value">${property.landlordPhone}</div>
-                            </div>
-                            ` : ''}
                         </div>
                     </div>
                 `;
