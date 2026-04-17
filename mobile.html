@@ -11841,58 +11841,60 @@
                 <head>
                     <title>房源打印</title>
                     <style>
-                        @page { size: A4 landscape; margin: 10mm; }
+                        @page { size: A4 landscape; margin: 5mm; }
                         body { font-family: Arial, sans-serif; padding: 0; margin: 0; }
-                        .header { text-align: center; margin-bottom: 10mm; border-bottom: 2px solid #333; padding-bottom: 5mm; }
-                        .header h1 { margin: 0; color: #333; font-size: 36pt; }
-                        .header p { margin: 3mm 0 0 0; color: #666; font-size: 18pt; }
+                        .header { text-align: center; margin-bottom: 5mm; border-bottom: 3px solid #333; padding-bottom: 5mm; }
+                        .header h1 { margin: 0; color: #333; font-size: 48pt; }
+                        .header p { margin: 3mm 0 0 0; color: #666; font-size: 24pt; }
                         .property { 
-                            padding: 8mm; 
-                            border: 1px solid #ddd; 
-                            border-radius: 6px; 
-                            height: calc(100vh - 20mm); 
+                            padding: 10mm; 
+                            border: 2px solid #333; 
+                            border-radius: 8px; 
+                            height: calc(100vh - 10mm); 
                             display: grid;
                             grid-template-columns: 1fr 1fr;
-                            gap: 8mm;
+                            gap: 10mm;
                             page-break-after: always;
                             box-sizing: border-box;
                         }
                         .property:last-child { page-break-after: avoid; }
                         .property-title { 
                             grid-column: 1 / -1; 
-                            font-size: 28pt; 
+                            font-size: 42pt; 
                             font-weight: bold; 
                             color: #333; 
                             text-align: center; 
-                            margin-bottom: 5mm;
-                            padding-bottom: 5mm;
-                            border-bottom: 2px solid #ef4444;
+                            margin-bottom: 8mm;
+                            padding-bottom: 8mm;
+                            border-bottom: 3px solid #ef4444;
                         }
                         .property-row { 
                             display: flex; 
-                            margin-bottom: 4mm; 
-                            padding: 2mm 0; 
+                            margin-bottom: 8mm; 
+                            padding: 4mm 0; 
+                            border-bottom: 1px solid #ddd;
                         }
                         .property-label { 
-                            width: 70mm; 
+                            width: 90mm; 
                             font-weight: bold; 
-                            color: #666; 
-                            font-size: 16pt; 
+                            color: #333; 
+                            font-size: 24pt; 
                         }
                         .property-value { 
                             flex: 1; 
                             color: #333; 
-                            font-size: 16pt; 
+                            font-size: 28pt; 
                         }
                         .price { 
                             color: #ef4444; 
-                            font-size: 20pt; 
+                            font-size: 36pt; 
                             font-weight: bold; 
                         }
                         .column {
                             display: flex;
                             flex-direction: column;
-                            justify-content: flex-start;
+                            justify-content: space-between;
+                            height: 100%;
                         }
                         @media print {
                             .no-print { display: none; }
