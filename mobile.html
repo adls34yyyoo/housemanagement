@@ -11856,6 +11856,7 @@
                             gap: 10mm;
                             page-break-after: always;
                             box-sizing: border-box;
+                            align-items: start;
                         }
                         .property:last-child { page-break-after: avoid; }
                         .property-title { 
@@ -11911,7 +11912,6 @@
                 
                 printContent += `
                     <div class="property">
-                        <div class="property-title">${index + 1}</div>
                         <div class="column">
                             <div class="property-row">
                                 <div class="property-label">类型：</div>
