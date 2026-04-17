@@ -11841,26 +11841,59 @@
                 <head>
                     <title>房源打印</title>
                     <style>
-                        @page { size: A4; margin: 15mm; }
+                        @page { size: A4 landscape; margin: 10mm; }
                         body { font-family: Arial, sans-serif; padding: 0; margin: 0; }
-                        .header { text-align: center; margin-bottom: 20mm; border-bottom: 3px solid #333; padding-bottom: 10mm; }
-                        .header h1 { margin: 0; color: #333; font-size: 144pt; }
-                        .header p { margin: 5mm 0 0 0; color: #666; font-size: 72pt; }
+                        .header { text-align: center; margin-bottom: 10mm; border-bottom: 2px solid #333; padding-bottom: 5mm; }
+                        .header h1 { margin: 0; color: #333; font-size: 36pt; }
+                        .header p { margin: 3mm 0 0 0; color: #666; font-size: 18pt; }
                         .property { 
-                            padding: 15mm; 
-                            border: 2px solid #ddd; 
-                            border-radius: 8px; 
-                            min-height: calc(100vh - 60mm); 
-                            display: flex; 
-                            flex-direction: column;
+                            padding: 8mm; 
+                            border: 1px solid #ddd; 
+                            border-radius: 6px; 
+                            height: calc(100vh - 20mm); 
+                            display: grid;
+                            grid-template-columns: 1fr 1fr;
+                            gap: 8mm;
                             page-break-after: always;
+                            box-sizing: border-box;
                         }
                         .property:last-child { page-break-after: avoid; }
-                        .property-title { font-size: 96pt; font-weight: bold; color: #333; margin-bottom: 20mm; text-align: center; }
-                        .property-row { display: flex; margin-bottom: 10mm; padding: 5mm 0; border-bottom: 1px solid #eee; }
-                        .property-label { width: 100mm; font-weight: bold; color: #666; font-size: 64pt; }
-                        .property-value { flex: 1; color: #333; font-size: 64pt; }
-                        .price { color: #ef4444; font-size: 80pt; font-weight: bold; }
+                        .property-title { 
+                            grid-column: 1 / -1; 
+                            font-size: 28pt; 
+                            font-weight: bold; 
+                            color: #333; 
+                            text-align: center; 
+                            margin-bottom: 5mm;
+                            padding-bottom: 5mm;
+                            border-bottom: 2px solid #ef4444;
+                        }
+                        .property-row { 
+                            display: flex; 
+                            margin-bottom: 4mm; 
+                            padding: 2mm 0; 
+                        }
+                        .property-label { 
+                            width: 70mm; 
+                            font-weight: bold; 
+                            color: #666; 
+                            font-size: 16pt; 
+                        }
+                        .property-value { 
+                            flex: 1; 
+                            color: #333; 
+                            font-size: 16pt; 
+                        }
+                        .price { 
+                            color: #ef4444; 
+                            font-size: 20pt; 
+                            font-weight: bold; 
+                        }
+                        .column {
+                            display: flex;
+                            flex-direction: column;
+                            justify-content: flex-start;
+                        }
                         @media print {
                             .no-print { display: none; }
                             body { -webkit-print-color-adjust: exact; }
@@ -11877,39 +11910,54 @@
                 printContent += `
                     <div class="property">
                         <div class="property-title">${index + 1}. ${property.community || '未知小区'} - ${typeText}</div>
-                        <div class="property-row">
-                            <div class="property-label">面积：</div>
-                            <div class="property-value">${property.area ? property.area + '平方米' : '未知面积'}</div>
+                        <div class="column">
+                            <div class="property-row">
+                                <div class="property-label">面积：</div>
+                                <div class="property-value">${property.area ? property.area + '平方米' : '未知面积'}</div>
+                            </div>
+                            <div class="property-row">
+                                <div class="property-label">楼层：</div>
+                                <div class="property-value">${property.floor || '未知楼层'}</div>
+                            </div>
+                            <div class="property-row">
+                                <div class="property-label">户型：</div>
+                                <div class="property-value">${property.layout || '未知户型'}</div>
+                            </div>
+                            <div class="property-row">
+                                <div class="property-label">装修：</div>
+                                <div class="property-value">${property.decoration || '未知装修'}</div>
+                            </div>
                         </div>
-                        <div class="property-row">
-                            <div class="property-label">楼层：</div>
-                            <div class="property-value">${property.floor || '未知楼层'}</div>
+                        <div class="column">
+                            <div class="property-row">
+                                <div class="property-label">价格：</div>
+                                <div class="property-value price">${property.price || '面议'}${priceUnit}</div>
+                            </div>
+                            ${property.primarySchool ? `
+                            <div class="property-row">
+                                <div class="property-label">小学学区：</div>
+                                <div class="property-value">${property.primarySchool}</div>
+                            </div>
+                            ` : ''}
+                            ${property.middleSchool ? `
+                            <div class="property-row">
+                                <div class="property-label">初中学区：</div>
+                                <div class="property-value">${property.middleSchool}</div>
+                            </div>
+                            ` : ''}
+                            ${property.landlordName ? `
+                            <div class="property-row">
+                                <div class="property-label">房东：</div>
+                                <div class="property-value">${property.landlordName}</div>
+                            </div>
+                            ` : ''}
+                            ${property.landlordPhone ? `
+                            <div class="property-row">
+                                <div class="property-label">电话：</div>
+                                <div class="property-value">${property.landlordPhone}</div>
+                            </div>
+                            ` : ''}
                         </div>
-                        <div class="property-row">
-                            <div class="property-label">户型：</div>
-                            <div class="property-value">${property.layout || '未知户型'}</div>
-                        </div>
-                        <div class="property-row">
-                            <div class="property-label">装修：</div>
-                            <div class="property-value">${property.decoration || '未知装修'}</div>
-                        </div>
-                        <div class="property-row">
-                            <div class="property-label">价格：</div>
-                            <div class="property-value price">${property.price || '面议'}${priceUnit}</div>
-                        </div>
-                        ${property.landlordName ? `
-                        <div class="property-row">
-                            <div class="property-label">房东：</div>
-                            <div class="property-value">${property.landlordName}</div>
-                        </div>
-                        ` : ''}
-                        ${property.landlordPhone ? `
-                        <div class="property-row">
-                            <div class="property-label">电话：</div>
-                            <div class="property-value">${property.landlordPhone}</div>
-                        </div>
-                        ` : ''}
-
                     </div>
                 `;
             });
