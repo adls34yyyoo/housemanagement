@@ -11911,11 +11911,11 @@
                 
                 printContent += `
                     <div class="property">
-                        <div class="property-title">${index + 1}. ${property.community || '未知小区'}</div>
+                        <div class="property-title">${index + 1}</div>
                         <div class="column">
                             <div class="property-row">
                                 <div class="property-label">类型：</div>
-                                <div class="property-value price">${typeText}</div>
+                                <div class="property-value price">${typeText} - ${property.community || '未知小区'}</div>
                             </div>
                             <div class="property-row">
                                 <div class="property-label">面积：</div>
