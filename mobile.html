@@ -11909,8 +11909,12 @@
                 
                 printContent += `
                     <div class="property">
-                        <div class="property-title">${index + 1}. ${property.community || '未知小区'} - ${typeText}</div>
+                        <div class="property-title">${index + 1}. ${property.community || '未知小区'}</div>
                         <div class="column">
+                            <div class="property-row">
+                                <div class="property-label">类型：</div>
+                                <div class="property-value price">${typeText}</div>
+                            </div>
                             <div class="property-row">
                                 <div class="property-label">面积：</div>
                                 <div class="property-value">${property.area ? property.area + '平方米' : '未知面积'}</div>
