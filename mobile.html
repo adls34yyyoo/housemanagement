@@ -5038,7 +5038,9 @@
             const container = document.getElementById('agentPropertyList');
             if (!container) return;
 
-            let propsToRender = filteredAgentProperties.length ? filteredAgentProperties : agentProperties;
+            // 只显示可代理房源（is_coop为false的代理房源）
+            let allAgentProperties = agentProperties.filter(p => !p.is_coop);
+            let propsToRender = filteredAgentProperties.length ? filteredAgentProperties : allAgentProperties;
 
             if (propsToRender.length === 0) {
                 container.innerHTML = `
@@ -5093,8 +5095,8 @@
             const container = document.getElementById('coopPropertyList');
             if (!container) return;
 
-            // 只显示代理房源（所有代理房源都可以合作）
-            let allCoopProperties = agentProperties;
+            // 只显示合作房源（is_coop为true的代理房源）
+            let allCoopProperties = agentProperties.filter(p => p.is_coop);
             let propsToRender = filteredCoopProperties.length ? filteredCoopProperties : allCoopProperties;
 
             if (propsToRender.length === 0) {
@@ -5147,7 +5149,8 @@
 
         // 全选/取消全选可代理房源
         window.toggleAgentSelectAll = function() {
-            const propsToRender = filteredAgentProperties.length ? filteredAgentProperties : agentProperties;
+            let allAgentProperties = agentProperties.filter(p => !p.is_coop);
+            const propsToRender = filteredAgentProperties.length ? filteredAgentProperties : allAgentProperties;
             const allSelected = selectedProperties.length === propsToRender.length && propsToRender.length > 0;
             
             if (allSelected) {
@@ -5166,7 +5169,7 @@
 
         // 全选/取消全选合作房源
         window.toggleCoopSelectAll = function() {
-            let allCoopProperties = agentProperties;
+            let allCoopProperties = agentProperties.filter(p => p.is_coop);
             const propsToRender = filteredCoopProperties.length ? filteredCoopProperties : allCoopProperties;
             const allSelected = selectedProperties.length === propsToRender.length && propsToRender.length > 0;
             
@@ -6919,6 +6922,8 @@
             // 如果是可代理/合作房源，添加标记和房源方信息
             if (isAgentMode) {
                 property.is_agent = true;
+                // 标记是否为合作房源
+                property.is_coop = isCoopPropertyMode;
                 property.agent_parties = agentParties;
                 // 兼容旧数据，保留第一个房源方作为agentName/agentPhone
                 if (agentParties.length > 0) {
@@ -6937,27 +6942,62 @@
                     }
                 }
 
-                // 所有房源都同步到云端
+                // 创建一个不包含is_coop的属性对象，避免列不存在的错误
+                const propertyWithoutCoop = { ...property };
+                delete propertyWithoutCoop.is_coop;
+
+                let saveSuccess = false;
+                let saveError = null;
+
+                // 首先尝试保存包含is_coop的版本
                 if (editingPropertyId) {
                     const { error } = await supabaseClient
                         .from('properties')
                         .update(property)
                         .eq('id', editingPropertyId);
                     
-                    if (error) {
-                        console.error('更新房源失败:', error);
-                        showToast('❌ 更新房源失败，请重试');
-                        return;
+                    if (!error) {
+                        saveSuccess = true;
+                    } else {
+                        console.log('is_coop列可能不存在，尝试不包含is_coop的保存:', error);
+                        saveError = error;
                     }
                 } else {
                     const { error } = await supabaseClient
                         .from('properties')
                         .insert([property]);
                     
-                    if (error) {
-                        console.error('保存房源失败:', error);
-                        showToast(`❌ 保存房源失败: ${error.message || '未知错误'}`);
-                        return;
+                    if (!error) {
+                        saveSuccess = true;
+                    } else {
+                        console.log('is_coop列可能不存在，尝试不包含is_coop的保存:', error);
+                        saveError = error;
+                    }
+                }
+
+                // 如果第一次保存失败，尝试不包含is_coop的版本
+                if (!saveSuccess) {
+                    if (editingPropertyId) {
+                        const { error } = await supabaseClient
+                            .from('properties')
+                            .update(propertyWithoutCoop)
+                            .eq('id', editingPropertyId);
+                        
+                        if (error) {
+                            console.error('更新房源失败:', error);
+                            showToast('❌ 更新房源失败，请重试');
+                            return;
+                        }
+                    } else {
+                        const { error } = await supabaseClient
+                            .from('properties')
+                            .insert([propertyWithoutCoop]);
+                        
+                        if (error) {
+                            console.error('保存房源失败:', error);
+                            showToast(`❌ 保存房源失败: ${error.message || '未知错误'}`);
+                            return;
+                        }
                     }
                 }
 
