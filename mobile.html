@@ -7258,6 +7258,15 @@
                         status: property.status || 'pending',
                         updated_at: new Date().toISOString()
                     };
+                    
+                    // 如果是可代理房源，添加is_agent字段
+                    if (property.is_agent) {
+                        minimalProperty.is_agent = true;
+                        // 同时添加is_coop字段（如果存在）
+                        if (property.is_coop !== undefined) {
+                            minimalProperty.is_coop = property.is_coop;
+                        }
+                    }
 
                     if (editingPropertyId) {
                         const { error } = await supabaseClient
