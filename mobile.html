@@ -7139,60 +7139,111 @@
                     }
                 }
 
-                // 创建一个不包含is_coop的属性对象，避免列不存在的错误
-                const propertyWithoutCoop = { ...property };
-                delete propertyWithoutCoop.is_coop;
+                // 创建一个精简的属性对象，只包含基本字段，避免因列不存在而报错
+                const basicProperty = {
+                    community: property.community,
+                    decoration: property.decoration,
+                    price: property.price,
+                    region: property.region,
+                    layout: property.layout,
+                    area: property.area,
+                    floor: property.floor,
+                    door_number: property.door_number,
+                    landlord_name: property.landlord_name,
+                    landlord_phone: property.landlord_phone,
+                    status: property.status,
+                    type: property.type,
+                    description: property.description,
+                    remark: property.remark,
+                    created_at: property.created_at,
+                    updated_at: property.updated_at
+                };
+
+                // 根据 is_agent 字段决定是否添加代理相关字段
+                if (property.is_agent) {
+                    basicProperty.is_agent = true;
+                    // 只有当 is_coop 为 true 时才添加
+                    if (property.is_coop) {
+                        basicProperty.is_coop = true;
+                    }
+                    // 添加房源方信息（如果有）
+                    if (property.agent_name) basicProperty.agent_name = property.agent_name;
+                    if (property.agent_phone) basicProperty.agent_phone = property.agent_phone;
+                    if (property.agent_parties && property.agent_parties.length > 0) {
+                        basicProperty.agent_parties = property.agent_parties;
+                    }
+                    if (property.coop_parties && property.coop_parties.length > 0) {
+                        basicProperty.coop_parties = property.coop_parties;
+                    }
+                }
+
+                // 添加可选字段（如果存在）
+                if (property.primary_school) basicProperty.primary_school = property.primary_school;
+                if (property.middle_school) basicProperty.middle_school = property.middle_school;
+                if (property.property_type) basicProperty.property_type = property.property_type;
+                if (property.property_certificate) basicProperty.property_certificate = property.property_certificate;
+                if (property.landlord_wechat) basicProperty.landlord_wechat = property.landlord_wechat;
+                if (property.change_history) basicProperty.change_history = property.change_history;
+                if (property.communication_records) basicProperty.communication_records = property.communication_records;
 
                 let saveSuccess = false;
-                let saveError = null;
 
-                // 首先尝试保存包含is_coop的版本
+                // 尝试保存基本版本
                 if (editingPropertyId) {
                     const { error } = await supabaseClient
                         .from('properties')
-                        .update(property)
+                        .update(basicProperty)
                         .eq('id', editingPropertyId);
-                    
+
                     if (!error) {
                         saveSuccess = true;
                     } else {
-                        console.log('is_coop列可能不存在，尝试不包含is_coop的保存:', error);
-                        saveError = error;
+                        console.error('更新房源失败，尝试不更新可选字段:', error);
                     }
                 } else {
                     const { error } = await supabaseClient
                         .from('properties')
-                        .insert([property]);
-                    
+                        .insert([basicProperty]);
+
                     if (!error) {
                         saveSuccess = true;
                     } else {
-                        console.log('is_coop列可能不存在，尝试不包含is_coop的保存:', error);
-                        saveError = error;
+                        console.error('保存房源失败，尝试不保存可选字段:', error);
                     }
                 }
 
-                // 如果第一次保存失败，尝试不包含is_coop的版本
                 if (!saveSuccess) {
+                    // 如果基本字段保存也失败，尝试只保存核心字段
+                    const minimalProperty = {
+                        community: property.community || '',
+                        price: property.price,
+                        type: property.type || 'rent',
+                        status: property.status || 'pending',
+                        updated_at: new Date().toISOString()
+                    };
+
                     if (editingPropertyId) {
                         const { error } = await supabaseClient
                             .from('properties')
-                            .update(propertyWithoutCoop)
+                            .update(minimalProperty)
                             .eq('id', editingPropertyId);
-                        
+
                         if (error) {
-                            console.error('更新房源失败:', error);
-                            showToast('❌ 更新房源失败，请重试');
+                            console.error('最小更新也失败:', error);
+                            showToast('❌ 保存房源失败，请检查数据库是否缺少必要字段');
                             return;
                         }
                     } else {
+                        minimalProperty.id = property.id || `prop_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                        minimalProperty.created_at = new Date().toISOString();
+
                         const { error } = await supabaseClient
                             .from('properties')
-                            .insert([propertyWithoutCoop]);
-                        
+                            .insert([minimalProperty]);
+
                         if (error) {
-                            console.error('保存房源失败:', error);
-                            showToast(`❌ 保存房源失败: ${error.message || '未知错误'}`);
+                            console.error('最小插入也失败:', error);
+                            showToast('❌ 保存房源失败，请检查数据库是否缺少必要字段');
                             return;
                         }
                     }
