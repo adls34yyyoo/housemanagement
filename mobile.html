@@ -5266,11 +5266,14 @@
             if (property.status === 'off_shelf') {
                 statusText = '已下架';
             } else {
-                statusText = '待发布'; // 恢复待发布字样
+                statusText = '待发布';
             }
 
-            const priceUnit = property.type === 'sale' ? '万' : '元/月'; // 修改代理出售房源价格单位为万
+            const priceUnit = property.type === 'sale' ? '万' : '元/月';
             const isSelected = selectedProperties.some(id => String(id) === String(property.id));
+            const isCoop = property.is_coop;
+            const toggleText = isCoop ? '转为可代理' : '转为合作';
+            const toggleIcon = isCoop ? '🔄' : '🔄';
 
             return `
                 <div class="property-card" style="padding: 12px 16px; cursor: pointer; transition: var(--transition); position: relative; display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid var(--border);" onclick="openPropertyDetailModal('${property.id}')">
@@ -5291,6 +5294,9 @@
                     </div>
                     <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px; margin-left: 12px;">
                         <span class="property-status ${statusClass}" style="font-size: 12px;">${statusText}</span>
+                        <button onclick="event.stopPropagation(); showAgentCoopToggleModal('${property.id}')" style="padding: 4px 8px; background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 500;">
+                            ${toggleIcon} ${toggleText}
+                        </button>
                     </div>
                 </div>
             `;
@@ -8676,6 +8682,143 @@
 
             // 显示成功提示
             showToast(`✅ 房源已成功转换为${newType === 'sale' ? '出售' : '出租'}`);
+        }
+
+        // 显示可代理方/合作方互转模态框
+        window.showAgentCoopToggleModal = function(propertyId) {
+            const property = agentProperties.find(p => String(p.id) === String(propertyId));
+            if (!property) {
+                console.error('未找到要转换的房源，propertyId:', propertyId);
+                return;
+            }
+
+            const isCoop = property.is_coop;
+            const currentTypeText = isCoop ? '合作房源' : '可代理房源';
+            const newTypeText = isCoop ? '可代理房源' : '合作房源';
+
+            // 创建模态框
+            const modalHTML = `
+                <div class="modal" id="agentCoopToggleModal" style="display: flex; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000;">
+                    <div class="modal-content" style="background: white; border-radius: var(--radius); padding: 20px; width: 90%; max-width: 400px;">
+                        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin: 0; color: var(--text);">转换房源类型</h3>
+                            <button onclick="closeAgentCoopToggleModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);">&times;</button>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <p style="margin-bottom: 16px;">确定将房源从 <strong style="color: var(--primary);">${currentTypeText}</strong> 转换为 <strong style="color: var(--primary);">${newTypeText}</strong> 吗？</p>
+                            
+                            <div style="background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.2); border-radius: var(--radius); padding: 12px; margin-bottom: 16px;">
+                                <div style="color: #8b5cf6; font-size: 14px;">
+                                    ${isCoop ? '📋 转换后，房源将从"合作房源"列表移到"可代理房源"列表' : '📋 转换后，房源将从"可代理房源"列表移到"合作房源"列表'}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-actions" style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button class="btn btn-default" onclick="closeAgentCoopToggleModal()">取消</button>
+                            <button class="btn btn-primary" onclick="toggleAgentCoop('${property.id}')" style="background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);">确认转换</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        // 关闭可代理方/合作方互转模态框
+        window.closeAgentCoopToggleModal = function() {
+            const modal = document.getElementById('agentCoopToggleModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // 执行可代理方/合作方互转
+        window.toggleAgentCoop = async function(propertyId) {
+            const property = agentProperties.find(p => String(p.id) === String(propertyId));
+            if (!property) {
+                console.error('未找到要转换的房源，propertyId:', propertyId);
+                return;
+            }
+
+            const isCoop = property.is_coop;
+            const newIsCoop = !isCoop;
+            const newTypeText = newIsCoop ? '合作房源' : '可代理房源';
+
+            // 同时转换 agent_parties 和 coop_parties
+            if (newIsCoop) {
+                // 转为合作房源：将 agent_parties 复制到 coop_parties
+                const currentAgentParties = property.agentParties || property.agent_parties || [];
+                if (currentAgentParties.length > 0) {
+                    property.coopParties = [...currentAgentParties];
+                    property.coop_parties = [...currentAgentParties];
+                }
+            } else {
+                // 转为可代理房源：将 coop_parties 复制到 agent_parties
+                const currentCoopParties = property.coopParties || property.coop_parties || [];
+                if (currentCoopParties.length > 0) {
+                    property.agentParties = [...currentCoopParties];
+                    property.agent_parties = [...currentCoopParties];
+                }
+            }
+
+            // 转换类型
+            property.is_coop = newIsCoop;
+            property.isCoop = newIsCoop;
+            property.updated_at = new Date().toISOString();
+            property.synced = false;
+
+            // 添加更改记录
+            if (!property.changeHistory) {
+                property.changeHistory = [];
+            }
+            property.changeHistory.push({
+                timestamp: new Date().toISOString(),
+                action: `转换为${newTypeText}`,
+                user: currentUser || 'admin'
+            });
+
+            // 保存到云数据库
+            try {
+                if (!supabaseClient) {
+                    const initialized = initSupabase();
+                    if (!initialized) {
+                        showToast('❌ 数据库连接失败，请检查网络');
+                        return;
+                    }
+                }
+
+                const updateData = {
+                    is_coop: newIsCoop,
+                    agent_parties: property.agentParties || property.agent_parties || [],
+                    coop_parties: property.coopParties || property.coop_parties || [],
+                    change_history: property.changeHistory,
+                    updated_at: property.updated_at
+                };
+
+                const { error } = await supabaseClient
+                    .from('properties')
+                    .update(updateData)
+                    .eq('id', propertyId);
+
+                if (error) {
+                    console.error('更新房源类型失败:', error);
+                    showToast('❌ 转换失败，请重试');
+                    return;
+                }
+
+                await loadData();
+            } catch (error) {
+                console.error('可代理/合作互转时出错:', error);
+                showToast('❌ 操作失败，请检查网络连接');
+            }
+
+            closeAgentCoopToggleModal();
+            closePropertyDetailModal();
+            renderAgentPropertyList();
+            renderCoopPropertyList();
+            renderPropertyList();
+
+            showToast(`✅ 房源已成功转换为${newTypeText}`);
         }
 
         // 存储训练数据
