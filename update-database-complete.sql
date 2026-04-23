@@ -160,8 +160,16 @@ BEGIN
     END IF;
 END $$;
 
--- 创建 agent_parties 表（可代理方/合作方管理表）
+-- 创建 agent_parties 表（可代理方管理表）
 CREATE TABLE IF NOT EXISTS agent_parties (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    phone TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 创建 coop_parties 表（合作方管理表）
+CREATE TABLE IF NOT EXISTS coop_parties (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     phone TEXT,

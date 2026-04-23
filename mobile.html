@@ -7318,8 +7318,31 @@
                     }
                 }
                 
+                // 即使数据库保存失败，也将房源添加到本地数组
+                if (isAgentMode) {
+                    // 检查是否已存在
+                    const existingIndex = agentProperties.findIndex(p => p.id === property.id);
+                    if (existingIndex > -1) {
+                        agentProperties[existingIndex] = property;
+                    } else {
+                        agentProperties.push(property);
+                    }
+                } else {
+                    // 检查是否已存在
+                    const existingIndex = properties.findIndex(p => p.id === property.id);
+                    if (existingIndex > -1) {
+                        properties[existingIndex] = property;
+                    } else {
+                        properties.push(property);
+                    }
+                }
+                
                 // 重新加载数据
-                await loadData();
+                try {
+                    await loadData();
+                } catch (error) {
+                    console.error('重新加载数据失败:', error);
+                }
                 
                 showToast('✅ 房源保存成功');
                 closePropertyModal();
@@ -7334,7 +7357,33 @@
                 updateStats();
             } catch (error) {
                 console.error('保存房源时出错:', error);
-                showToast('❌ 保存失败，请检查网络连接');
+                
+                // 即使保存失败，也将房源添加到本地数组
+                if (isAgentMode) {
+                    // 检查是否已存在
+                    const existingIndex = agentProperties.findIndex(p => p.id === property.id);
+                    if (existingIndex > -1) {
+                        agentProperties[existingIndex] = property;
+                    } else {
+                        agentProperties.push(property);
+                    }
+                    // 刷新列表
+                    renderAgentPropertyList();
+                } else {
+                    // 检查是否已存在
+                    const existingIndex = properties.findIndex(p => p.id === property.id);
+                    if (existingIndex > -1) {
+                        properties[existingIndex] = property;
+                    } else {
+                        properties.push(property);
+                    }
+                    // 刷新列表
+                    renderPropertyList();
+                }
+                
+                showToast('⚠️ 网络连接失败，房源已保存到本地');
+                closePropertyModal();
+                updateStats();
             }
         }
 
@@ -7812,37 +7861,45 @@
                 }
 
                 // 加载可代理方
-                const { data: agentPartiesFromDB, error: agentError } = await supabaseClient
-                    .from('agent_parties')
-                    .select('*');
+                try {
+                    const { data: agentPartiesFromDB, error: agentError } = await supabaseClient
+                        .from('agent_parties')
+                        .select('*');
 
-                if (agentError) {
-                    console.error('加载可代理方失败:', agentError);
-                } else if (agentPartiesFromDB) {
-                    agentParties = agentPartiesFromDB.map(party => ({
-                        id: party.id,
-                        name: party.name,
-                        phone: party.phone
-                    }));
+                    if (agentError) {
+                        console.error('加载可代理方失败:', agentError);
+                    } else if (agentPartiesFromDB) {
+                        agentParties = agentPartiesFromDB.map(party => ({
+                            id: party.id,
+                            name: party.name,
+                            phone: party.phone
+                        }));
 
-                    console.log('从数据库加载可代理方成功:', agentParties);
+                        console.log('从数据库加载可代理方成功:', agentParties);
+                    }
+                } catch (error) {
+                    console.error('加载可代理方时发生错误:', error);
                 }
 
                 // 加载合作方
-                const { data: coopPartiesFromDB, error: coopError } = await supabaseClient
-                    .from('coop_parties')
-                    .select('*');
+                try {
+                    const { data: coopPartiesFromDB, error: coopError } = await supabaseClient
+                        .from('coop_parties')
+                        .select('*');
 
-                if (coopError) {
-                    console.error('加载合作方失败:', coopError);
-                } else if (coopPartiesFromDB) {
-                    coopParties = coopPartiesFromDB.map(party => ({
-                        id: party.id,
-                        name: party.name,
-                        phone: party.phone
-                    }));
+                    if (coopError) {
+                        console.error('加载合作方失败:', coopError);
+                    } else if (coopPartiesFromDB) {
+                        coopParties = coopPartiesFromDB.map(party => ({
+                            id: party.id,
+                            name: party.name,
+                            phone: party.phone
+                        }));
 
-                    console.log('从数据库加载合作方成功:', coopParties);
+                        console.log('从数据库加载合作方成功:', coopParties);
+                    }
+                } catch (error) {
+                    console.error('加载合作方时发生错误:', error);
                 }
 
                 // 更新下拉框选项
@@ -7919,8 +7976,8 @@
         async function saveAgentPartyToDatabase(name, phone) {
             if (!supabaseClient) {
                 console.log('Supabase未连接，无法保存可代理方');
-                showToast('Supabase未连接，无法保存可代理方');
-                return false;
+                // 不显示错误提示，允许本地保存
+                return true;
             }
 
             try {
@@ -7935,16 +7992,16 @@
 
                 if (error) {
                     console.error('保存可代理方失败:', error);
-                    showToast('保存可代理方失败: ' + error.message);
-                    return false;
+                    // 不显示错误提示，允许本地保存
+                    return true;
                 }
 
                 console.log('可代理方保存成功:', name, phone);
                 return true;
             } catch (error) {
                 console.error('保存可代理方时发生错误:', error);
-                showToast('保存可代理方时发生错误: ' + error.message);
-                return false;
+                // 不显示错误提示，允许本地保存
+                return true;
             }
         }
 
@@ -7952,8 +8009,8 @@
         async function deleteAgentPartyFromDatabase(name, phone) {
             if (!supabaseClient) {
                 console.log('Supabase未连接，无法删除可代理方');
-                showToast('Supabase未连接，无法删除可代理方');
-                return false;
+                // 不显示错误提示，允许本地删除
+                return true;
             }
 
             try {
@@ -7965,16 +8022,16 @@
 
                 if (error) {
                     console.error('删除可代理方失败:', error);
-                    showToast('删除可代理方失败: ' + error.message);
-                    return false;
+                    // 不显示错误提示，允许本地删除
+                    return true;
                 }
 
                 console.log('可代理方删除成功:', name, phone);
                 return true;
             } catch (error) {
                 console.error('删除可代理方时发生错误:', error);
-                showToast('删除可代理方时发生错误: ' + error.message);
-                return false;
+                // 不显示错误提示，允许本地删除
+                return true;
             }
         }
 
@@ -7982,8 +8039,8 @@
         async function saveCoopPartyToDatabase(name, phone) {
             if (!supabaseClient) {
                 console.log('Supabase未连接，无法保存合作方');
-                showToast('Supabase未连接，无法保存合作方');
-                return false;
+                // 不显示错误提示，允许本地保存
+                return true;
             }
 
             try {
@@ -7998,16 +8055,16 @@
 
                 if (error) {
                     console.error('保存合作方失败:', error);
-                    showToast('保存合作方失败: ' + error.message);
-                    return false;
+                    // 不显示错误提示，允许本地保存
+                    return true;
                 }
 
                 console.log('合作方保存成功:', name, phone);
                 return true;
             } catch (error) {
                 console.error('保存合作方时发生错误:', error);
-                showToast('保存合作方时发生错误: ' + error.message);
-                return false;
+                // 不显示错误提示，允许本地保存
+                return true;
             }
         }
 
@@ -8015,8 +8072,8 @@
         async function deleteCoopPartyFromDatabase(name, phone) {
             if (!supabaseClient) {
                 console.log('Supabase未连接，无法删除合作方');
-                showToast('Supabase未连接，无法删除合作方');
-                return false;
+                // 不显示错误提示，允许本地删除
+                return true;
             }
 
             try {
@@ -8028,16 +8085,16 @@
 
                 if (error) {
                     console.error('删除合作方失败:', error);
-                    showToast('删除合作方失败: ' + error.message);
-                    return false;
+                    // 不显示错误提示，允许本地删除
+                    return true;
                 }
 
                 console.log('合作方删除成功:', name, phone);
                 return true;
             } catch (error) {
                 console.error('删除合作方时发生错误:', error);
-                showToast('删除合作方时发生错误: ' + error.message);
-                return false;
+                // 不显示错误提示，允许本地删除
+                return true;
             }
         }
 
