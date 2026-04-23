@@ -5537,12 +5537,13 @@
                 const agentPartiesList = document.getElementById('agentPartiesList');
                 if (agentPartiesList) {
                     agentPartiesList.innerHTML = '';
-                    const parties = property.agentParties || [];
+                    // 同时支持驼峰和下划线命名
+                    const parties = property.agentParties || property.agent_parties || [];
                     if (parties.length > 0) {
                         parties.forEach(party => addAgentParty(party.name, party.phone));
-                    } else if (property.agentName || property.agentPhone) {
+                    } else if (property.agentName || property.agentPhone || property.agent_name || property.agent_phone) {
                         // 兼容旧数据
-                        addAgentParty(property.agentName || '', property.agentPhone || '');
+                        addAgentParty(property.agentName || property.agent_name || '', property.agentPhone || property.agent_phone || '');
                     } else {
                         // 默认添加一个空的
                         addAgentParty();
@@ -5554,12 +5555,13 @@
                 const coopPartiesList = document.getElementById('coopPartiesList');
                 if (coopPartiesList) {
                     coopPartiesList.innerHTML = '';
-                    const parties = property.coopParties || [];
+                    // 同时支持驼峰和下划线命名
+                    const parties = property.coopParties || property.coop_parties || [];
                     if (parties.length > 0) {
                         parties.forEach(party => addCoopParty(party.name, party.phone));
-                    } else if (property.agentName || property.agentPhone) {
+                    } else if (property.agentName || property.agentPhone || property.agent_name || property.agent_phone) {
                         // 兼容旧数据
-                        addCoopParty(property.agentName || '', property.agentPhone || '');
+                        addCoopParty(property.agentName || property.agent_name || '', property.agentPhone || property.agent_phone || '');
                     } else {
                         // 默认添加一个空的
                         addCoopParty();
