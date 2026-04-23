@@ -2986,7 +2986,8 @@
                             <option value="region">地区</option>
                             <option value="propertyType">房源类型</option>
                             <option value="propertyCertificate">产证情况</option>
-                            <option value="agentParties">被代理方</option>
+                            <option value="agentParties">可代理方</option>
+                            <option value="coopParties">合作方</option>
                         </select>
                 </div>
                 <div class="form-group">
@@ -6578,6 +6579,16 @@
                 <button type="button" onclick="removeAgentParty(this)" style="padding: 8px 12px; background: #ef4444; color: white; border: none; border-radius: var(--radius); cursor: pointer;">删除</button>
             `;
             list.appendChild(partyDiv);
+            
+            // 自动同步到合作方列表
+            if (name && phone) {
+                // 检查合作方列表中是否已存在
+                const existingCoopParty = coopParties.find(p => p.name === name && p.phone === phone);
+                if (!existingCoopParty) {
+                    coopParties.push({ name, phone });
+                    localStorage.setItem('coopParties', JSON.stringify(coopParties));
+                }
+            }
         }
         
         // 选择可代理方
@@ -6650,16 +6661,24 @@
                 if (name || phone) {
                     parties.push({ name, phone });
 
-                    // 保存到全局被代理方列表（如果不存在）
-                    const existingParty = agentParties.find(p => p.name === name && p.phone === phone);
-                    if (!existingParty) {
+                    // 保存到全局可代理方列表（如果不存在）
+                    const existingAgentParty = agentParties.find(p => p.name === name && p.phone === phone);
+                    if (!existingAgentParty) {
                         agentParties.push({ name, phone });
+                    }
+                    
+                    // 自动同步到合作方列表
+                    const existingCoopParty = coopParties.find(p => p.name === name && p.phone === phone);
+                    if (!existingCoopParty) {
+                        coopParties.push({ name, phone });
                     }
                 }
             });
 
-            // 保存全局被代理方列表
-
+            // 保存全局可代理方列表
+            localStorage.setItem('agentParties', JSON.stringify(agentParties));
+            // 保存全局合作方列表
+            localStorage.setItem('coopParties', JSON.stringify(coopParties));
 
             return parties;
         }
@@ -6699,6 +6718,16 @@
                 <button type="button" onclick="removeCoopParty(this)" style="padding: 8px 12px; background: #ef4444; color: white; border: none; border-radius: var(--radius); cursor: pointer;">删除</button>
             `;
             list.appendChild(partyDiv);
+            
+            // 自动同步到可代理方列表
+            if (name && phone) {
+                // 检查可代理方列表中是否已存在
+                const existingAgentParty = agentParties.find(p => p.name === name && p.phone === phone);
+                if (!existingAgentParty) {
+                    agentParties.push({ name, phone });
+                    localStorage.setItem('agentParties', JSON.stringify(agentParties));
+                }
+            }
         }
 
         // 选择合作方
@@ -6772,15 +6801,23 @@
                     parties.push({ name, phone });
 
                     // 保存到全局合作方列表（如果不存在）
-                    const existingParty = coopParties.find(p => p.name === name && p.phone === phone);
-                    if (!existingParty) {
+                    const existingCoopParty = coopParties.find(p => p.name === name && p.phone === phone);
+                    if (!existingCoopParty) {
                         coopParties.push({ name, phone });
+                    }
+                    
+                    // 自动同步到可代理方列表
+                    const existingAgentParty = agentParties.find(p => p.name === name && p.phone === phone);
+                    if (!existingAgentParty) {
+                        agentParties.push({ name, phone });
                     }
                 }
             });
 
             // 保存全局合作方列表
-
+            localStorage.setItem('coopParties', JSON.stringify(coopParties));
+            // 保存全局可代理方列表
+            localStorage.setItem('agentParties', JSON.stringify(agentParties));
 
             return parties;
         }
@@ -7765,13 +7802,13 @@
                     console.log('从数据库加载选项成功:', optionsData);
                 }
 
-                // 加载被代理方
+                // 加载可代理方
                 const { data: agentPartiesFromDB, error: agentError } = await supabaseClient
                     .from('agent_parties')
                     .select('*');
 
                 if (agentError) {
-                    console.error('加载被代理方失败:', agentError);
+                    console.error('加载可代理方失败:', agentError);
                 } else if (agentPartiesFromDB) {
                     agentParties = agentPartiesFromDB.map(party => ({
                         id: party.id,
@@ -7779,7 +7816,24 @@
                         phone: party.phone
                     }));
 
-                    console.log('从数据库加载被代理方成功:', agentParties);
+                    console.log('从数据库加载可代理方成功:', agentParties);
+                }
+
+                // 加载合作方
+                const { data: coopPartiesFromDB, error: coopError } = await supabaseClient
+                    .from('coop_parties')
+                    .select('*');
+
+                if (coopError) {
+                    console.error('加载合作方失败:', coopError);
+                } else if (coopPartiesFromDB) {
+                    coopParties = coopPartiesFromDB.map(party => ({
+                        id: party.id,
+                        name: party.name,
+                        phone: party.phone
+                    }));
+
+                    console.log('从数据库加载合作方成功:', coopParties);
                 }
 
                 // 更新下拉框选项
@@ -7915,6 +7969,69 @@
             }
         }
 
+        // 保存合作方到数据库
+        async function saveCoopPartyToDatabase(name, phone) {
+            if (!supabaseClient) {
+                console.log('Supabase未连接，无法保存合作方');
+                showToast('Supabase未连接，无法保存合作方');
+                return false;
+            }
+
+            try {
+                const id = `coop_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                const { error } = await supabaseClient
+                    .from('coop_parties')
+                    .insert([{
+                        id: id,
+                        name: name,
+                        phone: phone
+                    }]);
+
+                if (error) {
+                    console.error('保存合作方失败:', error);
+                    showToast('保存合作方失败: ' + error.message);
+                    return false;
+                }
+
+                console.log('合作方保存成功:', name, phone);
+                return true;
+            } catch (error) {
+                console.error('保存合作方时发生错误:', error);
+                showToast('保存合作方时发生错误: ' + error.message);
+                return false;
+            }
+        }
+
+        // 从数据库删除合作方
+        async function deleteCoopPartyFromDatabase(name, phone) {
+            if (!supabaseClient) {
+                console.log('Supabase未连接，无法删除合作方');
+                showToast('Supabase未连接，无法删除合作方');
+                return false;
+            }
+
+            try {
+                const { error } = await supabaseClient
+                    .from('coop_parties')
+                    .delete()
+                    .eq('name', name)
+                    .eq('phone', phone);
+
+                if (error) {
+                    console.error('删除合作方失败:', error);
+                    showToast('删除合作方失败: ' + error.message);
+                    return false;
+                }
+
+                console.log('合作方删除成功:', name, phone);
+                return true;
+            } catch (error) {
+                console.error('删除合作方时发生错误:', error);
+                showToast('删除合作方时发生错误: ' + error.message);
+                return false;
+            }
+        }
+
         function loadOptions() {
             const type = document.getElementById('optionType').value;
             const container = document.getElementById('optionsList');
@@ -7925,13 +8042,32 @@
             }
 
             if (type === 'agentParties') {
-                // 加载被代理方列表
+                // 加载可代理方列表
                 if (agentParties.length === 0) {
-                    container.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">暂无被代理方</div>';
+                    container.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">暂无可代理方</div>';
                     return;
                 }
 
                 container.innerHTML = agentParties.map(party => `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--border);">
+                        <div>
+                            <div style="font-weight: 500;">${party.name}</div>
+                            <div style="font-size: 12px; color: var(--text-secondary);">${party.phone}</div>
+                        </div>
+                        <button class="btn btn-danger" onclick="removeOption('${type}', '${party.name}', '${party.phone}')" style="padding: 6px 12px; font-size: 12px;">删除</button>
+                    </div>
+                `).join('');
+                return;
+            }
+
+            if (type === 'coopParties') {
+                // 加载合作方列表
+                if (coopParties.length === 0) {
+                    container.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">暂无合作方</div>';
+                    return;
+                }
+
+                container.innerHTML = coopParties.map(party => `
                     <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--border);">
                         <div>
                             <div style="font-weight: 500;">${party.name}</div>
@@ -7968,23 +8104,23 @@
             }
 
             if (type === 'agentParties') {
-                // 添加被代理方
-                const name = prompt('请输入被代理方名称：');
+                // 添加可代理方
+                const name = prompt('请输入可代理方名称：');
                 if (!name || name.trim() === '') {
-                    showToast('请输入被代理方名称');
+                    showToast('请输入可代理方名称');
                     return;
                 }
                 
-                const phone = prompt('请输入被代理方电话：');
+                const phone = prompt('请输入可代理方电话：');
                 if (!phone || phone.trim() === '') {
-                    showToast('请输入被代理方电话');
+                    showToast('请输入可代理方电话');
                     return;
                 }
                 
                 // 检查是否已存在
-                const existingParty = agentParties.find(p => p.name === name.trim() && p.phone === phone.trim());
-                if (existingParty) {
-                    showToast('该被代理方已存在');
+                const existingAgentParty = agentParties.find(p => p.name === name.trim() && p.phone === phone.trim());
+                if (existingAgentParty) {
+                    showToast('该可代理方已存在');
                     return;
                 }
                 
@@ -7996,6 +8132,68 @@
                         name: name.trim(), 
                         phone: phone.trim() 
                     });
+                    
+                    // 自动同步到合作方列表
+                    const existingCoopParty = coopParties.find(p => p.name === name.trim() && p.phone === phone.trim());
+                    if (!existingCoopParty) {
+                        coopParties.push({ 
+                            name: name.trim(), 
+                            phone: phone.trim() 
+                        });
+                        // 保存合作方到数据库
+                        await saveCoopPartyToDatabase(name.trim(), phone.trim());
+                    }
+                    
+                    document.getElementById('newOptionValue').value = '';
+                    loadOptions();
+                    showToast('添加成功');
+                } else {
+                    showToast('添加失败，请重试');
+                }
+                return;
+            }
+
+            if (type === 'coopParties') {
+                // 添加合作方
+                const name = prompt('请输入合作方名称：');
+                if (!name || name.trim() === '') {
+                    showToast('请输入合作方名称');
+                    return;
+                }
+                
+                const phone = prompt('请输入合作方电话：');
+                if (!phone || phone.trim() === '') {
+                    showToast('请输入合作方电话');
+                    return;
+                }
+                
+                // 检查是否已存在
+                const existingCoopParty = coopParties.find(p => p.name === name.trim() && p.phone === phone.trim());
+                if (existingCoopParty) {
+                    showToast('该合作方已存在');
+                    return;
+                }
+                
+                // 保存到数据库
+                const saved = await saveCoopPartyToDatabase(name.trim(), phone.trim());
+                if (saved) {
+                    // 添加到内存
+                    coopParties.push({ 
+                        name: name.trim(), 
+                        phone: phone.trim() 
+                    });
+                    
+                    // 自动同步到可代理方列表
+                    const existingAgentParty = agentParties.find(p => p.name === name.trim() && p.phone === phone.trim());
+                    if (!existingAgentParty) {
+                        agentParties.push({ 
+                            name: name.trim(), 
+                            phone: phone.trim() 
+                        });
+                        // 保存可代理方到数据库
+                        await saveAgentPartyToDatabase(name.trim(), phone.trim());
+                    }
+                    
                     document.getElementById('newOptionValue').value = '';
                     loadOptions();
                     showToast('添加成功');
@@ -8032,14 +8230,14 @@
         // 删除选项
         async function removeOption(type, value, phone) {
             if (type === 'agentParties') {
-                // 检查被代理方是否被使用
+                // 检查可代理方是否被使用
                 const isInUse = agentProperties.some(property => {
                     const parties = property.agentParties || [];
                     return parties.some(party => party.name === value && party.phone === phone);
                 });
 
                 if (isInUse) {
-                    showToast('该被代理方正在被使用，无法删除');
+                    showToast('该可代理方正在被使用，无法删除');
                     return;
                 }
 
@@ -8057,6 +8255,41 @@
                     const index = agentParties.findIndex(p => p.name === value && p.phone === phone);
                     if (index > -1) {
                         agentParties.splice(index, 1);
+                        loadOptions();
+                        showToast('删除成功');
+                    }
+                } else {
+                    showToast('删除失败，请重试');
+                }
+                return;
+            }
+
+            if (type === 'coopParties') {
+                // 检查合作方是否被使用
+                const isInUse = agentProperties.some(property => {
+                    const parties = property.coopParties || [];
+                    return parties.some(party => party.name === value && party.phone === phone);
+                });
+
+                if (isInUse) {
+                    showToast('该合作方正在被使用，无法删除');
+                    return;
+                }
+
+                // 密码验证
+                const password = prompt('请输入密码以确认删除：');
+                if (password !== '123456') {
+                    showToast('密码错误，无法删除');
+                    return;
+                }
+
+                // 从数据库删除
+                const deleted = await deleteCoopPartyFromDatabase(value, phone);
+                if (deleted) {
+                    // 从内存中删除
+                    const index = coopParties.findIndex(p => p.name === value && p.phone === phone);
+                    if (index > -1) {
+                        coopParties.splice(index, 1);
                         loadOptions();
                         showToast('删除成功');
                     }
