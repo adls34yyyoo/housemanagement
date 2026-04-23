@@ -2836,6 +2836,14 @@
                         <button type="button" class="btn btn-primary" onclick="addAgentParty()" style="width: 100%;">添加可代理方</button>
                     </div>
                 </div>
+                <!-- 合作方区域 -->
+                <div id="coopPartiesSection" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">合作方</label>
+                        <div id="coopPartiesList" style="margin-bottom: 12px;"></div>
+                        <button type="button" class="btn btn-primary" onclick="addCoopParty()" style="width: 100%;">添加合作方</button>
+                    </div>
+                </div>
                 <div class="form-group">
                     <label class="form-label">产证情况</label>
                     <select class="form-select" id="propCertificate">
@@ -5029,9 +5037,11 @@
         let filteredAgentProperties = [];
         // 合作房源数据
         let filteredCoopProperties = [];
-        
+
         // 全局被代理方列表
         let agentParties = [];
+        // 全局合作方列表
+        let coopParties = [];
 
         // 渲染可代理房源列表
         function renderAgentPropertyList() {
@@ -5287,21 +5297,24 @@
 
         // 渲染被代理方信息
         function renderAgentParties(property) {
-            // 优先使用agentParties数组
-            const parties = property.agentParties || [];
+            // 根据 is_coop 字段判断是显示可代理方还是合作方
+            const isCoop = property.is_coop;
+            const parties = isCoop ? (property.coopParties || []) : (property.agentParties || []);
+            const partyTypeName = isCoop ? '合作方' : '可代理方';
+
             if (parties.length === 0) {
                 // 兼容旧数据
                 if (property.agentName || property.agentPhone) {
                     return `
-                        <div style="font-size: 13px; color: var(--text-secondary);">👤 ${property.agentName || ''} ${property.agentPhone ? '· ' + property.agentPhone : ''}</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">👤 ${partyTypeName}：${property.agentName || ''} ${property.agentPhone ? '· ' + property.agentPhone : ''}</div>
                     `;
                 }
                 return '';
             }
-            
+
             return parties.map((party, index) => `
                 <div style="font-size: 13px; color: var(--text-secondary);">
-                    👤 可代理方${parties.length > 1 ? index + 1 : ''}：${party.name || ''} ${party.phone ? `<a href="tel:${party.phone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">📞</a>` : ''}
+                    👤 ${partyTypeName}${parties.length > 1 ? index + 1 : ''}：${party.name || ''} ${party.phone ? `<a href="tel:${party.phone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">📞</a>` : ''}
                 </div>
             `).join('');
         }
@@ -5469,23 +5482,45 @@
         function editAgentProperty(propertyId) {
             const property = agentProperties.find(p => p.id === propertyId);
             if (!property) return;
-            
+
             // 设置编辑模式
             editingPropertyId = propertyId;
             editingPropertyType = property.type;
             isAgentPropertyMode = true;
-            
+            isCoopPropertyMode = property.is_coop || false;
+
             // 显示模态框并设置区域显示状态
             const modal = document.getElementById('propertyModal');
             const title = document.getElementById('propertyModalTitle');
             const landlordSection = document.getElementById('landlordSection');
             const agentPartiesSection = document.getElementById('agentPartiesSection');
+            const coopPartiesSection = document.getElementById('coopPartiesSection');
             const certificateSection = document.getElementById('certificateSection');
-            
+
             if (landlordSection) landlordSection.style.display = 'none';
-            if (agentPartiesSection) agentPartiesSection.style.display = 'block';
+            if (agentPartiesSection) agentPartiesSection.style.display = 'none';
+            if (coopPartiesSection) coopPartiesSection.style.display = 'none';
             if (certificateSection) certificateSection.style.display = 'none';
-            
+
+            // 根据 is_coop 显示对应的区域
+            if (property.is_coop) {
+                // 合作房源
+                if (coopPartiesSection) {
+                    coopPartiesSection.style.display = 'block';
+                    // 初始化合作方列表
+                    initCoopPartiesList();
+                }
+                if (title) title.textContent = '编辑合作房源';
+            } else {
+                // 可代理房源
+                if (agentPartiesSection) {
+                    agentPartiesSection.style.display = 'block';
+                    // 初始化可代理方列表
+                    initAgentPartiesList();
+                }
+                if (title) title.textContent = '编辑代理房源';
+            }
+
             // 设置状态下拉框
             const statusSelect = document.getElementById('propStatus');
             if (statusSelect) {
@@ -5494,7 +5529,7 @@
                     <option value="off_shelf">已下架</option>
                 `;
             }
-            
+
             // 填充表单数据
             setTimeout(() => {
                 const communityInput = document.getElementById('propCommunity');
@@ -5506,7 +5541,7 @@
                 const decorationInput = document.getElementById('propDecoration');
                 const statusInput = document.getElementById('propStatus');
                 const priceLabel = document.getElementById('priceLabel');
-                
+
                 if (communityInput) communityInput.value = property.community || '';
                 if (regionInput) regionInput.value = property.region || '';
                 if (layoutInput) layoutInput.value = property.layout || '';
@@ -5516,29 +5551,47 @@
                 if (decorationInput) decorationInput.value = property.decoration || '';
                 if (statusInput) statusInput.value = property.status || 'pending';
                 if (priceLabel) priceLabel.textContent = '价格（万元）'; // 代理房源始终使用万元单位
-                
-                // 填充房源方列表
-                const agentPartiesList = document.getElementById('agentPartiesList');
-                if (agentPartiesList) {
-                    agentPartiesList.innerHTML = '';
-                    // 优先使用agentParties数组，兼容旧数据使用agentName/agentPhone
-                    const parties = property.agentParties || [];
-                    if (parties.length > 0) {
-                        parties.forEach(party => addAgentParty(party.name, party.phone));
-                    } else if (property.agentName || property.agentPhone) {
-                        // 兼容旧数据
-                        addAgentParty(property.agentName || '', property.agentPhone || '');
-                    } else {
-                        // 默认添加一个空的
-                        addAgentParty();
+
+                // 根据 is_coop 填充对应的房源方列表
+                if (property.is_coop) {
+                    // 合作房源 - 填充合作方列表
+                    const coopPartiesList = document.getElementById('coopPartiesList');
+                    if (coopPartiesList) {
+                        coopPartiesList.innerHTML = '';
+                        const parties = property.coopParties || [];
+                        if (parties.length > 0) {
+                            parties.forEach(party => addCoopParty(party.name, party.phone));
+                        } else if (property.agentName || property.agentPhone) {
+                            // 兼容旧数据
+                            addCoopParty(property.agentName || '', property.agentPhone || '');
+                        } else {
+                            // 默认添加一个空的
+                            addCoopParty();
+                        }
+                    }
+                } else {
+                    // 可代理房源 - 填充可代理方列表
+                    const agentPartiesList = document.getElementById('agentPartiesList');
+                    if (agentPartiesList) {
+                        agentPartiesList.innerHTML = '';
+                        const parties = property.agentParties || [];
+                        if (parties.length > 0) {
+                            parties.forEach(party => addAgentParty(party.name, party.phone));
+                        } else if (property.agentName || property.agentPhone) {
+                            // 兼容旧数据
+                            addAgentParty(property.agentName || '', property.agentPhone || '');
+                        } else {
+                            // 默认添加一个空的
+                            addAgentParty();
+                        }
                     }
                 }
             }, 100);
-            
+
             // 打开模态框
-            if (modal && title) {
-                modal.style.display = 'block';
-                title.textContent = '编辑代理房源';
+            if (modal) {
+                modal.style.display = 'flex';
+                modal.classList.add('active');
             }
         }
 
@@ -6441,24 +6494,39 @@
             editingPropertyId = null;
             isAgentPropertyMode = isAgent;
             isCoopPropertyMode = isCoop;
-            
+
             const priceLabel = document.getElementById('priceLabel');
             const landlordSection = document.getElementById('landlordSection');
             const agentPartiesSection = document.getElementById('agentPartiesSection');
+            const coopPartiesSection = document.getElementById('coopPartiesSection');
             const certificateSection = document.getElementById('certificateSection');
-            
+
             if (isAgent) {
                 // 可代理/合作房源模式 - 显示房源方区域，隐藏房东区域和产证
                 if (landlordSection) landlordSection.style.display = 'none';
-                if (agentPartiesSection) {
-                    agentPartiesSection.style.display = 'block';
-                    // 初始化一个空的房源方
-                    initAgentPartiesList();
+                if (agentPartiesSection) agentPartiesSection.style.display = 'none';
+                if (coopPartiesSection) coopPartiesSection.style.display = 'none';
+
+                // 根据模式显示不同的区域
+                if (isCoop) {
+                    // 合作模式，显示合作方区域
+                    if (coopPartiesSection) {
+                        coopPartiesSection.style.display = 'block';
+                        initCoopPartiesList();
+                    }
+                    document.getElementById('propertyModalTitle').textContent = '新增合作卖房';
+                } else {
+                    // 代理模式，显示可代理方区域
+                    if (agentPartiesSection) {
+                        agentPartiesSection.style.display = 'block';
+                        initAgentPartiesList();
+                    }
+                    document.getElementById('propertyModalTitle').textContent = '新增代理卖房';
                 }
+
                 if (certificateSection) certificateSection.style.display = 'none';
                 // 可代理/合作房源强制使用卖房类型
                 type = 'sale';
-                document.getElementById('propertyModalTitle').textContent = isCoop ? '新增合作卖房' : '新增代理卖房';
                 // 卖房房源状态选项
                 const statusSelect = document.getElementById('propStatus');
                 statusSelect.innerHTML = `
@@ -6471,8 +6539,9 @@
                 // 自有房源模式 - 显示房东区域和产证，隐藏房源方区域
                 if (landlordSection) landlordSection.style.display = 'block';
                 if (agentPartiesSection) agentPartiesSection.style.display = 'none';
+                if (coopPartiesSection) coopPartiesSection.style.display = 'none';
                 if (certificateSection) certificateSection.style.display = 'block';
-                
+
                 if (type === 'rent') {
                     document.getElementById('propertyModalTitle').textContent = '新增租房';
                     // 租房房源状态选项
@@ -6495,7 +6564,7 @@
                     priceLabel.textContent = '价格（万元）';
                 }
             }
-            
+
             clearPropertyForm();
             document.getElementById('propertyModal').style.display = 'flex';
             document.getElementById('propertyModal').classList.add('active');
@@ -6608,7 +6677,7 @@
                 const phone = item.querySelector('.agent-party-phone')?.value || '';
                 if (name || phone) {
                     parties.push({ name, phone });
-                    
+
                     // 保存到全局被代理方列表（如果不存在）
                     const existingParty = agentParties.find(p => p.name === name && p.phone === phone);
                     if (!existingParty) {
@@ -6616,10 +6685,131 @@
                     }
                 }
             });
-            
+
             // 保存全局被代理方列表
 
-            
+
+            return parties;
+        }
+
+        // 初始化合作方列表
+        function initCoopPartiesList() {
+            const list = document.getElementById('coopPartiesList');
+            if (list) {
+                list.innerHTML = '';
+                // 默认添加一个空的合作方
+                addCoopParty();
+            }
+        }
+
+        // 添加合作方
+        function addCoopParty(name = '', phone = '') {
+            const list = document.getElementById('coopPartiesList');
+            if (!list) return;
+
+            const index = list.children.length;
+            const partyDiv = document.createElement('div');
+            partyDiv.className = 'coop-party-item';
+            partyDiv.style.cssText = 'display: flex; gap: 8px; margin-bottom: 8px; align-items: center;';
+
+            // 生成合作方选择下拉框
+            let coopPartyOptions = '<option value="">选择合作方</option>';
+            coopParties.forEach(party => {
+                coopPartyOptions += `<option value="${party.name}" data-phone="${party.phone}">${party.name} (${party.phone})</option>`;
+            });
+
+            partyDiv.innerHTML = `
+                <select class="form-select coop-party-select" style="flex: 1;" onchange="selectCoopParty(this)">
+                    ${coopPartyOptions}
+                </select>
+                <input type="text" class="form-input coop-party-name" placeholder="合作方" style="flex: 1; display: none;" value="${name}">
+                <input type="tel" class="form-input coop-party-phone" placeholder="合作方电话" style="flex: 1;" value="${phone}">
+                <button type="button" onclick="removeCoopParty(this)" style="padding: 8px 12px; background: #ef4444; color: white; border: none; border-radius: var(--radius); cursor: pointer;">删除</button>
+            `;
+            list.appendChild(partyDiv);
+        }
+
+        // 选择合作方
+        function selectCoopParty(select) {
+            const nameInput = select.nextElementSibling;
+            const phoneInput = nameInput.nextElementSibling;
+
+            if (select.value) {
+                // 从下拉框选择
+                const selectedOption = select.options[select.selectedIndex];
+                const phone = selectedOption.getAttribute('data-phone');
+                nameInput.value = select.value;
+                phoneInput.value = phone;
+                nameInput.style.display = 'none';
+                select.style.display = 'block';
+            } else {
+                // 手动输入
+                nameInput.style.display = 'block';
+                select.style.display = 'none';
+            }
+        }
+
+        // 删除合作方
+        function removeCoopParty(btn) {
+            const list = document.getElementById('coopPartiesList');
+            const items = list.querySelectorAll('.coop-party-item');
+
+            // 获取要删除的合作方信息
+            const partyItem = btn.parentElement;
+            const name = partyItem.querySelector('.coop-party-name')?.value || '';
+            const phone = partyItem.querySelector('.coop-party-phone')?.value || '';
+
+            // 检查该合作方是否被任何房源使用
+            const isPartyInUse = agentProperties.some(property => {
+                const parties = property.coopParties || [];
+                return parties.some(party => party.name === name && party.phone === phone);
+            });
+
+            if (isPartyInUse) {
+                showToast('该合作方正在被使用，无法删除');
+                return;
+            }
+
+            // 密码验证
+            const password = prompt('请输入密码以确认删除：');
+            if (password !== '123456') {
+                showToast('密码错误，无法删除');
+                return;
+            }
+
+            if (items.length > 1) {
+                btn.parentElement.remove();
+            } else {
+                btn.parentElement.remove();
+                // 添加一个空的合作方输入框
+                addCoopParty();
+            }
+        }
+
+        // 获取合作方列表
+        function getCoopParties() {
+            const list = document.getElementById('coopPartiesList');
+            if (!list) return [];
+
+            const parties = [];
+            const items = list.querySelectorAll('.coop-party-item');
+            items.forEach(item => {
+                const name = item.querySelector('.coop-party-name')?.value || '';
+                const phone = item.querySelector('.coop-party-phone')?.value || '';
+                if (name || phone) {
+                    parties.push({ name, phone });
+
+                    // 保存到全局合作方列表（如果不存在）
+                    const existingParty = coopParties.find(p => p.name === name && p.phone === phone);
+                    if (!existingParty) {
+                        coopParties.push({ name, phone });
+                    }
+                }
+            });
+
+            // 保存全局合作方列表
+
+
             return parties;
         }
 
@@ -6743,10 +6933,29 @@
             
             // 判断是否为可代理房源模式
             const isAgentMode = isAgentPropertyMode;
-            
-            // 获取房源方信息（可代理房源）
-            const agentParties = isAgentMode ? getAgentParties() : [];
-            
+
+            // 获取可代理方信息（可代理房源）
+            const agentParties = isAgentMode && !isCoopPropertyMode ? getAgentParties() : [];
+            // 获取合作方信息（合作房源）
+            const coopParties = isAgentMode && isCoopPropertyMode ? getCoopParties() : [];
+
+            // 可代理/合作房源二选一必选验证
+            if (isAgentMode) {
+                if (isCoopPropertyMode) {
+                    // 合作模式，合作方必填
+                    if (coopParties.length === 0 || !coopParties.some(p => p.name || p.phone)) {
+                        showToast('❌ 请添加至少一个合作方');
+                        return;
+                    }
+                } else {
+                    // 代理模式，可代理方必填
+                    if (agentParties.length === 0 || !agentParties.some(p => p.name || p.phone)) {
+                        showToast('❌ 请添加至少一个可代理方');
+                        return;
+                    }
+                }
+            }
+
             // 可代理房源强制使用卖房类型和万元单位
             if (isAgentMode) {
                 saleOrRentType = 'sale';
@@ -6924,11 +7133,26 @@
                 property.is_agent = true;
                 // 标记是否为合作房源
                 property.is_coop = isCoopPropertyMode;
-                property.agent_parties = agentParties;
-                // 兼容旧数据，保留第一个房源方作为agentName/agentPhone
-                if (agentParties.length > 0) {
-                    property.agent_name = agentParties[0].name;
-                    property.agent_phone = agentParties[0].phone;
+
+                // 根据模式保存不同的数据
+                if (isCoopPropertyMode) {
+                    // 合作模式，保存合作方信息
+                    property.coop_parties = coopParties;
+                    property.agent_parties = [];
+                    // 兼容旧数据，保留第一个合作方作为agentName/agentPhone
+                    if (coopParties.length > 0) {
+                        property.agent_name = coopParties[0].name;
+                        property.agent_phone = coopParties[0].phone;
+                    }
+                } else {
+                    // 代理模式，保存可代理方信息
+                    property.agent_parties = agentParties;
+                    property.coop_parties = [];
+                    // 兼容旧数据，保留第一个可代理方作为agentName/agentPhone
+                    if (agentParties.length > 0) {
+                        property.agent_name = agentParties[0].name;
+                        property.agent_phone = agentParties[0].phone;
+                    }
                 }
             }
 
@@ -10374,7 +10598,11 @@
                             // 确保 communicationRecords 字段存在
                             communicationRecords: p.communicationRecords || p.communication_records || [],
                             // 确保 landlordWechat 字段存在
-                            landlordWechat: p.landlordWechat || p.landlord_wechat || ''
+                            landlordWechat: p.landlordWechat || p.landlord_wechat || '',
+                            // 确保 agentParties 字段存在
+                            agentParties: p.agentParties || p.agent_parties || [],
+                            // 确保 coopParties 字段存在
+                            coopParties: p.coopParties || p.coop_parties || []
                         }));
                         // 更新agentProperties数组，包含所有is_agent: true的房源
                         agentProperties = properties.filter(p => p.is_agent === true);
