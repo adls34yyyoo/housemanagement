@@ -6504,23 +6504,17 @@
             if (isAgent) {
                 // 可代理/合作房源模式 - 显示房源方区域，隐藏房东区域和产证
                 if (landlordSection) landlordSection.style.display = 'none';
-                if (agentPartiesSection) agentPartiesSection.style.display = 'none';
-                if (coopPartiesSection) coopPartiesSection.style.display = 'none';
+                if (agentPartiesSection) agentPartiesSection.style.display = 'block';
+                if (coopPartiesSection) coopPartiesSection.style.display = 'block';
 
-                // 根据模式显示不同的区域
+                // 初始化可代理方和合作方列表
+                initAgentPartiesList();
+                initCoopPartiesList();
+
+                // 根据模式设置标题
                 if (isCoop) {
-                    // 合作模式，显示合作方区域
-                    if (coopPartiesSection) {
-                        coopPartiesSection.style.display = 'block';
-                        initCoopPartiesList();
-                    }
                     document.getElementById('propertyModalTitle').textContent = '新增合作卖房';
                 } else {
-                    // 代理模式，显示可代理方区域
-                    if (agentPartiesSection) {
-                        agentPartiesSection.style.display = 'block';
-                        initAgentPartiesList();
-                    }
                     document.getElementById('propertyModalTitle').textContent = '新增代理卖房';
                 }
 
