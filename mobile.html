@@ -5544,6 +5544,12 @@
                     if (decorationInput) decorationInput.value = property.decoration || '';
                     if (statusInput) statusInput.value = property.status || 'pending';
                     if (priceLabel) priceLabel.textContent = '价格（万元）'; // 代理房源始终使用万元单位
+                    
+                    // 填充学区信息
+                    const primarySchoolInput = document.getElementById('propPrimarySchool');
+                    const middleSchoolInput = document.getElementById('propMiddleSchool');
+                    if (primarySchoolInput) primarySchoolInput.value = property.primarySchool || property.primary_school || '';
+                    if (middleSchoolInput) middleSchoolInput.value = property.middleSchool || property.middle_school || '';
 
                     // 根据房源类型选择对应的数据源
                     let parties;
@@ -5597,6 +5603,12 @@
             if (modal) {
                 modal.style.display = 'flex';
                 modal.classList.add('active');
+            }
+            
+            // 添加小区选择变化事件监听器，自动填充学区
+            const communitySelect = document.getElementById('propCommunity');
+            if (communitySelect) {
+                communitySelect.addEventListener('change', handleCommunityChange);
             }
         }
 
@@ -6495,6 +6507,29 @@
         // 当前是否为合作房源模式
         let isCoopPropertyMode = false;
 
+        // 小区选择变化时自动填充学区
+        function handleCommunityChange() {
+            const communitySelect = document.getElementById('propCommunity');
+            const primarySchoolSelect = document.getElementById('propPrimarySchool');
+            const middleSchoolSelect = document.getElementById('propMiddleSchool');
+            
+            if (!communitySelect || !primarySchoolSelect || !middleSchoolSelect) return;
+            
+            const selectedCommunity = communitySelect.value;
+            
+            if (selectedCommunity && communitySchoolMapping[selectedCommunity]) {
+                const mapping = communitySchoolMapping[selectedCommunity];
+                // 自动填充小学
+                if (mapping.primarySchool) {
+                    primarySchoolSelect.value = mapping.primarySchool;
+                }
+                // 自动填充初中
+                if (mapping.middleSchool) {
+                    middleSchoolSelect.value = mapping.middleSchool;
+                }
+            }
+        }
+
         function openPropertyModal(type = 'rent', isAgent = false, isCoop = false) {
             editingPropertyId = null;
             isAgentPropertyMode = isAgent;
@@ -6565,6 +6600,12 @@
             document.getElementById('propertyModal').style.display = 'flex';
             document.getElementById('propertyModal').classList.add('active');
             initSelectOptions();
+            
+            // 添加小区选择变化事件监听器，自动填充学区
+            const communitySelect = document.getElementById('propCommunity');
+            if (communitySelect) {
+                communitySelect.addEventListener('change', handleCommunityChange);
+            }
         }
 
         // 初始化可代理方或合作方列表
@@ -8195,9 +8236,37 @@
 
                 // 更新下拉框选项
                 initSelectOptions();
+                
+                // 从房源数据中构建小区与学区映射关系
+                buildCommunitySchoolMapping();
             } catch (error) {
                 console.error('加载选项时发生错误:', error);
             }
+        }
+        
+        // 从房源数据中构建小区与学区映射关系
+        function buildCommunitySchoolMapping() {
+            const allProperties = [...properties, ...agentProperties];
+            
+            allProperties.forEach(property => {
+                const community = property.community;
+                const primarySchool = property.primarySchool || property.primary_school;
+                const middleSchool = property.middleSchool || property.middle_school;
+                
+                if (community && (primarySchool || middleSchool)) {
+                    // 如果小区还没有映射，或者新的学区信息更完整，更新映射
+                    if (!communitySchoolMapping[community] || 
+                        (primarySchool && !communitySchoolMapping[community].primarySchool) || 
+                        (middleSchool && !communitySchoolMapping[community].middleSchool)) {
+                        communitySchoolMapping[community] = {
+                            primarySchool: primarySchool || communitySchoolMapping[community]?.primarySchool,
+                            middleSchool: middleSchool || communitySchoolMapping[community]?.middleSchool
+                        };
+                    }
+                }
+            });
+            
+            console.log('小区与学区映射关系已构建:', communitySchoolMapping);
         }
 
         // 保存选项到数据库
@@ -11369,6 +11438,9 @@
                         agentProperties = properties.filter(p => p.is_agent === true);
                         console.log(`成功加载 ${properties.length} 条房源数据`);
                         console.log(`成功加载 ${agentProperties.length} 条代理房源数据`);
+                        
+                        // 加载选项数据并构建小区与学区映射关系
+                        await loadOptionsFromDatabase();
                     } else if (propertiesError) {
                         console.warn('加载房源数据失败:', propertiesError);
                     }
