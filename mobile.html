@@ -6610,9 +6610,10 @@
                     searchAgentOrCoopParty(this);
                 });
                 
-                // 为搜索输入框添加点击事件，防止点击时关闭结果
+                // 为搜索输入框添加点击事件，显示所有可选项
                 searchInput.addEventListener('click', function(event) {
                     event.stopPropagation();
+                    showAllParties(this);
                 });
                 
                 // 为结果容器添加点击事件，防止点击时关闭结果
@@ -6674,6 +6675,32 @@
             phoneInput.value = phone;
             wechatInput.value = wechat;
             resultsContainer.style.display = 'none';
+        }
+
+        // 显示所有可代理方或合作方选项
+        function showAllParties(input) {
+            const resultsContainer = input.nextElementSibling;
+            const partyDiv = input.closest('.agent-or-coop-party-item');
+            const phoneInput = partyDiv.querySelector('.agent-or-coop-party-phone');
+            const wechatInput = partyDiv.querySelector('.agent-or-coop-party-wechat');
+
+            // 合并可代理方和合作方的选项
+            const allParties = [...agentParties, ...coopParties].filter((party, index, self) =>
+                index === self.findIndex((p) => p.name === party.name && p.phone === party.phone)
+            );
+
+            if (allParties.length === 0) {
+                resultsContainer.innerHTML = '<div style="padding: 12px; color: #64748b; text-align: center;">无可用选项</div>';
+                resultsContainer.style.display = 'block';
+            } else {
+                resultsContainer.innerHTML = allParties.map(party => `
+                    <div style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9;" onclick="selectSearchedParty(this, '${party.name}', '${party.phone || ''}', '${party.wechat || ''}')">
+                        <div style="font-weight: 500;">${party.name}</div>
+                        <div style="font-size: 12px; color: #64748b;">${party.phone || '无电话'}</div>
+                    </div>
+                `).join('');
+                resultsContainer.style.display = 'block';
+            }
         }
 
         // 显示新增可代理方/合作方模态框
