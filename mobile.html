@@ -3083,6 +3083,10 @@
             const priceUnit = property.type === 'sale' ? '万元' : '元/月';
             const typeText = property.type === 'sale' ? '出售' : '出租';
             
+            // 判断是否为代理房源，决定调用哪个编辑函数
+            const isAgentProperty = agentProperties.some(p => String(p.id) === String(propertyId));
+            const editFunction = isAgentProperty ? 'editAgentProperty' : 'editProperty';
+            
             // 根据房源类型显示不同的状态文本
             let statusText;
             if (property.type === 'sale') {
@@ -3261,7 +3265,7 @@
                     
                     <div style="display: flex; gap: 12px;">
                         <button class="btn btn-default" onclick="closePropertyDetailModal(); showPropertyCommunicationModal('${property.id}')">添加沟通记录</button>
-                        <button class="btn btn-primary" onclick="editProperty('${property.id}'); closePropertyDetailModal()">编辑</button>
+                        <button class="btn btn-primary" onclick="${editFunction}('${property.id}'); closePropertyDetailModal()">编辑</button>
                         <button class="btn btn-danger" onclick="deletePropertyFromDetail('${property.id}')" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none;">删除</button>
                     </div>
                 </div>
@@ -5480,7 +5484,7 @@
 
         // 编辑可代理/合作房源
         function editAgentProperty(propertyId) {
-            const property = agentProperties.find(p => p.id === propertyId);
+            const property = agentProperties.find(p => String(p.id) === String(propertyId));
             if (!property) return;
 
             // 设置编辑模式
