@@ -3183,6 +3183,15 @@
                         </div>
                     ` : ''}
                     
+                    ${property.is_agent ? `
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">${property.is_coop ? '合作方信息' : '可代理方信息'}</h4>
+                            <div style="background: var(--background); border-radius: var(--radius); padding: 16px;">
+                                ${renderAgentParties(property)}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
                     ${property.changeHistory && property.changeHistory.length > 0 ? `
                         <div style="margin-bottom: 20px;">
                             <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">更改记录</h4>
@@ -5291,7 +5300,6 @@
                                 <span>${property.layout || ''} ${property.area ? property.area + '平' : ''} ${property.floor ? property.floor + '楼' : ''} ${property.decoration || ''}</span>
                                 <span style="font-weight: 500; color: ${property.type === 'sale' ? '#ef4444' : '#22c55e'};">${property.price || '面议'}${priceUnit}</span>
                             </div>
-                            ${renderAgentParties(property)}
                         </div>
                     </div>
                     <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px; margin-left: 12px;">
@@ -5313,15 +5321,20 @@
                 // 兼容旧数据
                 if (property.agentName || property.agentPhone || property.agent_name || property.agent_phone) {
                     return `
-                        <div style="font-size: 13px; color: var(--text-secondary);">👤 ${partyTypeName}：${property.agentName || property.agent_name || ''} ${(property.agentPhone || property.agent_phone) ? '· ' + (property.agentPhone || property.agent_phone) : ''}</div>
+                        <div style="margin-bottom: 8px;">
+                            <div style="margin-bottom: 8px;"><strong>姓名：</strong>${property.agentName || property.agent_name || ''}</div>
+                            ${(property.agentPhone || property.agent_phone) ? `<div style="margin-bottom: 8px;"><strong>电话：</strong><a href="tel:${property.agentPhone || property.agent_phone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 24px;">📞 ${property.agentPhone || property.agent_phone}</a></div>` : ''}
+                        </div>
                     `;
                 }
-                return '';
+                return '<div style="color: var(--text-secondary);">暂无信息</div>';
             }
 
             return parties.map((party, index) => `
-                <div style="font-size: 13px; color: var(--text-secondary);">
-                    👤 ${partyTypeName}${parties.length > 1 ? index + 1 : ''}：${party.name || ''} ${party.phone ? `<a href="tel:${party.phone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">📞 ${party.phone}</a>` : ''} ${party.wechat ? `<span style="color: #07C160; display: inline-flex; align-items: center; gap: 6px;">💬 ${party.wechat}</span>` : ''}
+                <div style="margin-bottom: 8px; ${index > 0 ? 'padding-top: 12px; border-top: 1px solid var(--border);' : ''}">
+                    ${party.name ? `<div style="margin-bottom: 8px;"><strong>姓名：</strong>${party.name}</div>` : ''}
+                    ${party.phone ? `<div style="margin-bottom: 8px;"><strong>电话：</strong><a href="tel:${party.phone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 24px;">📞 ${party.phone}</a></div>` : ''}
+                    ${party.wechat ? `<div><strong>微信：</strong><div onclick="copyWeChat(\'${party.wechat.replace(/'/g, "\\'")}\')" style="color: #07C160; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 24px;">🌐 ${party.wechat}</div></div>` : ''}
                 </div>
             `).join('');
         }
