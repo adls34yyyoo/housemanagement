@@ -5032,11 +5032,9 @@
         let filteredCoopProperties = [];
 
         // 全局被代理方列表
-        let agentParties = JSON.parse(localStorage.getItem('agentParties') || '[]');
+        let agentParties = [];
         // 全局合作方列表
-        let coopParties = JSON.parse(localStorage.getItem('coopParties') || '[]');
-        console.log('从本地存储加载可代理方:', agentParties);
-        console.log('从本地存储加载合作方:', coopParties);
+        let coopParties = [];
 
         // 渲染可代理房源列表
         function renderAgentPropertyList() {
@@ -5564,9 +5562,7 @@
                     }
                 });
 
-                // 保存到本地存储
-                localStorage.setItem('agentParties', JSON.stringify(agentParties));
-                localStorage.setItem('coopParties', JSON.stringify(coopParties));
+
 
                 // 初始化可代理方或合作方列表并填充数据
                 initAgentOrCoopPartiesList();
@@ -6722,7 +6718,7 @@
         }
 
         // 新增可代理方/合作方
-        function addNewParty() {
+        async function addNewParty() {
             const name = document.getElementById('newPartyName').value.trim();
             const phone = document.getElementById('newPartyPhone').value.trim();
             const wechat = document.getElementById('newPartyWechat').value.trim();
@@ -6739,16 +6735,26 @@
                 return;
             }
 
-            // 添加到全局数组
-            agentParties.push({ name, phone, wechat });
-            coopParties.push({ name, phone, wechat });
-
-            // 保存到本地存储
-            localStorage.setItem('agentParties', JSON.stringify(agentParties));
-            localStorage.setItem('coopParties', JSON.stringify(coopParties));
-
-            showToast('✅ 新增成功');
-            closeAddPartyModal();
+            try {
+                // 保存到数据库（可代理方）
+                const savedAgent = await saveAgentPartyToDatabase(name, phone, wechat);
+                // 保存到数据库（合作方）
+                const savedCoop = await saveCoopPartyToDatabase(name, phone, wechat);
+                
+                if (savedAgent && savedCoop) {
+                    // 添加到全局数组
+                    agentParties.push({ name, phone, wechat });
+                    coopParties.push({ name, phone, wechat });
+                    
+                    showToast('✅ 新增成功');
+                    closeAddPartyModal();
+                } else {
+                    showToast('新增失败，请重试');
+                }
+            } catch (error) {
+                console.error('新增可代理方/合作方失败:', error);
+                showToast('新增失败，请重试');
+            }
         }
 
         // 为搜索输入框添加事件监听
@@ -6822,8 +6828,7 @@
                 }
             });
 
-            localStorage.setItem('agentParties', JSON.stringify(agentParties));
-            localStorage.setItem('coopParties', JSON.stringify(coopParties));
+
 
             return parties;
         }
@@ -6842,7 +6847,7 @@
                 const existingCoopParty = coopParties.find(p => p.name === name && p.phone === phone);
                 if (!existingCoopParty) {
                     coopParties.push({ name, phone });
-                    localStorage.setItem('coopParties', JSON.stringify(coopParties));
+
                 }
             }
         }
@@ -6931,10 +6936,7 @@
                 }
             });
 
-            // 保存全局可代理方列表
-            localStorage.setItem('agentParties', JSON.stringify(agentParties));
-            // 保存全局合作方列表
-            localStorage.setItem('coopParties', JSON.stringify(coopParties));
+
 
             return parties;
         }
@@ -6981,7 +6983,7 @@
                 const existingAgentParty = agentParties.find(p => p.name === name && p.phone === phone);
                 if (!existingAgentParty) {
                     agentParties.push({ name, phone });
-                    localStorage.setItem('agentParties', JSON.stringify(agentParties));
+
                 }
             }
         }
@@ -7070,10 +7072,7 @@
                 }
             });
 
-            // 保存全局合作方列表
-            localStorage.setItem('coopParties', JSON.stringify(coopParties));
-            // 保存全局可代理方列表
-            localStorage.setItem('agentParties', JSON.stringify(agentParties));
+
 
             return parties;
         }
@@ -8121,7 +8120,8 @@
                         agentParties = agentPartiesFromDB.map(party => ({
                             id: party.id,
                             name: party.name,
-                            phone: party.phone
+                            phone: party.phone,
+                            wechat: party.wechat || ''
                         }));
 
                         console.log('从数据库加载可代理方成功:', agentParties);
@@ -8142,7 +8142,8 @@
                         coopParties = coopPartiesFromDB.map(party => ({
                             id: party.id,
                             name: party.name,
-                            phone: party.phone
+                            phone: party.phone,
+                            wechat: party.wechat || ''
                         }));
 
                         console.log('从数据库加载合作方成功:', coopParties);
@@ -8222,7 +8223,7 @@
         }
 
         // 保存可代理方到数据库
-        async function saveAgentPartyToDatabase(name, phone) {
+        async function saveAgentPartyToDatabase(name, phone, wechat = '') {
             if (!supabaseClient) {
                 console.log('Supabase未连接，无法保存可代理方');
                 // 不显示错误提示，允许本地保存
@@ -8236,7 +8237,8 @@
                     .insert([{
                         id: id,
                         name: name,
-                        phone: phone
+                        phone: phone,
+                        wechat: wechat
                     }]);
 
                 if (error) {
@@ -8245,7 +8247,7 @@
                     return true;
                 }
 
-                console.log('可代理方保存成功:', name, phone);
+                console.log('可代理方保存成功:', name, phone, wechat);
                 return true;
             } catch (error) {
                 console.error('保存可代理方时发生错误:', error);
@@ -8285,7 +8287,7 @@
         }
 
         // 保存合作方到数据库
-        async function saveCoopPartyToDatabase(name, phone) {
+        async function saveCoopPartyToDatabase(name, phone, wechat = '') {
             if (!supabaseClient) {
                 console.log('Supabase未连接，无法保存合作方');
                 // 不显示错误提示，允许本地保存
@@ -8299,7 +8301,8 @@
                     .insert([{
                         id: id,
                         name: name,
-                        phone: phone
+                        phone: phone,
+                        wechat: wechat
                     }]);
 
                 if (error) {
@@ -8308,7 +8311,7 @@
                     return true;
                 }
 
-                console.log('合作方保存成功:', name, phone);
+                console.log('合作方保存成功:', name, phone, wechat);
                 return true;
             } catch (error) {
                 console.error('保存合作方时发生错误:', error);
