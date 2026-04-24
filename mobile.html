@@ -5314,7 +5314,7 @@
 
             return parties.map((party, index) => `
                 <div style="font-size: 13px; color: var(--text-secondary);">
-                    👤 ${partyTypeName}${parties.length > 1 ? index + 1 : ''}：${party.name || ''} ${party.phone ? `<a href="tel:${party.phone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">📞</a>` : ''} ${party.wechat ? `(${party.wechat})` : ''}
+                    👤 ${partyTypeName}${parties.length > 1 ? index + 1 : ''}：${party.name || ''} ${party.phone ? `<a href="tel:${party.phone}" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">📞 ${party.phone}</a>` : ''} ${party.wechat ? `<span style="color: #07C160; display: inline-flex; align-items: center; gap: 6px;">💬 ${party.wechat}</span>` : ''}
                 </div>
             `).join('');
         }
