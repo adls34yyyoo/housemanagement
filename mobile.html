@@ -5500,6 +5500,9 @@
             if (agentOrCoopPartiesSection) agentOrCoopPartiesSection.style.display = 'block';
             if (certificateSection) certificateSection.style.display = 'none';
 
+            // 初始化可代理方或合作方列表
+            initAgentOrCoopPartiesList();
+
             // 根据 is_coop 设置标题
             if (property.is_coop) {
                 if (title) title.textContent = '编辑合作房源';
