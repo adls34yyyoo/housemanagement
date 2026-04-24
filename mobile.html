@@ -5529,24 +5529,51 @@
                 if (statusInput) statusInput.value = property.status || 'pending';
                 if (priceLabel) priceLabel.textContent = '价格（万元）'; // 代理房源始终使用万元单位
 
+                // 根据房源类型选择对应的数据源
+                let parties;
+                if (property.is_coop) {
+                    parties = property.coopParties || property.coop_parties || [];
+                } else {
+                    parties = property.agentParties || property.agent_parties || [];
+                }
+                
+                // 如果没有数据但有旧数据格式，转换旧数据
+                if (parties.length === 0 && (property.agentName || property.agentPhone || property.agent_name || property.agent_phone)) {
+                    parties = [{
+                        name: property.agentName || property.agent_name || '',
+                        phone: property.agentPhone || property.agent_phone || '',
+                        wechat: ''
+                    }];
+                }
+
+                // 确保全局数组包含当前编辑的房源数据
+                parties.forEach(party => {
+                    if (party.name && party.phone) {
+                        // 添加到全局可代理方数组（如果不存在）
+                        const existsInAgent = agentParties.some(p => p.name === party.name && p.phone === party.phone);
+                        if (!existsInAgent) {
+                            agentParties.push({ name: party.name, phone: party.phone, wechat: party.wechat || '' });
+                        }
+                        // 添加到全局合作方数组（如果不存在）
+                        const existsInCoop = coopParties.some(p => p.name === party.name && p.phone === party.phone);
+                        if (!existsInCoop) {
+                            coopParties.push({ name: party.name, phone: party.phone, wechat: party.wechat || '' });
+                        }
+                    }
+                });
+
+                // 保存到本地存储
+                localStorage.setItem('agentParties', JSON.stringify(agentParties));
+                localStorage.setItem('coopParties', JSON.stringify(coopParties));
+
                 // 初始化可代理方或合作方列表并填充数据
                 initAgentOrCoopPartiesList();
                 const agentOrCoopPartiesList = document.getElementById('agentOrCoopPartiesList');
                 if (agentOrCoopPartiesList) {
                     agentOrCoopPartiesList.innerHTML = '';
-                    // 根据房源类型选择对应的数据源
-                    let parties;
-                    if (property.is_coop) {
-                        parties = property.coopParties || property.coop_parties || [];
-                    } else {
-                        parties = property.agentParties || property.agent_parties || [];
-                    }
                     
                     if (parties.length > 0) {
                         parties.forEach(party => addAgentOrCoopParty(party.name, party.phone, party.wechat || ''));
-                    } else if (property.agentName || property.agentPhone || property.agent_name || property.agent_phone) {
-                        // 兼容旧数据
-                        addAgentOrCoopParty(property.agentName || property.agent_name || '', property.agentPhone || property.agent_phone || '');
                     } else {
                         // 默认添加一个空的
                         addAgentOrCoopParty();
