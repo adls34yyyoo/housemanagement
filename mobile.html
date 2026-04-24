@@ -6590,10 +6590,13 @@
             
             partyDiv.innerHTML = `
                 <div style="display: flex; gap: 8px; align-items: center;">
-                    <select class="form-select agent-or-coop-party-select" style="flex: 1;" onchange="selectAgentOrCoopParty(this)">
-                        ${partyOptions}
-                    </select>
-                    <input type="text" class="form-input agent-or-coop-party-name" placeholder="姓名" style="flex: 1; display: none;" value="${name}">
+                    <div style="flex: 1; position: relative;">
+                        <input type="text" class="form-input agent-or-coop-party-search" placeholder="搜索可代理方或合作方" style="width: 100%;" value="${name}">
+                        <div class="search-results" style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #e2e8f0; border-radius: 0 0 var(--radius) var(--radius); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); z-index: 10; max-height: 200px; overflow-y: auto; display: none;"></div>
+                    </div>
+                    <button type="button" class="add-party-btn" style="padding: 8px 12px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: var(--radius); cursor: pointer; display: flex; align-items: center; justify-content: center; min-width: 36px;" onclick="showAddPartyModal()">
+                        +
+                    </button>
                 </div>
                 <div style="display: flex; gap: 8px; align-items: center;">
                     <input type="tel" class="form-input agent-or-coop-party-phone" placeholder="电话" style="flex: 1;" value="${phone}">
@@ -6602,29 +6605,160 @@
                 <button type="button" onclick="removeAgentOrCoopParty(this)" style="padding: 6px 12px; background: #ef4444; color: white; border: none; border-radius: var(--radius); cursor: pointer; align-self: flex-end;">删除</button>
             `;
             list.appendChild(partyDiv);
+            
+            // 为搜索输入框添加事件监听器
+            const searchInput = partyDiv.querySelector('.agent-or-coop-party-search');
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    searchAgentOrCoopParty(this);
+                });
+                
+                // 为搜索输入框添加点击事件，防止点击时关闭结果
+                searchInput.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                });
+                
+                // 为结果容器添加点击事件，防止点击时关闭结果
+                const resultsContainer = searchInput.nextElementSibling;
+                if (resultsContainer) {
+                    resultsContainer.addEventListener('click', function(event) {
+                        event.stopPropagation();
+                    });
+                }
+            }
         }
 
-        // 选择可代理方或合作方
-        function selectAgentOrCoopParty(select) {
-            const partyDiv = select.parentElement.parentElement;
-            const nameInput = partyDiv.querySelector('.agent-or-coop-party-name');
+        // 搜索可代理方或合作方
+        function searchAgentOrCoopParty(input) {
+            const searchTerm = input.value.toLowerCase();
+            const resultsContainer = input.nextElementSibling;
+            const partyDiv = input.closest('.agent-or-coop-party-item');
             const phoneInput = partyDiv.querySelector('.agent-or-coop-party-phone');
             const wechatInput = partyDiv.querySelector('.agent-or-coop-party-wechat');
 
-            if (select.value) {
-                const selectedOption = select.options[select.selectedIndex];
-                const phone = selectedOption.getAttribute('data-phone') || '';
-                const wechat = selectedOption.getAttribute('data-wechat') || '';
-                nameInput.value = select.value;
-                phoneInput.value = phone;
-                wechatInput.value = wechat;
-                nameInput.style.display = 'none';
-                select.style.display = 'block';
+            if (!searchTerm) {
+                resultsContainer.style.display = 'none';
+                return;
+            }
+
+            // 合并可代理方和合作方的选项
+            const allParties = [...agentParties, ...coopParties].filter((party, index, self) =>
+                index === self.findIndex((p) => p.name === party.name && p.phone === party.phone)
+            );
+
+            const filteredParties = allParties.filter(party =>
+                party.name.toLowerCase().includes(searchTerm) ||
+                (party.phone && party.phone.toLowerCase().includes(searchTerm))
+            );
+
+            if (filteredParties.length === 0) {
+                resultsContainer.innerHTML = '<div style="padding: 12px; color: #64748b; text-align: center;">无匹配结果</div>';
+                resultsContainer.style.display = 'block';
             } else {
-                nameInput.style.display = 'block';
-                select.style.display = 'none';
+                resultsContainer.innerHTML = filteredParties.map(party => `
+                    <div style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9;" onclick="selectSearchedParty(this, '${party.name}', '${party.phone || ''}', '${party.wechat || ''}')">
+                        <div style="font-weight: 500;">${party.name}</div>
+                        <div style="font-size: 12px; color: #64748b;">${party.phone || '无电话'}</div>
+                    </div>
+                `).join('');
+                resultsContainer.style.display = 'block';
             }
         }
+
+        // 选择搜索结果
+        function selectSearchedParty(element, name, phone, wechat) {
+            const partyDiv = element.closest('.agent-or-coop-party-item');
+            const searchInput = partyDiv.querySelector('.agent-or-coop-party-search');
+            const phoneInput = partyDiv.querySelector('.agent-or-coop-party-phone');
+            const wechatInput = partyDiv.querySelector('.agent-or-coop-party-wechat');
+            const resultsContainer = searchInput.nextElementSibling;
+
+            searchInput.value = name;
+            phoneInput.value = phone;
+            wechatInput.value = wechat;
+            resultsContainer.style.display = 'none';
+        }
+
+        // 显示新增可代理方/合作方模态框
+        function showAddPartyModal() {
+            const modalHTML = `
+                <div class="modal" id="addPartyModal" style="display: flex; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000;">
+                    <div class="modal-content" style="background: white; border-radius: var(--radius); padding: 20px; width: 90%; max-width: 400px;">
+                        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin: 0; color: var(--text);">新增可代理方/合作方</h3>
+                            <button onclick="closeAddPartyModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);">&times;</button>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 500;">姓名</label>
+                            <input type="text" id="newPartyName" class="form-input" placeholder="请输入姓名" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius);">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 500;">电话</label>
+                            <input type="tel" id="newPartyPhone" class="form-input" placeholder="请输入电话" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius);">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 500;">微信号（选填）</label>
+                            <input type="text" id="newPartyWechat" class="form-input" placeholder="请输入微信号" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius);">
+                        </div>
+                        <div class="form-actions" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                            <button class="btn btn-default" onclick="closeAddPartyModal()">取消</button>
+                            <button class="btn btn-primary" onclick="addNewParty()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">保存</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        // 关闭新增可代理方/合作方模态框
+        function closeAddPartyModal() {
+            const modal = document.getElementById('addPartyModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // 新增可代理方/合作方
+        function addNewParty() {
+            const name = document.getElementById('newPartyName').value.trim();
+            const phone = document.getElementById('newPartyPhone').value.trim();
+            const wechat = document.getElementById('newPartyWechat').value.trim();
+
+            if (!name || !phone) {
+                showToast('请输入姓名和电话');
+                return;
+            }
+
+            // 检查是否已存在
+            const exists = agentParties.some(p => p.name === name && p.phone === phone);
+            if (exists) {
+                showToast('该可代理方/合作方已存在');
+                return;
+            }
+
+            // 添加到全局数组
+            agentParties.push({ name, phone, wechat });
+            coopParties.push({ name, phone, wechat });
+
+            // 保存到本地存储
+            localStorage.setItem('agentParties', JSON.stringify(agentParties));
+            localStorage.setItem('coopParties', JSON.stringify(coopParties));
+
+            showToast('✅ 新增成功');
+            closeAddPartyModal();
+        }
+
+        // 为搜索输入框添加事件监听
+        document.addEventListener('click', function(event) {
+            const searchInputs = document.querySelectorAll('.agent-or-coop-party-search');
+            searchInputs.forEach(input => {
+                const resultsContainer = input.nextElementSibling;
+                if (!input.contains(event.target) && !resultsContainer.contains(event.target)) {
+                    resultsContainer.style.display = 'none';
+                }
+            });
+        });
 
         // 删除可代理方或合作方
         function removeAgentOrCoopParty(btn) {
@@ -6633,7 +6767,7 @@
 
             // 获取要删除的信息
             const partyDiv = btn.parentElement;
-            const name = partyDiv.querySelector('.agent-or-coop-party-name')?.value || '';
+            const name = partyDiv.querySelector('.agent-or-coop-party-search')?.value || '';
             const phone = partyDiv.querySelector('.agent-or-coop-party-phone')?.value || '';
 
             // 检查是否被使用
@@ -6665,7 +6799,7 @@
             const parties = [];
             const items = list.querySelectorAll('.agent-or-coop-party-item');
             items.forEach(item => {
-                const name = item.querySelector('.agent-or-coop-party-name')?.value || '';
+                const name = item.querySelector('.agent-or-coop-party-search')?.value || '';
                 const phone = item.querySelector('.agent-or-coop-party-phone')?.value || '';
                 const wechat = item.querySelector('.agent-or-coop-party-wechat')?.value || '';
                 
