@@ -5032,9 +5032,11 @@
         let filteredCoopProperties = [];
 
         // 全局被代理方列表
-        let agentParties = [];
+        let agentParties = JSON.parse(localStorage.getItem('agentParties') || '[]');
         // 全局合作方列表
-        let coopParties = [];
+        let coopParties = JSON.parse(localStorage.getItem('coopParties') || '[]');
+        console.log('从本地存储加载可代理方:', agentParties);
+        console.log('从本地存储加载合作方:', coopParties);
 
         // 渲染可代理房源列表
         function renderAgentPropertyList() {
