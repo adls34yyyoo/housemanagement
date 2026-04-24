@@ -3263,8 +3263,11 @@
                         </div>
                     ` : ''}
                     
-                    <div style="display: flex; gap: 12px;">
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
                         <button class="btn btn-default" onclick="closePropertyDetailModal(); showPropertyCommunicationModal('${property.id}')">添加沟通记录</button>
+                        ${property.is_agent ? `
+                            <button class="btn btn-secondary" onclick="showConvertToOwnModal('${property.id}')" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none;">转为自有房源</button>
+                        ` : ''}
                         <button class="btn btn-primary" onclick="${editFunction}('${property.id}'); closePropertyDetailModal()">编辑</button>
                         <button class="btn btn-danger" onclick="deletePropertyFromDetail('${property.id}')" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none;">删除</button>
                     </div>
@@ -9181,6 +9184,127 @@
             renderPropertyList();
 
             showToast(`✅ 房源已成功转换为${newTypeText}`);
+        }
+
+        // 显示转为自有房源确认模态框
+        window.showConvertToOwnModal = function(propertyId) {
+            const property = agentProperties.find(p => String(p.id) === String(propertyId));
+            if (!property) {
+                console.error('未找到要转换的房源，propertyId:', propertyId);
+                return;
+            }
+
+            const currentTypeText = property.is_coop ? '合作房源' : '可代理房源';
+
+            // 创建模态框
+            const modalHTML = `
+                <div class="modal" id="convertToOwnModal" style="display: flex; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000;">
+                    <div class="modal-content" style="background: white; border-radius: var(--radius); padding: 20px; width: 90%; max-width: 400px;">
+                        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin: 0; color: var(--text);">转为自有房源</h3>
+                            <button onclick="closeConvertToOwnModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);">&times;</button>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <p style="margin-bottom: 16px;">确定将房源从 <strong style="color: var(--primary);">${currentTypeText}</strong> 转换为 <strong style="color: #f59e0b;">自有房源</strong> 吗？</p>
+                            
+                            <div style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: var(--radius); padding: 12px; margin-bottom: 16px;">
+                                <div style="color: #f59e0b; font-size: 14px;">
+                                    📋 转换后，房源将移到"房源列表"，不再显示在"可代理房源"或"合作房源"列表中
+                                </div>
+                            </div>
+                            
+                            <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: var(--radius); padding: 12px;">
+                                <div style="color: #ef4444; font-size: 14px;">
+                                    ⚠️ 注意：转为自有房源后，将无法再转回可代理房源或合作房源
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-actions" style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button class="btn btn-default" onclick="closeConvertToOwnModal()">取消</button>
+                            <button class="btn btn-primary" onclick="convertToOwn('${property.id}')" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">确认转换</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        // 关闭转为自有房源模态框
+        window.closeConvertToOwnModal = function() {
+            const modal = document.getElementById('convertToOwnModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // 执行转为自有房源
+        window.convertToOwn = async function(propertyId) {
+            const property = agentProperties.find(p => String(p.id) === String(propertyId));
+            if (!property) {
+                console.error('未找到要转换的房源，propertyId:', propertyId);
+                return;
+            }
+
+            // 移除 is_agent 和 is_coop 标记
+            property.is_agent = false;
+            property.isAgent = false;
+            property.is_coop = false;
+            property.isCoop = false;
+            property.updated_at = new Date().toISOString();
+            property.synced = false;
+
+            // 添加更改记录
+            if (!property.changeHistory) {
+                property.changeHistory = [];
+            }
+            property.changeHistory.push({
+                timestamp: new Date().toISOString(),
+                action: '转为自有房源',
+                user: currentUser || 'admin'
+            });
+
+            // 保存到云数据库
+            try {
+                if (!supabaseClient) {
+                    const initialized = initSupabase();
+                    if (!initialized) {
+                        showToast('❌ 数据库连接失败，请检查网络');
+                        return;
+                    }
+                }
+
+                const updateData = {
+                    is_agent: false,
+                    is_coop: false,
+                    change_history: property.changeHistory,
+                    updated_at: property.updated_at
+                };
+
+                const { error } = await supabaseClient
+                    .from('properties')
+                    .update(updateData)
+                    .eq('id', propertyId);
+
+                if (error) {
+                    console.error('更新房源类型失败:', error);
+                    showToast('❌ 转换失败，请重试');
+                    return;
+                }
+
+                await loadData();
+            } catch (error) {
+                console.error('转为自有房源时出错:', error);
+                showToast('❌ 操作失败，请检查网络连接');
+            }
+
+            closeConvertToOwnModal();
+            closePropertyDetailModal();
+            renderAgentPropertyList();
+            renderCoopPropertyList();
+            renderPropertyList();
+
+            showToast('✅ 房源已成功转为自有房源');
         }
 
         // 存储训练数据
