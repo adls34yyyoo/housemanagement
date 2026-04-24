@@ -8231,14 +8231,18 @@
 
             try {
                 const id = `agent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                const insertData = {
+                    id: id,
+                    name: name,
+                    phone: phone
+                };
+                // 只有当wechat不为空时才添加wechat字段
+                if (wechat) {
+                    insertData.wechat = wechat;
+                }
                 const { error } = await supabaseClient
                     .from('agent_parties')
-                    .insert([{
-                        id: id,
-                        name: name,
-                        phone: phone,
-                        wechat: wechat
-                    }]);
+                    .insert([insertData]);
 
                 if (error) {
                     console.error('保存可代理方失败:', error);
@@ -8295,14 +8299,18 @@
 
             try {
                 const id = `coop_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                const insertData = {
+                    id: id,
+                    name: name,
+                    phone: phone
+                };
+                // 只有当wechat不为空时才添加wechat字段
+                if (wechat) {
+                    insertData.wechat = wechat;
+                }
                 const { error } = await supabaseClient
                     .from('coop_parties')
-                    .insert([{
-                        id: id,
-                        name: name,
-                        phone: phone,
-                        wechat: wechat
-                    }]);
+                    .insert([insertData]);
 
                 if (error) {
                     console.error('保存合作方失败:', error);
