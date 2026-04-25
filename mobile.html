@@ -7540,10 +7540,8 @@
                 // 根据 is_agent 字段决定是否添加代理相关字段
                 if (property.is_agent) {
                     basicProperty.is_agent = true;
-                    // 只有当 is_coop 为 true 时才添加
-                    if (property.is_coop) {
-                        basicProperty.is_coop = true;
-                    }
+                    // 总是添加 is_coop 字段
+                    basicProperty.is_coop = property.is_coop || false;
                     // 添加房源方信息（如果有）
                     if (property.agent_name) basicProperty.agent_name = property.agent_name;
                     if (property.agent_phone) basicProperty.agent_phone = property.agent_phone;
@@ -7603,10 +7601,8 @@
                     // 如果是可代理房源，添加is_agent字段
                     if (property.is_agent) {
                         minimalProperty.is_agent = true;
-                        // 同时添加is_coop字段（如果存在）
-                        if (property.is_coop !== undefined) {
-                            minimalProperty.is_coop = property.is_coop;
-                        }
+                        // 总是添加is_coop字段
+                        minimalProperty.is_coop = property.is_coop || false;
                     }
 
                     if (editingPropertyId) {
