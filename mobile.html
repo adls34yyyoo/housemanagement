@@ -5610,31 +5610,87 @@
 
                 // 填充表单数据
                 setTimeout(() => {
+                    // 先初始化下拉选项，确保选项存在
+                    initSelectOptions();
+                    
                     const communityInput = document.getElementById('propCommunity');
+                    const communityCustomInput = document.getElementById('propCommunityCustom');
                     const regionInput = document.getElementById('propRegion');
+                    const regionCustomInput = document.getElementById('propRegionCustom');
                     const layoutInput = document.getElementById('propLayout');
+                    const layoutCustomInput = document.getElementById('propLayoutCustom');
                     const floorInput = document.getElementById('propFloor');
+                    const floorCustomInput = document.getElementById('propFloorCustom');
                     const areaInput = document.getElementById('propArea');
                     const priceInput = document.getElementById('propPrice');
                     const decorationInput = document.getElementById('propDecoration');
+                    const decorationCustomInput = document.getElementById('propDecorationCustom');
                     const statusInput = document.getElementById('propStatus');
                     const priceLabel = document.getElementById('priceLabel');
+                    const primarySchoolInput = document.getElementById('propPrimarySchool');
+                    const primarySchoolCustomInput = document.getElementById('propPrimarySchoolCustom');
+                    const middleSchoolInput = document.getElementById('propMiddleSchool');
+                    const middleSchoolCustomInput = document.getElementById('propMiddleSchoolCustom');
+                    const propTypeInput = document.getElementById('propPropertyType');
+                    const propTypeCustomInput = document.getElementById('propPropertyTypeCustom');
+                    const certificateInput = document.getElementById('propCertificate');
+                    const certificateCustomInput = document.getElementById('propCertificateCustom');
+                    const doorNumberInput = document.getElementById('propDoorNumber');
+                    const descInput = document.getElementById('propDesc');
+                    const remarkInput = document.getElementById('propRemark');
 
+                    // 检查下拉选项中是否存在该值，如果不存在则使用自定义输入框
+                    const setSelectValue = (select, custom, value) => {
+                        if (!value) return;
+                        if (select) {
+                            let found = false;
+                            for (let i = 0; i < select.options.length; i++) {
+                                if (select.options[i].value === value) {
+                                    select.value = value;
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (!found && custom) {
+                                custom.value = value;
+                            }
+                        }
+                    };
+
+                    // 设置小区
                     if (communityInput) communityInput.value = property.community || '';
+                    // 设置地区
                     if (regionInput) regionInput.value = property.region || '';
+                    // 设置户型
                     if (layoutInput) layoutInput.value = property.layout || '';
+                    // 设置楼层
                     if (floorInput) floorInput.value = property.floor || '';
+                    // 设置面积
                     if (areaInput) areaInput.value = property.area || '';
+                    // 设置价格
                     if (priceInput) priceInput.value = property.price || '';
+                    // 设置装修
                     if (decorationInput) decorationInput.value = property.decoration || '';
+                    // 设置状态
                     if (statusInput) statusInput.value = property.status || 'pending';
                     if (priceLabel) priceLabel.textContent = '价格（万元）'; // 代理房源始终使用万元单位
                     
                     // 填充学区信息
-                    const primarySchoolInput = document.getElementById('propPrimarySchool');
-                    const middleSchoolInput = document.getElementById('propMiddleSchool');
-                    if (primarySchoolInput) primarySchoolInput.value = property.primarySchool || property.primary_school || '';
-                    if (middleSchoolInput) middleSchoolInput.value = property.middleSchool || property.middle_school || '';
+                    setSelectValue(primarySchoolInput, primarySchoolCustomInput, property.primarySchool || property.primary_school || '');
+                    setSelectValue(middleSchoolInput, middleSchoolCustomInput, property.middleSchool || property.middle_school || '');
+                    
+                    // 填充房源类型
+                    setSelectValue(propTypeInput, propTypeCustomInput, property.propertyType || property.property_type || '');
+                    
+                    // 填充产证情况
+                    setSelectValue(certificateInput, certificateCustomInput, property.propertyCertificate || property.property_certificate || '');
+                    
+                    // 填充门牌号
+                    if (doorNumberInput) doorNumberInput.value = property.doorNumber || property.door_number || '';
+                    
+                    // 填充描述和备注
+                    if (descInput) descInput.value = property.description || property.desc || '';
+                    if (remarkInput) remarkInput.value = property.remark || '';
 
                     // 根据房源类型选择对应的数据源
                     let parties;
