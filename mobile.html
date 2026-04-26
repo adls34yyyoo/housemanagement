@@ -7676,9 +7676,7 @@
                     middle_school: middleSchool || '',
                     property_type: propType || '',
                     property_certificate: propertyCertificate || '',
-                    landlord_wechat: landlordWechat || '',
-                    change_history: changeHistoryRecord || [],
-                    communication_records: originalProperty?.communication_records || originalProperty?.communicationRecords || []
+                    landlord_wechat: landlordWechat || ''
                 };
 
                 // 根据 is_agent 字段决定是否添加代理相关字段
@@ -7722,13 +7720,29 @@
                 }
 
                 if (!saveSuccess) {
-                    // 如果基本字段保存也失败，尝试只保存核心字段
+                    // 如果基本字段保存也失败，使用核心字段重试
                     const minimalProperty = {
                         community: property.community || '',
-                        price: property.price,
-                        type: property.type || 'rent',
+                        decoration: property.decoration || '',
+                        price: property.price || '',
+                        region: property.region || '',
+                        layout: property.layout || '',
+                        area: property.area || '',
+                        floor: property.floor || '',
+                        door_number: property.door_number || '',
+                        landlord_name: property.landlord_name || '',
+                        landlord_phone: property.landlord_phone || '',
                         status: property.status || 'pending',
-                        updated_at: new Date().toISOString()
+                        type: property.type || 'rent',
+                        description: property.description || '',
+                        remark: property.remark || '',
+                        created_at: property.created_at || new Date().toISOString(),
+                        updated_at: new Date().toISOString(),
+                        primary_school: primarySchool || '',
+                        middle_school: middleSchool || '',
+                        property_type: propType || '',
+                        property_certificate: propertyCertificate || '',
+                        landlord_wechat: landlordWechat || ''
                     };
                     
                     // 如果是可代理房源，添加相关字段
@@ -7741,6 +7755,8 @@
                         minimalProperty.coop_parties = property.coop_parties || [];
                     }
 
+                    console.log('保存房源 - minimalProperty对象:', minimalProperty);
+
                     if (editingPropertyId) {
                         const { error } = await supabaseClient
                             .from('properties')
@@ -7748,20 +7764,19 @@
                             .eq('id', editingPropertyId);
 
                         if (error) {
-                            console.error('最小更新也失败:', error);
-                            showToast('❌ 保存房源失败，请检查数据库是否缺少必要字段');
+                            console.error('更新房源失败:', error);
+                            showToast('❌ 更新房源失败，请检查数据库是否缺少必要字段');
                             return;
                         }
                     } else {
                         minimalProperty.id = property.id || `prop_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-                        minimalProperty.created_at = new Date().toISOString();
 
                         const { error } = await supabaseClient
                             .from('properties')
                             .insert([minimalProperty]);
 
                         if (error) {
-                            console.error('最小插入也失败:', error);
+                            console.error('插入房源失败:', error);
                             showToast('❌ 保存房源失败，请检查数据库是否缺少必要字段');
                             return;
                         }
