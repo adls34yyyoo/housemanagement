@@ -6739,7 +6739,12 @@
             clearPropertyForm();
             document.getElementById('propertyModal').style.display = 'flex';
             document.getElementById('propertyModal').classList.add('active');
-            initSelectOptions();
+            
+            // 确保选项数据已从数据库加载
+            (async () => {
+                await loadOptionsFromDatabase();
+                initSelectOptions();
+            })();
             
             // 添加小区选择变化事件监听器，自动填充学区
             const communitySelect = document.getElementById('propCommunity');
@@ -7359,6 +7364,8 @@
             const desc = document.getElementById('propDesc').value;
             const remark = document.getElementById('propRemark').value;
 
+            console.log('保存房源 - 表单数据:', { community, primarySchool, middleSchool, decoration, price, region, propType, propertyCertificate, layout, area, floor, doorNumber });
+
             if (!community) {
                 showToast('请输入小区名称');
                 return;
@@ -7685,6 +7692,8 @@
                     basicProperty.agent_parties = property.agent_parties || [];
                     basicProperty.coop_parties = property.coop_parties || [];
                 }
+
+                console.log('保存房源 - basicProperty对象:', basicProperty);
 
                 let saveSuccess = false;
 
@@ -8302,21 +8311,9 @@
                 if (optionsError) {
                     console.error('加载选项失败:', optionsError);
                 } else if (optionsDataFromDB && optionsDataFromDB.length > 0) {
-                    // 清空默认选项
-                    optionsData = {
-                        community: [],
-                        primarySchool: [],
-                        middleSchool: [],
-                        decoration: [],
-                        layout: [],
-                        region: [],
-                        propertyType: [],
-                        propertyCertificate: []
-                    };
-
-                    // 填充选项数据
+                    // 填充选项数据（不清空默认选项，只添加新选项）
                     optionsDataFromDB.forEach(option => {
-                        if (optionsData[option.type]) {
+                        if (optionsData[option.type] && !optionsData[option.type].includes(option.value)) {
                             optionsData[option.type].push(option.value);
                         }
                     });
