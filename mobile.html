@@ -7662,9 +7662,9 @@
                     layout: property.layout,
                     area: property.area,
                     floor: property.floor,
-                    door_number: property.door_number,
-                    landlord_name: property.landlord_name,
-                    landlord_phone: property.landlord_phone,
+                    door_number: property.doorNumber || property.door_number || '',
+                    landlord_name: property.landlordName || property.landlord_name || '',
+                    landlord_phone: property.landlordPhone || property.landlord_phone || '',
                     status: property.status,
                     type: property.type,
                     description: property.description,
@@ -7672,11 +7672,11 @@
                     created_at: property.created_at,
                     updated_at: property.updated_at,
                     // 总是添加可选字段，即使为空
-                    primary_school: primarySchool || '',
-                    middle_school: middleSchool || '',
-                    property_type: propType || '',
-                    property_certificate: propertyCertificate || '',
-                    landlord_wechat: landlordWechat || ''
+                    primary_school: primarySchool || property.primarySchool || property.primary_school || '',
+                    middle_school: middleSchool || property.middleSchool || property.middle_school || '',
+                    property_type: propType || property.propertyType || property.property_type || '',
+                    property_certificate: propertyCertificate || property.propertyCertificate || property.property_certificate || '',
+                    landlord_wechat: landlordWechat || property.landlordWechat || property.landlord_wechat || ''
                 };
 
                 // 根据 is_agent 字段决定是否添加代理相关字段
@@ -7729,20 +7729,20 @@
                         layout: property.layout || '',
                         area: property.area || '',
                         floor: property.floor || '',
-                        door_number: property.door_number || '',
-                        landlord_name: property.landlord_name || '',
-                        landlord_phone: property.landlord_phone || '',
+                        door_number: property.doorNumber || property.door_number || '',
+                        landlord_name: property.landlordName || property.landlord_name || '',
+                        landlord_phone: property.landlordPhone || property.landlord_phone || '',
                         status: property.status || 'pending',
                         type: property.type || 'rent',
                         description: property.description || '',
                         remark: property.remark || '',
                         created_at: property.created_at || new Date().toISOString(),
                         updated_at: new Date().toISOString(),
-                        primary_school: primarySchool || '',
-                        middle_school: middleSchool || '',
-                        property_type: propType || '',
-                        property_certificate: propertyCertificate || '',
-                        landlord_wechat: landlordWechat || ''
+                        primary_school: primarySchool || property.primarySchool || property.primary_school || '',
+                        middle_school: middleSchool || property.middleSchool || property.middle_school || '',
+                        property_type: propType || property.propertyType || property.property_type || '',
+                        property_certificate: propertyCertificate || property.propertyCertificate || property.property_certificate || '',
+                        landlord_wechat: landlordWechat || property.landlordWechat || property.landlord_wechat || ''
                     };
                     
                     // 如果是可代理房源，添加相关字段
