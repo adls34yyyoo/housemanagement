@@ -7655,12 +7655,13 @@
 
                 // 创建一个完整的属性对象，包含所有必要字段
                 const basicProperty = {
+                    id: property.id || `prop_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                     community: property.community,
                     decoration: property.decoration,
-                    price: property.price,
+                    price: parseFloat(property.price) || null,
                     region: property.region,
                     layout: property.layout,
-                    area: property.area,
+                    area: parseFloat(property.area) || null,
                     floor: property.floor,
                     door_number: property.doorNumber || property.door_number || '',
                     landlord_name: property.landlordName || property.landlord_name || '',
@@ -7669,8 +7670,8 @@
                     type: property.type,
                     description: property.description,
                     remark: property.remark,
-                    created_at: property.created_at,
-                    updated_at: property.updated_at,
+                    created_at: property.created_at || new Date().toISOString(),
+                    updated_at: property.updated_at || new Date().toISOString(),
                     // 总是添加可选字段，即使为空
                     primary_school: primarySchool || property.primarySchool || property.primary_school || '',
                     middle_school: middleSchool || property.middleSchool || property.middle_school || '',
@@ -7722,12 +7723,13 @@
                 if (!saveSuccess) {
                     // 如果基本字段保存也失败，使用核心字段重试
                     const minimalProperty = {
+                        id: property.id || `prop_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                         community: property.community || '',
                         decoration: property.decoration || '',
-                        price: property.price || '',
+                        price: parseFloat(property.price) || null,
                         region: property.region || '',
                         layout: property.layout || '',
-                        area: property.area || '',
+                        area: parseFloat(property.area) || null,
                         floor: property.floor || '',
                         door_number: property.doorNumber || property.door_number || '',
                         landlord_name: property.landlordName || property.landlord_name || '',
