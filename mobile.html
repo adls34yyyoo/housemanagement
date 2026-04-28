@@ -3123,43 +3123,43 @@
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                             <span style="color: var(--text-secondary);">区域</span>
-                            <span>${property.region || '未知区域'}</span>
+                            <span style="cursor: pointer; color: var(--primary); text-decoration: underline;" onclick="editPropertyField('${property.id}', 'region', '区域', '${property.region || ''}');">${property.region || '未知区域'}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                             <span style="color: var(--text-secondary);">房源类型</span>
-                            <span>${property.property_type || property.propertyType || '未知类型'}</span>
+                            <span style="cursor: pointer; color: var(--primary); text-decoration: underline;" onclick="editPropertyField('${property.id}', 'property_type', '房源类型', '${property.property_type || property.propertyType || ''}', 'select');">${property.property_type || property.propertyType || '未知类型'}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                             <span style="color: var(--text-secondary);">产证情况</span>
-                            <span>${property.property_certificate || property.propertyCertificate || '未知'}</span>
+                            <span style="cursor: pointer; color: var(--primary); text-decoration: underline;" onclick="editPropertyField('${property.id}', 'property_certificate', '产证情况', '${property.property_certificate || property.propertyCertificate || ''}', 'select');">${property.property_certificate || property.propertyCertificate || '未知'}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                             <span style="color: var(--text-secondary);">户型</span>
-                            <span>${property.layout || '未知户型'}</span>
+                            <span style="cursor: pointer; color: var(--primary); text-decoration: underline;" onclick="editPropertyField('${property.id}', 'layout', '户型', '${property.layout || ''}', 'select');">${property.layout || '未知户型'}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                             <span style="color: var(--text-secondary);">面积</span>
-                            <span>${property.area ? property.area + '平' : '未知面积'}</span>
+                            <span style="cursor: pointer; color: var(--primary); text-decoration: underline;" onclick="editPropertyField('${property.id}', 'area', '面积', '${property.area || ''}', 'number');">${property.area ? property.area + '平' : '未知面积'}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                             <span style="color: var(--text-secondary);">装修</span>
-                            <span>${property.decoration || '未知装修'}</span>
+                            <span style="cursor: pointer; color: var(--primary); text-decoration: underline;" onclick="editPropertyField('${property.id}', 'decoration', '装修', '${property.decoration || ''}', 'select');">${property.decoration || '未知装修'}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                             <span style="color: var(--text-secondary);">楼层</span>
-                            <span>${property.floor || '未知楼层'}</span>
+                            <span style="cursor: pointer; color: var(--primary); text-decoration: underline;" onclick="editPropertyField('${property.id}', 'floor', '楼层', '${property.floor || ''}');">${property.floor || '未知楼层'}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                             <span style="color: var(--text-secondary);">门牌号</span>
-                            <span>${property.door_number || property.doorNumber || '未知门牌号'}</span>
+                            <span style="cursor: pointer; color: var(--primary); text-decoration: underline;" onclick="editPropertyField('${property.id}', 'door_number', '门牌号', '${property.door_number || property.doorNumber || ''}');">${property.door_number || property.doorNumber || '未知门牌号'}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                             <span style="color: var(--text-secondary);">小学学区</span>
-                            <span>${property.primarySchool || property.primary_school || '未知'}</span>
+                            <span style="cursor: pointer; color: var(--primary); text-decoration: underline;" onclick="editPropertyField('${property.id}', 'primary_school', '小学学区', '${property.primarySchool || property.primary_school || ''}');">${property.primarySchool || property.primary_school || '未知'}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                             <span style="color: var(--text-secondary);">初中学区</span>
-                            <span>${property.middleSchool || property.middle_school || '未知'}</span>
+                            <span style="cursor: pointer; color: var(--primary); text-decoration: underline;" onclick="editPropertyField('${property.id}', 'middle_school', '初中学区', '${property.middleSchool || property.middle_school || ''}');">${property.middleSchool || property.middle_school || '未知'}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; color: var(--danger);">
                             <span>价格</span>
@@ -3297,6 +3297,124 @@
         // 关闭房源详情模态框
         window.closePropertyDetailModal = function() {
             document.getElementById('propertyDetailModal').classList.remove('active');
+        }
+
+        // 通用字段编辑函数
+        window.editPropertyField = function(propertyId, fieldName, fieldLabel, currentValue, fieldType = 'text') {
+            // 根据字段类型显示不同的输入方式
+            let inputHTML = '';
+            let fieldValue = currentValue || '';
+            
+            // 处理不同字段类型
+            if (fieldType === 'select') {
+                // 下拉选择框类型
+                let options = [];
+                switch(fieldName) {
+                    case 'decoration':
+                        options = ['', '精装修', '简装修', '老装修', '中等装修', '全屋定制', '自住老装修', '婚房装修', '一般装修'];
+                        break;
+                    case 'layout':
+                        options = ['', '1-1', '2-1', '2-2', '2-1-2', '2-2-1', '3-2-1', '3-2-2', '4-2-3', '三上三下 单层120-130平'];
+                        break;
+                    case 'property_type':
+                        options = ['', '住宅', '别墅', '公寓', '商铺', '写字楼'];
+                        break;
+                    case 'property_certificate':
+                        options = ['', '有产证', '无产证', '办理中', '抵押中'];
+                        break;
+                    default:
+                        options = ['', '选项1', '选项2', '选项3'];
+                }
+                inputHTML = `<select id="editFieldValue" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 16px;">`;
+                options.forEach(opt => {
+                    const selected = opt === fieldValue ? 'selected' : '';
+                    inputHTML += `<option value="${opt}" ${selected}>${opt || '请选择'}</option>`;
+                });
+                inputHTML += `</select>`;
+            } else if (fieldType === 'number') {
+                // 数字输入框
+                inputHTML = `<input type="number" id="editFieldValue" value="${fieldValue}" placeholder="请输入${fieldLabel}" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 16px;" />`;
+            } else {
+                // 普通文本输入框
+                inputHTML = `<input type="text" id="editFieldValue" value="${fieldValue}" placeholder="请输入${fieldLabel}" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 16px;" />`;
+            }
+
+            const modalHTML = `
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;" onclick="closeEditFieldModal()">
+                    <div style="background: white; border-radius: 16px; padding: 24px; width: 90%; max-width: 400px; position: relative;" onclick="event.stopPropagation()">
+                        <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 20px; text-align: center;">修改${fieldLabel}</h3>
+                        ${inputHTML}
+                        <div style="display: flex; gap: 12px; margin-top: 20px;">
+                            <button onclick="closeEditFieldModal()" style="flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); background: white; color: var(--text); font-size: 16px;">取消</button>
+                            <button onclick="saveFieldChange('${propertyId}', '${fieldName}', document.getElementById('editFieldValue').value)" style="flex: 1; padding: 12px; border: none; border-radius: var(--radius); background: var(--primary); color: white; font-size: 16px;">保存</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 创建模态框
+            const modalDiv = document.createElement('div');
+            modalDiv.id = 'editFieldModal';
+            modalDiv.innerHTML = modalHTML;
+            document.body.appendChild(modalDiv);
+        }
+
+        // 关闭字段编辑模态框
+        window.closeEditFieldModal = function() {
+            const modal = document.getElementById('editFieldModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // 保存字段修改
+        window.saveFieldChange = async function(propertyId, fieldName, value) {
+            // 关闭模态框
+            closeEditFieldModal();
+
+            // 查找房源
+            let property = properties.find(p => String(p.id) === String(propertyId));
+            if (!property) {
+                property = agentProperties.find(p => String(p.id) === String(propertyId));
+            }
+            if (!property) {
+                showToast('未找到房源');
+                return;
+            }
+
+            // 更新本地数据
+            // 支持驼峰和下划线两种命名方式
+            const camelCaseName = fieldName.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
+            if (property[fieldName] !== undefined) {
+                property[fieldName] = value;
+            }
+            if (property[camelCaseName] !== undefined) {
+                property[camelCaseName] = value;
+            }
+
+            // 更新到数据库
+            try {
+                const updateData = {};
+                updateData[fieldName] = value;
+                updateData['updated_at'] = new Date().toISOString();
+
+                const { error } = await supabaseClient
+                    .from('properties')
+                    .update(updateData)
+                    .eq('id', propertyId);
+
+                if (!error) {
+                    showToast('修改成功');
+                    // 刷新详情页面
+                    openPropertyDetailModal(propertyId);
+                } else {
+                    console.error('保存失败:', error);
+                    showToast('保存失败，请重试');
+                }
+            } catch (e) {
+                console.error('保存失败:', e);
+                showToast('保存失败，请重试');
+            }
         }
         
         // 初始化Supabase
