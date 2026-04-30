@@ -2021,11 +2021,11 @@
                     <div class="stat-value" id="statTotal">0</div>
                     <div class="stat-label">总房源</div>
                 </div>
-                <div class="stat-card" onclick="switchPage('properties'); setTimeout(() => filterPropertiesByStatus('pending'), 100)" style="cursor: pointer;">
+                <div class="stat-card" onclick="goToPendingProperties()" style="cursor: pointer;">
                     <div class="stat-value" id="statPending">0</div>
                     <div class="stat-label">待发布</div>
                 </div>
-                <div class="stat-card" onclick="switchPage('properties'); setTimeout(() => filterPropertiesByStatus('off_shelf'), 100)" style="cursor: pointer;">
+                <div class="stat-card" onclick="goToOffShelfProperties()" style="cursor: pointer;">
                     <div class="stat-value" id="statOffShelf">0</div>
                     <div class="stat-label">已下架</div>
                 </div>
@@ -3040,6 +3040,106 @@
     <div class="toast" id="toast"></div>
 
     <script>
+        // 华为浏览器兼容性修复 - 全局错误捕获
+        window.addEventListener('error', function(e) {
+            console.error('全局错误:', e.message, e.filename, e.lineno, e.colno, e.error);
+            return true; // 阻止错误传播，防止闪退
+        });
+        
+        // Promise未捕获异常处理
+        window.addEventListener('unhandledrejection', function(e) {
+            console.error('未处理的Promise异常:', e.reason);
+            e.preventDefault(); // 阻止默认行为，防止闪退
+        });
+        
+        // 兼容性处理 - 修复华为浏览器对某些API的支持
+        if (!window.Promise) {
+            window.Promise = Promise;
+        }
+        
+        // 兼容性处理 - 修复substr方法
+        if (!String.prototype.substr) {
+            String.prototype.substr = function(start, length) {
+                return this.substring(start, length ? start + length : this.length);
+            };
+        }
+        
+        // 兼容性处理 - 数组方法polyfill
+        if (!Array.prototype.forEach) {
+            Array.prototype.forEach = function(callback, thisArg) {
+                for (var i = 0; i < this.length; i++) {
+                    callback.call(thisArg || this, this[i], i, this);
+                }
+            };
+        }
+        
+        if (!Array.prototype.map) {
+            Array.prototype.map = function(callback, thisArg) {
+                var result = [];
+                for (var i = 0; i < this.length; i++) {
+                    result.push(callback.call(thisArg || this, this[i], i, this));
+                }
+                return result;
+            };
+        }
+        
+        if (!Array.prototype.filter) {
+            Array.prototype.filter = function(callback, thisArg) {
+                var result = [];
+                for (var i = 0; i < this.length; i++) {
+                    if (callback.call(thisArg || this, this[i], i, this)) {
+                        result.push(this[i]);
+                    }
+                }
+                return result;
+            };
+        }
+        
+        if (!Array.prototype.find) {
+            Array.prototype.find = function(callback, thisArg) {
+                for (var i = 0; i < this.length; i++) {
+                    if (callback.call(thisArg || this, this[i], i, this)) {
+                        return this[i];
+                    }
+                }
+                return undefined;
+            };
+        }
+        
+        if (!Array.prototype.findIndex) {
+            Array.prototype.findIndex = function(callback, thisArg) {
+                for (var i = 0; i < this.length; i++) {
+                    if (callback.call(thisArg || this, this[i], i, this)) {
+                        return i;
+                    }
+                }
+                return -1;
+            };
+        }
+        
+        if (!Array.prototype.some) {
+            Array.prototype.some = function(callback, thisArg) {
+                for (var i = 0; i < this.length; i++) {
+                    if (callback.call(thisArg || this, this[i], i, this)) {
+                        return true;
+                    }
+                }
+                return false;
+            };
+        }
+        
+        if (!Array.prototype.includes) {
+            Array.prototype.includes = function(searchElement, fromIndex) {
+                var startIndex = fromIndex || 0;
+                for (var i = startIndex; i < this.length; i++) {
+                    if (this[i] === searchElement) {
+                        return true;
+                    }
+                }
+                return false;
+            };
+        }
+        
         // Supabase配置
         const supabaseUrl = 'https://ewjmzcqvmiokddizuidt.supabase.co';
         // 使用service key获取完整权限
@@ -3053,7 +3153,7 @@
         let agentProperties = [];
         
         // 暴露全局createClient以便控制台测试
-        window.createClient = window.createClient || window.Supabase?.createClient || window.supabase?.createClient;
+        window.createClient = window.createClient || (window.Supabase && window.Supabase.createClient) || (window.supabase && window.supabase.createClient);
         console.log('全局createClient状态:', typeof window.createClient);
         console.log('window.Supabase:', typeof window.Supabase);
         console.log('window.supabase:', typeof window.supabase);
@@ -3648,8 +3748,20 @@
         customers = [];
         console.log('初始化数据数组完成');
 
-        // 直接从云数据库加载数据
-        loadData();
+        // 从云数据库加载数据（兼容华为浏览器）
+        function initApp() {
+            if (typeof loadData === 'function') {
+                loadData().then(function() {
+                    console.log('数据加载完成');
+                }).catch(function(error) {
+                    console.error('数据加载失败:', error);
+                    showToast('⚠️ 数据加载失败，请检查网络');
+                });
+            } else {
+                setTimeout(initApp, 100); // 等待函数定义完成
+            }
+        }
+        initApp();
 
 
 
@@ -4651,6 +4763,22 @@
                 const phoneInput = document.getElementById('propLandlordPhone');
                 if (phoneInput) phoneInput.value = data.landlordPhone;
             }
+        }
+
+        // 跳转到待发布房源页面（兼容华为浏览器）
+        function goToPendingProperties() {
+            switchPage('properties');
+            setTimeout(function() {
+                filterPropertiesByStatus('pending');
+            }, 100);
+        }
+
+        // 跳转到已下架房源页面（兼容华为浏览器）
+        function goToOffShelfProperties() {
+            switchPage('properties');
+            setTimeout(function() {
+                filterPropertiesByStatus('off_shelf');
+            }, 100);
         }
 
         // 页面切换
@@ -6858,11 +6986,16 @@
             document.getElementById('propertyModal').style.display = 'flex';
             document.getElementById('propertyModal').classList.add('active');
             
-            // 确保选项数据已从数据库加载
-            (async () => {
-                await loadOptionsFromDatabase();
-                initSelectOptions();
-            })();
+            // 确保选项数据已从数据库加载（兼容华为浏览器）
+            function loadOptionsAndInit() {
+                loadOptionsFromDatabase().then(function() {
+                    initSelectOptions();
+                }).catch(function(error) {
+                    console.error('加载选项失败:', error);
+                    initSelectOptions(); // 即使加载失败也继续初始化
+                });
+            }
+            loadOptionsAndInit();
             
             // 添加小区选择变化事件监听器，自动填充学区
             const communitySelect = document.getElementById('propCommunity');
