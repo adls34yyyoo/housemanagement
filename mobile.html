@@ -3276,6 +3276,18 @@
                         </div>
                     ` : ''}
                     
+                    ${property.remark ? `
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                                备注
+                                <span style="cursor: pointer; color: var(--primary); text-decoration: underline; font-size: 14px; font-weight: normal;" onclick="editPropertyField('${property.id}', 'remark', '备注', '${property.remark || ''}');">编辑</span>
+                            </h4>
+                            <div style="background: var(--background); border-radius: var(--radius); padding: 16px; line-height: 1.6;">
+                                ${property.remark}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
                     ${(property.landlordName || property.landlord_name) || (property.landlordPhone || property.landlord_phone) || (property.landlordWechat || property.landlord_wechat) ? `
                         <div style="margin-bottom: 20px;">
                             <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">房东信息</h4>
