@@ -12824,16 +12824,14 @@
                     timestamp: new Date().toISOString()
                 };
                 
-                // 同时更新 communicationRecords 和 communication_records 字段
-                if (!property.communicationRecords) {
-                    property.communicationRecords = [];
-                }
+                // 只更新 communication_records 字段（数据库字段），避免重复
                 if (!property.communication_records) {
                     property.communication_records = [];
                 }
                 
-                property.communicationRecords.unshift(communicationRecord);
                 property.communication_records.unshift(communicationRecord);
+                // 同步更新 communicationRecords 用于显示（保持兼容性）
+                property.communicationRecords = [...property.communication_records];
                 
                 // 尝试保存到 Supabase
                 if (supabaseClient) {
@@ -12891,9 +12889,6 @@
             }
 
             // 添加沟通记录
-            if (!customer.communicationRecords) {
-                customer.communicationRecords = [];
-            }
             if (!customer.communication_records) {
                 customer.communication_records = [];
             }
@@ -12907,8 +12902,10 @@
                 created_at: new Date().toISOString()
             };
 
-            customer.communicationRecords.push(newRecord);
+            // 只更新 communication_records 字段（数据库字段），避免重复
             customer.communication_records.push(newRecord);
+            // 同步更新 communicationRecords 用于显示（保持兼容性）
+            customer.communicationRecords = [...customer.communication_records];
 
             // 保存到云数据库
             try {
