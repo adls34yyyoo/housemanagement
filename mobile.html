@@ -12082,10 +12082,14 @@
                             // 确保 agentParties 字段存在
                             agentParties: p.agentParties || p.agent_parties || [],
                             // 确保 coopParties 字段存在
-                            coopParties: p.coopParties || p.coop_parties || []
+                            coopParties: p.coopParties || p.coop_parties || [],
+                            // 确保 isAgent 字段存在（兼容 is_agent）
+                            isAgent: p.is_agent === true || p.isAgent === true,
+                            // 确保 isCoop 字段存在（兼容 is_coop）
+                            isCoop: p.is_coop === true || p.isCoop === true
                         }));
                         // 更新agentProperties数组，包含所有is_agent: true的房源
-                        agentProperties = properties.filter(p => p.is_agent === true);
+                        agentProperties = properties.filter(p => p.is_agent === true || p.isAgent === true);
                         console.log(`成功加载 ${properties.length} 条房源数据`);
                         console.log(`成功加载 ${agentProperties.length} 条代理房源数据`);
                         
