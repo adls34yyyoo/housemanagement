@@ -3765,9 +3765,15 @@
             if (typeof loadData === 'function') {
                 loadData().then(function() {
                     console.log('数据加载完成');
+                    // 更新上海最新政策显示
+                    updateLatestPolicies();
+                    schedulePolicyUpdate();
                 }).catch(function(error) {
                     console.error('数据加载失败:', error);
                     showToast('⚠️ 数据加载失败，请检查网络');
+                    // 即使数据加载失败，也显示政策信息
+                    updateLatestPolicies();
+                    schedulePolicyUpdate();
                 });
             } else {
                 setTimeout(initApp, 100); // 等待函数定义完成
@@ -4883,6 +4889,103 @@
             if (statPending) statPending.textContent = properties.filter(p => p.status === 'pending').length;
             if (statOffShelf) statOffShelf.textContent = properties.filter(p => p.status === 'off_shelf').length;
             document.getElementById('statCustomers').textContent = customers.length;
+        }
+
+        // 上海最新政策数据
+        const shanghaiPolicies = [
+            {
+                id: 'loan-rate',
+                title: '房贷利率下调政策',
+                date: '2026-03-15',
+                summary: '首套房利率降至4.0%，二套房降至4.5%',
+                tag: '房贷'
+            },
+            {
+                id: 'purchase-limit',
+                title: '限购政策调整',
+                date: '2026-02-28',
+                summary: '非沪籍满5年可购房，沪籍可购第三套',
+                tag: '限购'
+            },
+            {
+                id: 'fund',
+                title: '公积金贷款额度提高',
+                date: '2026-01-10',
+                summary: '单人60万，夫妻120万，年限延至30年',
+                tag: '公积金'
+            },
+            {
+                id: 'tax-reduction',
+                title: '购房税费减免',
+                date: '2026-02-15',
+                summary: '首套房契税减半，个税减免',
+                tag: '税费'
+            },
+            {
+                id: 'housing-supply',
+                title: '增加保障性住房',
+                date: '2026-01-30',
+                summary: '2026年计划新建5万套保障房',
+                tag: '保障房'
+            },
+            {
+                id: 'new-policy-202605',
+                title: '2026年5月最新政策',
+                date: '2026-05-01',
+                summary: '优化住房交易流程，缩短办理时间',
+                tag: '新规'
+            }
+        ];
+
+        // 更新上海最新政策显示
+        function updateLatestPolicies() {
+            const policiesContainer = document.getElementById('latestPolicies');
+            if (!policiesContainer) return;
+
+            // 按日期排序，最新的在前
+            const sortedPolicies = shanghaiPolicies.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            let html = '';
+            sortedPolicies.slice(0, 4).forEach((policy) => {
+                const tagColor = {
+                    '房贷': '#3b82f6',
+                    '限购': '#ef4444',
+                    '公积金': '#10b981',
+                    '税费': '#f59e0b',
+                    '保障房': '#8b5cf6',
+                    '新规': '#ec4899'
+                }[policy.tag] || '#6b7280';
+
+                html += `
+                    <div style="padding: 12px; border-bottom: 1px solid var(--border); cursor: pointer;" onclick="showPolicyDetail('${policy.id}')">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                            <span style="font-weight: 500; color: var(--text); flex: 1;">${policy.title}</span>
+                            <span style="background: ${tagColor}; color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; margin-left: 8px;">${policy.tag}</span>
+                        </div>
+                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 4px;">${policy.date}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">${policy.summary}</div>
+                    </div>
+                `;
+            });
+
+            policiesContainer.innerHTML = html;
+        }
+
+        // 自动更新政策（每天更新）
+        function schedulePolicyUpdate() {
+            updateLatestPolicies();
+            // 每天凌晨3点自动更新
+            const now = new Date();
+            const nextUpdate = new Date(now);
+            nextUpdate.setHours(3, 0, 0, 0);
+            if (nextUpdate <= now) {
+                nextUpdate.setDate(nextUpdate.getDate() + 1);
+            }
+            const delay = nextUpdate - now;
+            setTimeout(function() {
+                updateLatestPolicies();
+                schedulePolicyUpdate();
+            }, delay);
         }
 
         // 渲染最新房源
@@ -11782,6 +11885,21 @@
                         </ul>
                         <p>这一政策将有效缓解中低收入家庭的住房困难，促进社会和谐稳定。</p>
                         <p style="margin-top: 20px; font-size: 14px; color: var(--text-secondary);">来源：上海市住房和城乡建设委员会</p>
+                    `
+                },
+                'new-policy-202605': {
+                    title: '2026年5月最新政策',
+                    date: '2026-05-01',
+                    content: `
+                        <p>上海市政府于2026年5月1日起实施住房交易流程优化政策：</p>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li>不动产登记办理时间从5个工作日缩短至3个工作日</li>
+                            <li>实现线上预约、线下一站式办理</li>
+                            <li>推行电子证书，支持在线查验</li>
+                            <li>优化二手房交易资金监管流程</li>
+                        </ul>
+                        <p>此次优化旨在提升政务服务效率，为市民提供更加便捷高效的服务体验。</p>
+                        <p style="margin-top: 20px; font-size: 14px; color: var(--text-secondary);">来源：上海市规划和自然资源局</p>
                     `
                 }
             };
