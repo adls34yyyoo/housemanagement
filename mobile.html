@@ -2089,6 +2089,17 @@
                 </div>
             </div>
 
+            <!-- 办事指南 -->
+            <div class="info-section">
+                <div class="section-header">
+                    <h3>📑 办事指南</h3>
+                    <button class="section-more" onclick="showGuideList()">查看全部 ›</button>
+                </div>
+                <div class="info-card" id="guideList">
+                    <!-- 办事指南列表将通过JavaScript动态更新 -->
+                </div>
+            </div>
+
         </div>
 
         <!-- 房源页面 -->
@@ -3768,12 +3779,15 @@
                     // 更新上海最新政策显示
                     updateLatestPolicies();
                     schedulePolicyUpdate();
+                    // 更新办事指南显示
+                    updateGuideList();
                 }).catch(function(error) {
                     console.error('数据加载失败:', error);
                     showToast('⚠️ 数据加载失败，请检查网络');
-                    // 即使数据加载失败，也显示政策信息
+                    // 即使数据加载失败，也显示政策信息和办事指南
                     updateLatestPolicies();
                     schedulePolicyUpdate();
+                    updateGuideList();
                 });
             } else {
                 setTimeout(initApp, 100); // 等待函数定义完成
@@ -4889,6 +4903,179 @@
             if (statPending) statPending.textContent = properties.filter(p => p.status === 'pending').length;
             if (statOffShelf) statOffShelf.textContent = properties.filter(p => p.status === 'off_shelf').length;
             document.getElementById('statCustomers').textContent = customers.length;
+        }
+
+        // 办事指南数据
+        const guideData = [
+            {
+                id: 'gongjijin',
+                title: '提取公积金',
+                summary: '房产证、身份证、银行卡、买卖合同、购房发票',
+                location: '建设银行2楼西大厅公积金管理中心',
+                icon: '🏦',
+                tag: '公积金'
+            },
+            {
+                id: 'fangchanzheng',
+                title: '房产证办理',
+                summary: '身份证、购房合同、发票、户口本等',
+                location: '浦东新区不动产登记中心',
+                icon: '📄',
+                tag: '产权'
+            },
+            {
+                id: 'daiikuan',
+                title: '商业贷款办理',
+                summary: '身份证、收入证明、银行流水、购房合同',
+                location: '各大银行网点',
+                icon: '💳',
+                tag: '贷款'
+            },
+            {
+                id: 'tuihui',
+                title: '退税办理',
+                summary: '身份证、房产证、完税证明、银行卡',
+                location: '浦东新区税务局',
+                icon: '💰',
+                tag: '税务'
+            }
+        ];
+
+        // 更新办事指南显示
+        function updateGuideList() {
+            const guideContainer = document.getElementById('guideList');
+            if (!guideContainer) return;
+
+            let html = '';
+            guideData.slice(0, 2).forEach((guide) => {
+                const tagColor = {
+                    '公积金': '#10b981',
+                    '产权': '#3b82f6',
+                    '贷款': '#f59e0b',
+                    '税务': '#ef4444'
+                }[guide.tag] || '#6b7280';
+
+                html += `
+                    <div style="padding: 12px; border-bottom: 1px solid var(--border); cursor: pointer;" onclick="showGuideDetail('${guide.id}')">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                            <span style="font-size: 20px; margin-right: 8px;">${guide.icon}</span>
+                            <span style="font-weight: 500; color: var(--text); flex: 1;">${guide.title}</span>
+                            <span style="background: ${tagColor}; color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px;">${guide.tag}</span>
+                        </div>
+                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 4px;">📋 ${guide.summary}</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">📍 ${guide.location}</div>
+                    </div>
+                `;
+            });
+
+            guideContainer.innerHTML = html;
+        }
+
+        // 显示办事指南详情
+        function showGuideDetail(guideId) {
+            const guide = guideData.find(g => g.id === guideId);
+            if (!guide) return;
+
+            const tagColor = {
+                '公积金': '#10b981',
+                '产权': '#3b82f6',
+                '贷款': '#f59e0b',
+                '税务': '#ef4444'
+            }[guide.tag] || '#6b7280';
+
+            const modalHTML = `
+                <div class="modal" id="guideDetailModal" style="display: flex; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000;">
+                    <div class="modal-content" style="background: white; border-radius: var(--radius); padding: 20px; width: 90%; max-width: 400px; max-height: 80vh; overflow-y: auto;">
+                        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <div style="display: flex; align-items: center;">
+                                <span style="font-size: 24px; margin-right: 8px;">${guide.icon}</span>
+                                <h3 style="margin: 0; color: var(--text);">${guide.title}</h3>
+                            </div>
+                            <button onclick="closeGuideDetailModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);">&times;</button>
+                        </div>
+                        <div style="margin-bottom: 16px;">
+                            <span style="background: ${tagColor}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 14px;">${guide.tag}</span>
+                        </div>
+                        <div style="margin-bottom: 16px;">
+                            <div style="font-weight: 600; color: var(--text); margin-bottom: 8px;">📍 办理地点</div>
+                            <div style="color: var(--text-secondary);">${guide.location}</div>
+                        </div>
+                        <div style="margin-bottom: 16px;">
+                            <div style="font-weight: 600; color: var(--text); margin-bottom: 8px;">📋 所需资料</div>
+                            <div style="color: var(--text-secondary); line-height: 1.6;">${guide.summary}</div>
+                        </div>
+                        ${guide.tips ? `
+                            <div style="margin-bottom: 16px;">
+                                <div style="font-weight: 600; color: var(--text); margin-bottom: 8px;">💡 温馨提示</div>
+                                <div style="color: var(--text-secondary); line-height: 1.6;">${guide.tips}</div>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+
+            const modalDiv = document.createElement('div');
+            modalDiv.id = 'guideDetailModalContainer';
+            modalDiv.innerHTML = modalHTML;
+            document.body.appendChild(modalDiv);
+        }
+
+        // 关闭办事指南详情
+        function closeGuideDetailModal() {
+            const modal = document.getElementById('guideDetailModalContainer');
+            if (modal) modal.remove();
+        }
+
+        // 显示全部办事指南
+        function showGuideList() {
+            let html = '';
+            guideData.forEach((guide) => {
+                const tagColor = {
+                    '公积金': '#10b981',
+                    '产权': '#3b82f6',
+                    '贷款': '#f59e0b',
+                    '税务': '#ef4444'
+                }[guide.tag] || '#6b7280';
+
+                html += `
+                    <div style="padding: 16px; border-bottom: 1px solid var(--border); cursor: pointer;" onclick="showGuideDetail('${guide.id}')">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <div style="display: flex; align-items: center;">
+                                <span style="font-size: 24px; margin-right: 8px;">${guide.icon}</span>
+                                <span style="font-weight: 500; color: var(--text);">${guide.title}</span>
+                            </div>
+                            <span style="background: ${tagColor}; color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px;">${guide.tag}</span>
+                        </div>
+                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 4px;">📋 ${guide.summary}</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">📍 ${guide.location}</div>
+                    </div>
+                `;
+            });
+
+            const modalHTML = `
+                <div class="modal" id="guideListModal" style="display: flex; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000;">
+                    <div class="modal-content" style="background: white; border-radius: var(--radius); padding: 20px; width: 90%; max-width: 400px; max-height: 80vh; overflow-y: auto;">
+                        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin: 0; color: var(--text);">📑 办事指南</h3>
+                            <button onclick="closeGuideListModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);">&times;</button>
+                        </div>
+                        <div id="guideListContent">
+                            ${html}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const modalDiv = document.createElement('div');
+            modalDiv.id = 'guideListModalContainer';
+            modalDiv.innerHTML = modalHTML;
+            document.body.appendChild(modalDiv);
+        }
+
+        // 关闭办事指南列表
+        function closeGuideListModal() {
+            const modal = document.getElementById('guideListModalContainer');
+            if (modal) modal.remove();
         }
 
         // 上海最新政策数据
