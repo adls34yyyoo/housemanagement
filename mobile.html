@@ -10128,7 +10128,22 @@
 
             // 合并所有房源（普通房源和代理房源）
             const allProperties = [...properties, ...agentProperties];
-            const selectedProps = allProperties.filter(p => selectedProperties.some(id => String(id) === String(p.id)));
+            // 使用Map确保每个id只对应一个房源，避免重复
+            const propertyMap = new Map();
+            allProperties.forEach(property => {
+                const key = String(property.id);
+                // 如果已有相同id，优先保留自有房源
+                if (!propertyMap.has(key) || (!property.isAgent && propertyMap.get(key).isAgent)) {
+                    propertyMap.set(key, property);
+                }
+            });
+            const selectedProps = [];
+            selectedProperties.forEach(id => {
+                const key = String(id);
+                if (propertyMap.has(key)) {
+                    selectedProps.push(propertyMap.get(key));
+                }
+            });
             let shareText = '';
 
             // 按小区分组
