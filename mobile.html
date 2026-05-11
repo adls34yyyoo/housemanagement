@@ -10598,13 +10598,13 @@
                 return;
             }
 
-            // 去重：同一套房源只显示一次，优先保留代理房源
+            // 去重：同一套房源只显示一次，使用小区名称+门牌号，优先保留自有房源
             const seenAddresses = new Map();
             const uniqueProps = filteredProps.filter(property => {
-                const key = property.community + '_' + property.layout + '_' + property.area;
+                const key = property.community + '_' + (property.doorNumber || property.door_number || '');
                 if (seenAddresses.has(key)) {
                     const existing = seenAddresses.get(key);
-                    if (property.isAgent && !existing.isAgent) {
+                    if (!property.isAgent && existing.isAgent) {
                         seenAddresses.set(key, property);
                         return true;
                     }
