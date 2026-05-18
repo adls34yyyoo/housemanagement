@@ -10154,8 +10154,12 @@
             const propertyMap = new Map();
             allProperties.forEach(property => {
                 const key = String(property.id);
+                // 兼容 isAgent 和 is_agent 两种字段名
+                const isAgent = property.isAgent === true || property.is_agent === true;
+                const existing = propertyMap.get(key);
+                const existingIsAgent = existing ? (existing.isAgent === true || existing.is_agent === true) : false;
                 // 如果已有相同id，优先保留自有房源
-                if (!propertyMap.has(key) || (!property.isAgent && propertyMap.get(key).isAgent)) {
+                if (!propertyMap.has(key) || (!isAgent && existingIsAgent)) {
                     propertyMap.set(key, property);
                 }
             });
@@ -10639,9 +10643,12 @@
             const seenAddresses = new Map();
             const uniqueProps = filteredProps.filter(property => {
                 const key = property.community + '_' + (property.doorNumber || property.door_number || '');
+                // 兼容 isAgent 和 is_agent 两种字段名
+                const isAgent = property.isAgent === true || property.is_agent === true;
                 if (seenAddresses.has(key)) {
                     const existing = seenAddresses.get(key);
-                    if (!property.isAgent && existing.isAgent) {
+                    const existingIsAgent = existing.isAgent === true || existing.is_agent === true;
+                    if (!isAgent && existingIsAgent) {
                         seenAddresses.set(key, property);
                         return true;
                     }
