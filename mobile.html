@@ -5627,9 +5627,19 @@
             if (!container) return;
 
             let propsToRender = filteredProperties.length ? filteredProperties : properties;
-            // 如果没有搜索结果，同时显示所有自有房源和代理房源
+            // 如果没有搜索关键词，同时显示所有自有房源和代理房源
             if (!filteredProperties.length) {
-                propsToRender = [...properties, ...agentProperties];
+                // 合并并去重（基于id）
+                const allProps = [...properties, ...agentProperties];
+                const uniqueProps = [];
+                const seenIds = new Set();
+                allProps.forEach(p => {
+                    if (!seenIds.has(String(p.id))) {
+                        seenIds.add(String(p.id));
+                        uniqueProps.push(p);
+                    }
+                });
+                propsToRender = uniqueProps;
             }
 
             if (propsToRender.length === 0) {
@@ -6560,8 +6570,17 @@
                 (p.layout && p.layout.toLowerCase().includes(lowerKeyword)) ||
                 (p.landlordName && p.landlordName.toLowerCase().includes(lowerKeyword))
             );
-            // 合并搜索结果
-            filteredProperties = [...filteredOwnProps, ...filteredAgentProps];
+            // 合并搜索结果并去重（基于id）
+            const allFiltered = [...filteredOwnProps, ...filteredAgentProps];
+            const uniqueProps = [];
+            const seenIds = new Set();
+            allFiltered.forEach(p => {
+                if (!seenIds.has(String(p.id))) {
+                    seenIds.add(String(p.id));
+                    uniqueProps.push(p);
+                }
+            });
+            filteredProperties = uniqueProps;
             renderPropertyList();
         }
 
