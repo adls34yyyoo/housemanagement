@@ -10668,17 +10668,28 @@
                 return true;
             });
 
-            // 只按出售和出租分组
+            // 按自有/代理和出售/出租分组
             const groups = {
-                '出售': [],
-                '出租': []
+                '自有出售': [],
+                '自有出租': [],
+                '代理出售': [],
+                '代理出租': []
             };
             
             uniqueProps.forEach(property => {
+                const isAgent = property.isAgent === true || property.is_agent === true;
                 if (property.type === 'sale') {
-                    groups['出售'].push(property);
+                    if (isAgent) {
+                        groups['代理出售'].push(property);
+                    } else {
+                        groups['自有出售'].push(property);
+                    }
                 } else if (property.type === 'rent') {
-                    groups['出租'].push(property);
+                    if (isAgent) {
+                        groups['代理出租'].push(property);
+                    } else {
+                        groups['自有出租'].push(property);
+                    }
                 }
             });
 
