@@ -10607,14 +10607,10 @@
             // 筛选房源
             let filteredProps = allProperties.filter(property => {
                 let match = true;
-                // 默认排除已下架的房源
-                if (property.status === 'off_shelf') {
-                    match = false;
-                }
                 if (typeFilter !== 'all' && match) {
                     match = property.type === typeFilter;
                 }
-                // 只有用户明确选择"已下架"时才显示已下架房源
+                // 状态筛选：如果选择了特定状态则只显示该状态，否则显示所有状态（包括已下架）
                 if (statusFilter !== 'all' && match) {
                     match = property.status === statusFilter;
                 }
