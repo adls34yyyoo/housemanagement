@@ -10668,22 +10668,14 @@
                 return;
             }
 
-            // 去重：同一套房源只显示一次，使用小区名称+门牌号，优先保留自有房源
-            const seenAddresses = new Map();
+            // 去重：使用 id 确保每个房源唯一，避免同一 id 的房源被错误过滤
+            const seenIds = new Set();
             const uniqueProps = filteredProps.filter(property => {
-                const key = property.community + '_' + (property.doorNumber || property.door_number || '');
-                // 兼容 isAgent 和 is_agent 两种字段名
-                const isAgent = property.isAgent === true || property.is_agent === true;
-                if (seenAddresses.has(key)) {
-                    const existing = seenAddresses.get(key);
-                    const existingIsAgent = existing.isAgent === true || existing.is_agent === true;
-                    if (!isAgent && existingIsAgent) {
-                        seenAddresses.set(key, property);
-                        return true;
-                    }
+                const id = String(property.id);
+                if (seenIds.has(id)) {
                     return false;
                 }
-                seenAddresses.set(key, property);
+                seenIds.add(id);
                 return true;
             });
 
