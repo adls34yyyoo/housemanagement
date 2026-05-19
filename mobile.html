@@ -5627,9 +5627,10 @@
             if (!container) return;
 
             let propsToRender = filteredProperties.length ? filteredProperties : properties;
-            
-            // 只显示自有房源（非可代理）
-            propsToRender = propsToRender.filter(p => !(p.isAgent || p.is_agent));
+            // 如果没有搜索结果，同时显示所有自有房源和代理房源
+            if (!filteredProperties.length) {
+                propsToRender = [...properties, ...agentProperties];
+            }
 
             if (propsToRender.length === 0) {
                 container.innerHTML = `
@@ -6546,12 +6547,21 @@
             saveSearchHistory('propertySearch', keyword);
 
             const lowerKeyword = keyword.toLowerCase();
-            filteredProperties = properties.filter(p =>
+            // 同时搜索自有房源和代理房源
+            const filteredOwnProps = properties.filter(p =>
                 (p.community && p.community.toLowerCase().includes(lowerKeyword)) ||
                 (p.region && p.region.toLowerCase().includes(lowerKeyword)) ||
                 (p.layout && p.layout.toLowerCase().includes(lowerKeyword)) ||
                 (p.landlordName && p.landlordName.toLowerCase().includes(lowerKeyword))
             );
+            const filteredAgentProps = agentProperties.filter(p =>
+                (p.community && p.community.toLowerCase().includes(lowerKeyword)) ||
+                (p.region && p.region.toLowerCase().includes(lowerKeyword)) ||
+                (p.layout && p.layout.toLowerCase().includes(lowerKeyword)) ||
+                (p.landlordName && p.landlordName.toLowerCase().includes(lowerKeyword))
+            );
+            // 合并搜索结果
+            filteredProperties = [...filteredOwnProps, ...filteredAgentProps];
             renderPropertyList();
         }
 
