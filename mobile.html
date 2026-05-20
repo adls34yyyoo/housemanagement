@@ -2491,6 +2491,9 @@
                             <option value="pending">待发布</option>
                             <option value="off_shelf">已下架</option>
                         </select>
+                        <div style="position: relative; margin-bottom: 8px;">
+                            <input type="text" id="shareCommunitySearch" oninput="filterShareCommunityOptions()" placeholder="🔍 搜索小区..." style="width: 100%; padding: 8px 12px 8px 36px; border: 2px solid var(--border); border-radius: var(--radius); font-size: 14px; background: var(--background); transition: all 0.3s ease;">
+                        </div>
                         <select id="shareFilterCommunity" onchange="applyShareFilters()" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius);">
                             <option value="all">全部小区</option>
                         </select>
@@ -10997,6 +11000,44 @@
                 (optionsData.middleSchool || []).forEach(school => {
                     middleSchoolSelect.innerHTML += `<option value="${school}">${school}</option>`;
                 });
+            }
+        }
+
+        // 小区搜索过滤函数
+        function filterShareCommunityOptions() {
+            const searchInput = document.getElementById('shareCommunitySearch');
+            const communitySelect = document.getElementById('shareFilterCommunity');
+            
+            if (!searchInput || !communitySelect) return;
+            
+            const searchValue = searchInput.value.toLowerCase().trim();
+            const allCommunities = optionsData.community || [];
+            
+            // 保存当前选中的值
+            const currentValue = communitySelect.value;
+            
+            // 清空现有选项
+            communitySelect.innerHTML = '<option value="all">全部小区</option>';
+            
+            // 根据搜索关键词过滤小区
+            const filteredCommunities = allCommunities.filter(community => {
+                return community.toLowerCase().includes(searchValue);
+            });
+            
+            // 添加过滤后的选项
+            filteredCommunities.forEach(community => {
+                const option = document.createElement('option');
+                option.value = community;
+                option.textContent = community;
+                communitySelect.appendChild(option);
+            });
+            
+            // 恢复之前选中的值（如果还在过滤后的列表中）
+            if (filteredCommunities.includes(currentValue) || currentValue === 'all') {
+                communitySelect.value = currentValue;
+            } else {
+                // 如果选中的值不在过滤列表中，重置为全部
+                communitySelect.value = 'all';
             }
         }
 
