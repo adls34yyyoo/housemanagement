@@ -1978,6 +1978,97 @@
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
         }
+
+        /* 自定义搜索选择框样式 */
+        .searchable-select {
+            position: relative;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        .searchable-select-trigger {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--surface);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .searchable-select-trigger:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .searchable-select-arrow {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            transition: transform 0.3s ease;
+        }
+
+        .searchable-select-arrow.open {
+            transform: rotate(180deg);
+        }
+
+        .searchable-select-dropdown {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            display: none;
+            overflow: hidden;
+        }
+
+        .searchable-select-dropdown.open {
+            display: block;
+        }
+
+        .searchable-select-input {
+            width: calc(100% - 24px);
+            padding: 10px 12px;
+            border: none;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+            background: var(--background);
+            outline: none;
+        }
+
+        .searchable-select-options {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .searchable-select-option {
+            padding: 10px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-primary);
+            transition: background-color 0.2s ease;
+        }
+
+        .searchable-select-option:hover {
+            background-color: var(--background);
+        }
+
+        .searchable-select-option.selected {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .searchable-select-option.no-results {
+            color: var(--text-tertiary);
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -2491,12 +2582,19 @@
                             <option value="pending">待发布</option>
                             <option value="off_shelf">已下架</option>
                         </select>
-                        <div style="position: relative; margin-bottom: 8px;">
-                            <input type="text" id="shareCommunitySearch" oninput="filterShareCommunityOptions()" placeholder="🔍 搜索小区..." style="width: 100%; padding: 8px 12px 8px 36px; border: 2px solid var(--border); border-radius: var(--radius); font-size: 14px; background: var(--background); transition: all 0.3s ease;">
+                        <div class="searchable-select">
+                            <div class="searchable-select-trigger" onclick="toggleShareCommunityDropdown()">
+                                <span id="shareCommunityDisplay">全部小区</span>
+                                <span class="searchable-select-arrow">▼</span>
+                            </div>
+                            <div class="searchable-select-dropdown" id="shareCommunityDropdown">
+                                <input type="text" id="shareCommunitySearch" oninput="filterShareCommunityOptions()" placeholder="搜索小区..." class="searchable-select-input">
+                                <div class="searchable-select-options" id="shareCommunityOptions">
+                                    <div class="searchable-select-option" data-value="all" onclick="selectShareCommunity('all')">全部小区</div>
+                                </div>
+                            </div>
+                            <input type="hidden" id="shareFilterCommunity" name="shareFilterCommunity" value="all">
                         </div>
-                        <select id="shareFilterCommunity" onchange="applyShareFilters()" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius);">
-                            <option value="all">全部小区</option>
-                        </select>
                         <select id="shareFilterDecoration" onchange="applyShareFilters()" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius);">
                             <option value="all">全部装修</option>
                         </select>
@@ -10851,128 +10949,18 @@
 
         // 初始化一键转发页面的筛选选项
         function initShareFilterOptions() {
-            // 初始化小区选项
-            const communitySelect = document.getElementById('shareFilterCommunity');
-            if (communitySelect) {
-                communitySelect.innerHTML = '<option value="all">全部小区</option>';
+            // 初始化小区选项（使用自定义搜索选择框）
+            const communityOptions = document.getElementById('shareCommunityOptions');
+            if (communityOptions) {
+                communityOptions.innerHTML = '<div class="searchable-select-option" data-value="all" onclick="selectShareCommunityWithSchool(\'all\')">全部小区</div>';
                 (optionsData.community || []).forEach(community => {
-                    communitySelect.innerHTML += `<option value="${community}">${community}</option>`;
+                    const option = document.createElement('div');
+                    option.className = 'searchable-select-option';
+                    option.dataset.value = community;
+                    option.textContent = community;
+                    option.onclick = function() { selectShareCommunityWithSchool(community); };
+                    communityOptions.appendChild(option);
                 });
-                
-                // 添加小区选择变化事件监听器，实现小区和学区的关联
-                communitySelect.addEventListener('change', function() {
-                    const selectedCommunity = this.value;
-                    const primarySchoolSelect = document.getElementById('shareFilterPrimarySchool');
-                    const middleSchoolSelect = document.getElementById('shareFilterMiddleSchool');
-                    
-                    if (selectedCommunity === 'all') {
-                        // 选择全部小区时，显示所有小学和初中选项
-                        if (primarySchoolSelect) {
-                            primarySchoolSelect.innerHTML = '<option value="all">全部小学</option>';
-                            (optionsData.primarySchool || []).forEach(school => {
-                                primarySchoolSelect.innerHTML += `<option value="${school}">${school}</option>`;
-                            });
-                            primarySchoolSelect.disabled = false;
-                        }
-                        if (middleSchoolSelect) {
-                            middleSchoolSelect.innerHTML = '<option value="all">全部初中</option>';
-                            (optionsData.middleSchool || []).forEach(school => {
-                                middleSchoolSelect.innerHTML += `<option value="${school}">${school}</option>`;
-                            });
-                            middleSchoolSelect.disabled = false;
-                        }
-                    } else if (communitySchoolMapping[selectedCommunity]) {
-                        // 选择特定小区时，只显示该小区对应的小学和初中
-                        const mapping = communitySchoolMapping[selectedCommunity];
-                        if (primarySchoolSelect) {
-                            primarySchoolSelect.innerHTML = '';
-                            if (mapping.primarySchool) {
-                                primarySchoolSelect.innerHTML += `<option value="${mapping.primarySchool}">${mapping.primarySchool}</option>`;
-                                // 自动选择该小区对应的小学
-                                primarySchoolSelect.value = mapping.primarySchool;
-                                // 禁用小学选择，使其成为必选项
-                                primarySchoolSelect.disabled = true;
-                            }
-                        }
-                        if (middleSchoolSelect) {
-                            middleSchoolSelect.innerHTML = '';
-                            if (mapping.middleSchool) {
-                                middleSchoolSelect.innerHTML += `<option value="${mapping.middleSchool}">${mapping.middleSchool}</option>`;
-                                // 自动选择该小区对应的初中
-                                middleSchoolSelect.value = mapping.middleSchool;
-                                // 禁用初中选择，使其成为必选项
-                                middleSchoolSelect.disabled = true;
-                            }
-                        }
-                    }
-                    
-                    // 应用筛选条件
-                    applyShareFilters();
-                });
-                
-                // 为小学和初中选择添加事件监听器，实现密码验证
-                const primarySchoolSelect = document.getElementById('shareFilterPrimarySchool');
-                const middleSchoolSelect = document.getElementById('shareFilterMiddleSchool');
-                
-                if (primarySchoolSelect) {
-                    primarySchoolSelect.addEventListener('change', function() {
-                        // 如果小学选择被禁用，说明已经绑定到小区，需要密码才能修改
-                        if (this.disabled) {
-                            const password = prompt('修改学区需要输入密码：');
-                            if (password !== '123456') { // 这里使用默认密码123456，实际使用时应该从配置中读取
-                                // 密码错误，恢复原来的选择
-                                const selectedCommunity = communitySelect.value;
-                                if (selectedCommunity !== 'all' && communitySchoolMapping[selectedCommunity]) {
-                                    const mapping = communitySchoolMapping[selectedCommunity];
-                                    if (mapping.primarySchool) {
-                                        this.value = mapping.primarySchool;
-                                    }
-                                }
-                                showToast('密码错误，无法修改学区');
-                                return;
-                            }
-                            // 密码正确，启用选择
-                            this.disabled = false;
-                            // 显示所有小学选项
-                            this.innerHTML = '<option value="all">全部小学</option>';
-                            (optionsData.primarySchool || []).forEach(school => {
-                                this.innerHTML += `<option value="${school}">${school}</option>`;
-                            });
-                        }
-                        // 应用筛选条件
-                        applyShareFilters();
-                    });
-                }
-                
-                if (middleSchoolSelect) {
-                    middleSchoolSelect.addEventListener('change', function() {
-                        // 如果初中选择被禁用，说明已经绑定到小区，需要密码才能修改
-                        if (this.disabled) {
-                            const password = prompt('修改学区需要输入密码：');
-                            if (password !== '123456') { // 这里使用默认密码123456，实际使用时应该从配置中读取
-                                // 密码错误，恢复原来的选择
-                                const selectedCommunity = communitySelect.value;
-                                if (selectedCommunity !== 'all' && communitySchoolMapping[selectedCommunity]) {
-                                    const mapping = communitySchoolMapping[selectedCommunity];
-                                    if (mapping.middleSchool) {
-                                        this.value = mapping.middleSchool;
-                                    }
-                                }
-                                showToast('密码错误，无法修改学区');
-                                return;
-                            }
-                            // 密码正确，启用选择
-                            this.disabled = false;
-                            // 显示所有初中选项
-                            this.innerHTML = '<option value="all">全部初中</option>';
-                            (optionsData.middleSchool || []).forEach(school => {
-                                this.innerHTML += `<option value="${school}">${school}</option>`;
-                            });
-                        }
-                        // 应用筛选条件
-                        applyShareFilters();
-                    });
-                }
             }
             
             // 初始化装修选项
@@ -10991,6 +10979,29 @@
                 (optionsData.primarySchool || []).forEach(school => {
                     primarySchoolSelect.innerHTML += `<option value="${school}">${school}</option>`;
                 });
+                
+                primarySchoolSelect.addEventListener('change', function() {
+                    if (this.disabled) {
+                        const password = prompt('修改学区需要输入密码：');
+                        if (password !== '123456') {
+                            const selectedCommunity = document.getElementById('shareFilterCommunity').value;
+                            if (selectedCommunity !== 'all' && communitySchoolMapping[selectedCommunity]) {
+                                const mapping = communitySchoolMapping[selectedCommunity];
+                                if (mapping.primarySchool) {
+                                    this.value = mapping.primarySchool;
+                                }
+                            }
+                            showToast('密码错误，无法修改学区');
+                            return;
+                        }
+                        this.disabled = false;
+                        this.innerHTML = '<option value="all">全部小学</option>';
+                        (optionsData.primarySchool || []).forEach(school => {
+                            this.innerHTML += `<option value="${school}">${school}</option>`;
+                        });
+                    }
+                    applyShareFilters();
+                });
             }
             
             // 初始化初中选项
@@ -11000,44 +11011,146 @@
                 (optionsData.middleSchool || []).forEach(school => {
                     middleSchoolSelect.innerHTML += `<option value="${school}">${school}</option>`;
                 });
+                
+                middleSchoolSelect.addEventListener('change', function() {
+                    if (this.disabled) {
+                        const password = prompt('修改学区需要输入密码：');
+                        if (password !== '123456') {
+                            const selectedCommunity = document.getElementById('shareFilterCommunity').value;
+                            if (selectedCommunity !== 'all' && communitySchoolMapping[selectedCommunity]) {
+                                const mapping = communitySchoolMapping[selectedCommunity];
+                                if (mapping.middleSchool) {
+                                    this.value = mapping.middleSchool;
+                                }
+                            }
+                            showToast('密码错误，无法修改学区');
+                            return;
+                        }
+                        this.disabled = false;
+                        this.innerHTML = '<option value="all">全部初中</option>';
+                        (optionsData.middleSchool || []).forEach(school => {
+                            this.innerHTML += `<option value="${school}">${school}</option>`;
+                        });
+                    }
+                    applyShareFilters();
+                });
+            }
+        }
+
+        // 选择小区并处理学区关联
+        function selectShareCommunityWithSchool(value) {
+            const display = document.getElementById('shareCommunityDisplay');
+            const hiddenInput = document.getElementById('shareFilterCommunity');
+            const dropdown = document.getElementById('shareCommunityDropdown');
+            const arrow = document.querySelector('.searchable-select-arrow');
+            const options = document.querySelectorAll('.searchable-select-option');
+            
+            const primarySchoolSelect = document.getElementById('shareFilterPrimarySchool');
+            const middleSchoolSelect = document.getElementById('shareFilterMiddleSchool');
+            
+            if (display) {
+                display.textContent = value === 'all' ? '全部小区' : value;
+            }
+            
+            if (hiddenInput) {
+                hiddenInput.value = value;
+            }
+            
+            if (dropdown) {
+                dropdown.classList.remove('open');
+            }
+            if (arrow) {
+                arrow.classList.remove('open');
+            }
+            
+            options.forEach(opt => {
+                opt.classList.remove('selected');
+                if (opt.dataset.value === value) {
+                    opt.classList.add('selected');
+                }
+            });
+            
+            if (value === 'all') {
+                if (primarySchoolSelect) {
+                    primarySchoolSelect.innerHTML = '<option value="all">全部小学</option>';
+                    (optionsData.primarySchool || []).forEach(school => {
+                        primarySchoolSelect.innerHTML += `<option value="${school}">${school}</option>`;
+                    });
+                    primarySchoolSelect.disabled = false;
+                }
+                if (middleSchoolSelect) {
+                    middleSchoolSelect.innerHTML = '<option value="all">全部初中</option>';
+                    (optionsData.middleSchool || []).forEach(school => {
+                        middleSchoolSelect.innerHTML += `<option value="${school}">${school}</option>`;
+                    });
+                    middleSchoolSelect.disabled = false;
+                }
+            } else if (communitySchoolMapping[value]) {
+                const mapping = communitySchoolMapping[value];
+                if (primarySchoolSelect) {
+                    primarySchoolSelect.innerHTML = '';
+                    if (mapping.primarySchool) {
+                        primarySchoolSelect.innerHTML += `<option value="${mapping.primarySchool}">${mapping.primarySchool}</option>`;
+                        primarySchoolSelect.value = mapping.primarySchool;
+                        primarySchoolSelect.disabled = true;
+                    }
+                }
+                if (middleSchoolSelect) {
+                    middleSchoolSelect.innerHTML = '';
+                    if (mapping.middleSchool) {
+                        middleSchoolSelect.innerHTML += `<option value="${mapping.middleSchool}">${mapping.middleSchool}</option>`;
+                        middleSchoolSelect.value = mapping.middleSchool;
+                        middleSchoolSelect.disabled = true;
+                    }
+                }
+            }
+            
+            applyShareFilters();
+        }
+
+        // 切换小区下拉框显示/隐藏
+        function toggleShareCommunityDropdown() {
+            const dropdown = document.getElementById('shareCommunityDropdown');
+            const arrow = document.querySelector('.searchable-select-arrow');
+            
+            if (dropdown) {
+                dropdown.classList.toggle('open');
+                if (arrow) {
+                    arrow.classList.toggle('open');
+                }
             }
         }
 
         // 小区搜索过滤函数
         function filterShareCommunityOptions() {
             const searchInput = document.getElementById('shareCommunitySearch');
-            const communitySelect = document.getElementById('shareFilterCommunity');
+            const optionsContainer = document.getElementById('shareCommunityOptions');
             
-            if (!searchInput || !communitySelect) return;
+            if (!searchInput || !optionsContainer) return;
             
             const searchValue = searchInput.value.toLowerCase().trim();
             const allCommunities = optionsData.community || [];
             
-            // 保存当前选中的值
-            const currentValue = communitySelect.value;
-            
-            // 清空现有选项
-            communitySelect.innerHTML = '<option value="all">全部小区</option>';
-            
-            // 根据搜索关键词过滤小区
             const filteredCommunities = allCommunities.filter(community => {
                 return community.toLowerCase().includes(searchValue);
             });
             
-            // 添加过滤后的选项
-            filteredCommunities.forEach(community => {
-                const option = document.createElement('option');
-                option.value = community;
-                option.textContent = community;
-                communitySelect.appendChild(option);
-            });
+            optionsContainer.innerHTML = '<div class="searchable-select-option" data-value="all" onclick="selectShareCommunity(\'all\')">全部小区</div>';
             
-            // 恢复之前选中的值（如果还在过滤后的列表中）
-            if (filteredCommunities.includes(currentValue) || currentValue === 'all') {
-                communitySelect.value = currentValue;
-            } else {
-                // 如果选中的值不在过滤列表中，重置为全部
-                communitySelect.value = 'all';
+            if (filteredCommunities.length > 0) {
+                filteredCommunities.forEach(community => {
+                    const option = document.createElement('div');
+                    option.className = 'searchable-select-option';
+                    option.dataset.value = community;
+                    option.textContent = community;
+                    option.onclick = function() { selectShareCommunity(community); };
+                    optionsContainer.appendChild(option);
+                });
+            } else if (searchValue !== '') {
+                const noResult = document.createElement('div');
+                noResult.className = 'searchable-select-option no-results';
+                noResult.textContent = '未找到匹配的小区';
+                optionsContainer.appendChild(noResult);
             }
         }
 
