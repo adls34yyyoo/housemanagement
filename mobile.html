@@ -2590,8 +2590,8 @@
                             <div class="searchable-select-dropdown" id="shareCommunityDropdown">
                                 <input type="text" id="shareCommunitySearch" oninput="filterShareCommunityOptions()" placeholder="搜索小区..." class="searchable-select-input">
                                 <div class="searchable-select-options" id="shareCommunityOptions">
-                                    <div class="searchable-select-option" data-value="all" onclick="selectShareCommunity('all')">全部小区</div>
-                                </div>
+                                <div class="searchable-select-option" data-value="all" onclick="selectShareCommunityWithSchool('all')">全部小区</div>
+                            </div>
                             </div>
                             <input type="hidden" id="shareFilterCommunity" name="shareFilterCommunity" value="all">
                         </div>
@@ -11135,7 +11135,7 @@
                 return community.toLowerCase().includes(searchValue);
             });
             
-            optionsContainer.innerHTML = '<div class="searchable-select-option" data-value="all" onclick="selectShareCommunity(\'all\')">全部小区</div>';
+            optionsContainer.innerHTML = '<div class="searchable-select-option" data-value="all" onclick="selectShareCommunityWithSchool(\'all\')">全部小区</div>';
             
             if (filteredCommunities.length > 0) {
                 filteredCommunities.forEach(community => {
@@ -11143,7 +11143,7 @@
                     option.className = 'searchable-select-option';
                     option.dataset.value = community;
                     option.textContent = community;
-                    option.onclick = function() { selectShareCommunity(community); };
+                    option.onclick = function() { selectShareCommunityWithSchool(community); };
                     optionsContainer.appendChild(option);
                 });
             } else if (searchValue !== '') {
