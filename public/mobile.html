@@ -409,6 +409,16 @@
             color: var(--danger);
         }
 
+        .status-renting {
+            background: rgba(168, 85, 247, 0.1);
+            color: #a855f7;
+        }
+
+        .status-self-using {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+        }
+
         .status-on-shelf {
             background: rgba(59, 130, 246, 0.1);
             color: #3b82f6;
@@ -2119,6 +2129,12 @@
                             <label class="filter-checkbox-item">
                                 <input type="checkbox" value="off_shelf" onchange="applyFilters()"> 已下架
                             </label>
+                            <label class="filter-checkbox-item">
+                                <input type="checkbox" value="renting" onchange="applyFilters()"> 出租中
+                            </label>
+                            <label class="filter-checkbox-item">
+                                <input type="checkbox" value="self_using" onchange="applyFilters()"> 自住中
+                            </label>
                         </div>
                     </div>
                     <div class="filter-section">
@@ -2218,6 +2234,12 @@
                             </label>
                             <label class="filter-checkbox-item">
                                 <input type="checkbox" value="off_shelf" class="agent-filter-status" onchange="applyAgentFilters()"> 已下架
+                            </label>
+                            <label class="filter-checkbox-item">
+                                <input type="checkbox" value="renting" class="agent-filter-status" onchange="applyAgentFilters()"> 出租中
+                            </label>
+                            <label class="filter-checkbox-item">
+                                <input type="checkbox" value="self_using" class="agent-filter-status" onchange="applyAgentFilters()"> 自住中
                             </label>
                         </div>
                     </div>
@@ -2337,6 +2359,8 @@
                             <option value="all">全部状态</option>
                             <option value="pending">待发布</option>
                             <option value="off_shelf">已下架</option>
+                            <option value="renting">出租中</option>
+                            <option value="self_using">自住中</option>
                         </select>
                         <select id="shareFilterCommunity" onchange="applyShareFilters()" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius);">
                             <option value="all">全部小区</option>
@@ -2674,10 +2698,16 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">房源状态</label>
-                    <select class="form-select" id="propStatus">
+                    <select class="form-select" id="propStatus" onchange="handleStatusChange()">
                         <option value="pending">待发布</option>
                         <option value="off_shelf">已下架</option>
+                        <option value="renting">出租中</option>
+                        <option value="self_using">自住中</option>
                     </select>
+                </div>
+                <div class="form-group" id="statusMonthSection" style="display: none;">
+                    <label class="form-label" id="statusMonthLabel">月份</label>
+                    <input type="number" class="form-input" id="propStatusMonth" placeholder="请输入月份数" min="1" max="12">
                 </div>
                 <div class="form-group">
                     <label class="form-label">房源描述</label>
@@ -2918,13 +2948,17 @@
                 // 卖房房源状态
                 statusText = {
                     'pending': '待发布',
-                    'off_shelf': '已下架'
+                    'off_shelf': '已下架',
+                    'renting': '出租中',
+                    'self_using': '自住中'
                 }[property.status] || '待发布';
             } else {
                 // 租房房源状态
                 statusText = {
                     'pending': '待发布',
-                    'off_shelf': '已下架'
+                    'off_shelf': '已下架',
+                    'renting': '出租中',
+                    'self_using': '自住中'
                 }[property.status] || '待发布';
             }
 
@@ -3958,7 +3992,9 @@
         function createPropertyCard(property) {
             const statusClass = {
                 'pending': 'status-pending',
-                'off_shelf': 'status-off-shelf'
+                'off_shelf': 'status-off-shelf',
+                'renting': 'status-renting',
+                'self_using': 'status-self-using'
             }[property.status] || 'status-pending';
 
             // 根据房源类型显示不同的状态文本
@@ -3967,13 +4003,17 @@
                 // 卖房房源状态
                 statusText = {
                     'pending': '待发布',
-                    'off_shelf': '已下架'
+                    'off_shelf': '已下架',
+                    'renting': '出租中',
+                    'self_using': '自住中'
                 }[property.status] || '待发布';
             } else {
                 // 租房房源状态
                 statusText = {
                     'pending': '待发布',
-                    'off_shelf': '已下架'
+                    'off_shelf': '已下架',
+                    'renting': '出租中',
+                    'self_using': '自住中'
                 }[property.status] || '待发布';
             }
 
@@ -4472,12 +4512,18 @@
         function createAgentPropertyCard(property) {
             const statusClass = {
                 'pending': 'status-pending',
-                'off_shelf': 'status-off-shelf'
+                'off_shelf': 'status-off-shelf',
+                'renting': 'status-renting',
+                'self_using': 'status-self-using'
             }[property.status] || 'status-pending';
 
             let statusText;
             if (property.status === 'off_shelf') {
                 statusText = '已下架';
+            } else if (property.status === 'renting') {
+                statusText = '出租中';
+            } else if (property.status === 'self_using') {
+                statusText = '自住中';
             } else {
                 statusText = '待发布'; // 恢复待发布字样
             }
@@ -4625,6 +4671,8 @@
                 statusSelect.innerHTML = `
                     <option value="pending">待发布</option>
                     <option value="off_shelf">已下架</option>
+                    <option value="renting">出租中</option>
+                    <option value="self_using">自住中</option>
                 `;
             }
             
@@ -5232,6 +5280,8 @@
                 statusSelect.innerHTML = `
                     <option value="pending">待发布</option>
                     <option value="off_shelf">已下架</option>
+                    <option value="renting">出租中</option>
+                    <option value="self_using">自住中</option>
                 `;
                 // 价格标签显示为万元
                 priceLabel.textContent = '价格（万元）';
@@ -5248,6 +5298,8 @@
                     statusSelect.innerHTML = `
                         <option value="pending">待发布</option>
                         <option value="off_shelf">已下架</option>
+                        <option value="renting">出租中</option>
+                        <option value="self_using">自住中</option>
                     `;
                     // 价格标签显示为元/月
                     priceLabel.textContent = '价格（元/月）';
@@ -5258,6 +5310,8 @@
                     statusSelect.innerHTML = `
                         <option value="pending">待发布</option>
                         <option value="off_shelf">已下架</option>
+                        <option value="renting">出租中</option>
+                        <option value="self_using">自住中</option>
                     `;
                     // 价格标签显示为万元
                     priceLabel.textContent = '价格（万元）';
@@ -5422,8 +5476,29 @@
             document.getElementById('propLandlordWechat').value = '';
             document.getElementById('propLandlordPhone').value = '';
             document.getElementById('propStatus').value = 'pending';
+            document.getElementById('propStatusMonth').value = '';
             document.getElementById('propDesc').value = '';
             document.getElementById('propRemark').value = '';
+        }
+
+        // 处理房源状态变化，显示/隐藏月份输入
+        function handleStatusChange() {
+            const status = document.getElementById('propStatus').value;
+            const monthSection = document.getElementById('statusMonthSection');
+            const monthLabel = document.getElementById('statusMonthLabel');
+            
+            if (status === 'renting') {
+                monthSection.style.display = 'block';
+                monthLabel.textContent = '出租月份';
+                document.getElementById('propStatusMonth').placeholder = '请输入已出租月份数';
+            } else if (status === 'self_using') {
+                monthSection.style.display = 'block';
+                monthLabel.textContent = '自住月份';
+                document.getElementById('propStatusMonth').placeholder = '请输入已自住月份数';
+            } else {
+                monthSection.style.display = 'none';
+                document.getElementById('propStatusMonth').value = '';
+            }
         }
 
         // 保存房源
@@ -5442,6 +5517,7 @@
             const landlordWechat = document.getElementById('propLandlordWechat').value;
             const landlordPhone = document.getElementById('propLandlordPhone').value;
             const status = document.getElementById('propStatus').value;
+            const statusMonth = document.getElementById('propStatusMonth').value;
             const desc = document.getElementById('propDesc').value;
             const remark = document.getElementById('propRemark').value;
 
@@ -5588,6 +5664,7 @@
                 landlord_phone: isAgentMode ? '' : landlordPhone,
                 landlord_wechat: isAgentMode ? '' : landlordWechat,
                 status,
+                status_month: statusMonth ? parseInt(statusMonth) : null,
                 type: saleOrRentType,
                 description: desc,
                 remark,
@@ -5686,6 +5763,8 @@
                 statusSelect.innerHTML = `
                     <option value="pending">待发布</option>
                     <option value="off_shelf">已下架</option>
+                    <option value="renting">出租中</option>
+                    <option value="self_using">自住中</option>
                 `;
                 // 价格标签显示为万元
                 priceLabel.textContent = '价格（万元）';
@@ -5694,6 +5773,8 @@
                 statusSelect.innerHTML = `
                     <option value="pending">待发布</option>
                     <option value="off_shelf">已下架</option>
+                    <option value="renting">出租中</option>
+                    <option value="self_using">自住中</option>
                 `;
                 // 价格标签显示为元/月
                 priceLabel.textContent = '价格（元/月）';
@@ -5713,6 +5794,9 @@
             document.getElementById('propLandlordWechat').value = property.landlord_wechat || property.landlordWechat || '';
             document.getElementById('propLandlordPhone').value = property.landlord_phone || property.landlordPhone || '';
             document.getElementById('propStatus').value = property.status || 'pending';
+            document.getElementById('propStatusMonth').value = property.status_month || property.statusMonth || '';
+            // 调用状态变化处理函数以显示/隐藏月份输入框
+            handleStatusChange();
 
             document.getElementById('propertyModal').style.display = 'flex';
             document.getElementById('propertyModal').classList.add('active');
