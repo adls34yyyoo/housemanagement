@@ -4312,7 +4312,15 @@
             const container = document.getElementById('propertyList');
             if (!container) return;
 
-            let propsToRender = filteredProperties.length ? filteredProperties : properties;
+            let propsToRender = [];
+            
+            // 如果有筛选结果，显示筛选结果
+            if (filteredProperties.length > 0) {
+                propsToRender = filteredProperties;
+            } else {
+                // 如果没有筛选条件，显示所有自有房源
+                propsToRender = properties;
+            }
             
             // 只显示自有房源（非可代理）
             propsToRender = propsToRender.filter(p => !(p.isAgent || p.is_agent));
@@ -5163,14 +5171,14 @@
             function filterProperty(property) {
                 let match = true;
                 
-                // 类型筛选（多选）
+                // 类型筛选（多选）- 当没有选择任何类型时，显示所有类型
                 if (selectedTypes.length > 0 && match && !selectedTypes.includes('all')) {
-                    match = selectedTypes.includes(property.type);
+                    match = property.type && selectedTypes.includes(property.type);
                 }
                 
-                // 状态筛选（多选）
+                // 状态筛选（多选）- 当没有选择任何状态时，显示所有状态
                 if (selectedStatuses.length > 0 && match && !selectedStatuses.includes('all')) {
-                    match = selectedStatuses.includes(property.status);
+                    match = property.status && selectedStatuses.includes(property.status);
                 }
                 
                 // 区域筛选
@@ -5216,19 +5224,12 @@
                 return match;
             }
             
-            // 筛选自有房源和代理房源，合并去重
-            const allProps = [...properties, ...agentProperties];
-            const uniqueFilteredProps = [];
-            const seenIds = new Set();
+            // 筛选自有房源（排除代理房源）
+            const filteredProps = properties.filter(p => 
+                !(p.isAgent || p.is_agent) && filterProperty(p)
+            );
             
-            allProps.forEach(p => {
-                if (!seenIds.has(String(p.id)) && filterProperty(p)) {
-                    seenIds.add(String(p.id));
-                    uniqueFilteredProps.push(p);
-                }
-            });
-            
-            filteredProperties = uniqueFilteredProps;
+            filteredProperties = filteredProps;
             
             renderPropertyList();
         }
