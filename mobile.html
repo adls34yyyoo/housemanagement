@@ -7239,9 +7239,12 @@
 
         // 应用筛选条件
         function applyFilters() {
-            // 获取类型和状态的多选值
-            const typeCheckboxes = document.querySelectorAll('.filter-checkbox-group input[type="checkbox"]');
-            const selectedValues = Array.from(typeCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+            // 分别获取类型和状态的多选值
+            const typeCheckboxes = document.querySelectorAll('.filter-section:first-child .filter-checkbox-group input[type="checkbox"]');
+            const selectedTypes = Array.from(typeCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+            
+            const statusCheckboxes = document.querySelectorAll('.filter-section:nth-child(2) .filter-checkbox-group input[type="checkbox"]');
+            const selectedStatuses = Array.from(statusCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
             
             const regionValue = document.getElementById('filterRegion').value;
             const communityValue = document.getElementById('filterCommunity').value;
@@ -7256,9 +7259,14 @@
             filteredProperties = properties.filter(property => {
                 let match = true;
                 
-                // 类型和状态筛选（多选）
-                if (selectedValues.length > 0 && match && !selectedValues.includes('all')) {
-                    match = selectedValues.includes(property.type) || selectedValues.includes(property.status);
+                // 类型筛选（多选）
+                if (selectedTypes.length > 0 && match && !selectedTypes.includes('all')) {
+                    match = selectedTypes.includes(property.type);
+                }
+                
+                // 状态筛选（多选）
+                if (selectedStatuses.length > 0 && match && !selectedStatuses.includes('all')) {
+                    match = selectedStatuses.includes(property.status);
                 }
                 
                 // 区域筛选
