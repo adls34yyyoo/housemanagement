@@ -2256,12 +2256,6 @@
                                 <label class="filter-checkbox-item">
                                     <input type="checkbox" value="off_shelf"> 已下架
                                 </label>
-                                <label class="filter-checkbox-item">
-                                    <input type="checkbox" value="renting"> 出租中
-                                </label>
-                                <label class="filter-checkbox-item">
-                                    <input type="checkbox" value="self_using"> 自住中
-                                </label>
                             </div>
                         </div>
                         <div class="filter-section">
@@ -2389,12 +2383,6 @@
                                 <label class="filter-checkbox-item">
                                     <input type="checkbox" value="off_shelf" class="agent-filter-status"> 已下架
                                 </label>
-                                <label class="filter-checkbox-item">
-                                    <input type="checkbox" value="renting" class="agent-filter-status"> 出租中
-                                </label>
-                                <label class="filter-checkbox-item">
-                                    <input type="checkbox" value="self_using" class="agent-filter-status"> 自住中
-                                </label>
                             </div>
                         </div>
                         <div class="filter-section">
@@ -2469,12 +2457,6 @@
                                 </label>
                                 <label class="filter-checkbox-item">
                                     <input type="checkbox" value="off_shelf" class="coop-filter-status"> 已下架
-                                </label>
-                                <label class="filter-checkbox-item">
-                                    <input type="checkbox" value="renting" class="coop-filter-status"> 出租中
-                                </label>
-                                <label class="filter-checkbox-item">
-                                    <input type="checkbox" value="self_using" class="coop-filter-status"> 自住中
                                 </label>
                             </div>
                         </div>
@@ -2599,8 +2581,6 @@
                             <option value="all">全部状态</option>
                             <option value="pending">待发布</option>
                             <option value="off_shelf">已下架</option>
-                            <option value="renting">出租中</option>
-                            <option value="self_using">自住中</option>
                         </select>
                         <div class="searchable-select">
                             <div class="searchable-select-trigger" onclick="toggleShareCommunityDropdown()">
@@ -2983,6 +2963,12 @@
                     <select class="form-select" id="propStatus" onchange="handleStatusChange()">
                         <option value="pending">待发布</option>
                         <option value="off_shelf">已下架</option>
+                    </select>
+                </div>
+                <div class="form-group" id="offShelfSubSection" style="display: none;">
+                    <label class="form-label">已下架原因</label>
+                    <select class="form-select" id="propOffShelfReason" onchange="handleOffShelfReasonChange()">
+                        <option value="">请选择</option>
                         <option value="renting">出租中</option>
                         <option value="self_using">自住中</option>
                     </select>
@@ -3329,23 +3315,22 @@
             const isAgentProperty = agentProperties.some(p => String(p.id) === String(propertyId));
             const editFunction = isAgentProperty ? 'editAgentProperty' : 'editProperty';
             
-            // 根据房源类型显示不同的状态文本
+            // 根据房源状态和已下架原因显示状态文本
             let statusText;
-            if (property.type === 'sale') {
-                // 卖房房源状态
-                statusText = {
-                    'pending': '待发布',
-                    'off_shelf': '已下架',
-                    'self_using': '自住中' + (property.status_month ? `（${property.status_month}个月）` : '')
-                }[property.status] || '待发布';
+            if (property.status === 'pending') {
+                statusText = '待发布';
+            } else if (property.status === 'off_shelf') {
+                const reasonText = {
+                    'renting': '出租中',
+                    'self_using': '自住中'
+                }[property.off_shelf_reason];
+                if (reasonText) {
+                    statusText = `已下架 - ${reasonText}` + (property.status_month ? `（${property.status_month}个月）` : '');
+                } else {
+                    statusText = '已下架';
+                }
             } else {
-                // 租房房源状态
-                statusText = {
-                    'pending': '待发布',
-                    'off_shelf': '已下架',
-                    'renting': '出租中' + (property.status_month ? `（${property.status_month}个月）` : ''),
-                    'self_using': '自住中' + (property.status_month ? `（${property.status_month}个月）` : '')
-                }[property.status] || '待发布';
+                statusText = '待发布';
             }
 
             const detailHTML = `
@@ -5442,28 +5427,25 @@
         function createPropertyCard(property) {
             const statusClass = {
                 'pending': 'status-pending',
-                'off_shelf': 'status-off-shelf',
-                'renting': 'status-renting',
-                'self_using': 'status-self-using'
+                'off_shelf': 'status-off-shelf'
             }[property.status] || 'status-pending';
 
-            // 根据房源类型显示不同的状态文本
+            // 根据房源状态和已下架原因显示状态文本
             let statusText;
-            if (property.type === 'sale') {
-                // 卖房房源状态
-                statusText = {
-                    'pending': '待发布',
-                    'off_shelf': '已下架',
-                    'self_using': '自住中' + (property.status_month ? `（${property.status_month}个月）` : '')
-                }[property.status] || '待发布';
+            if (property.status === 'pending') {
+                statusText = '待发布';
+            } else if (property.status === 'off_shelf') {
+                const reasonText = {
+                    'renting': '出租中',
+                    'self_using': '自住中'
+                }[property.off_shelf_reason];
+                if (reasonText) {
+                    statusText = `已下架 - ${reasonText}` + (property.status_month ? `（${property.status_month}个月）` : '');
+                } else {
+                    statusText = '已下架';
+                }
             } else {
-                // 租房房源状态
-                statusText = {
-                    'pending': '待发布',
-                    'off_shelf': '已下架',
-                    'renting': '出租中' + (property.status_month ? `（${property.status_month}个月）` : ''),
-                    'self_using': '自住中' + (property.status_month ? `（${property.status_month}个月）` : '')
-                }[property.status] || '待发布';
+                statusText = '待发布';
             }
 
             const priceUnit = property.type === 'sale' ? '万元' : '元/月';
@@ -8092,23 +8074,41 @@
             document.getElementById('propLandlordWechat').value = '';
             document.getElementById('propLandlordPhone').value = '';
             document.getElementById('propStatus').value = 'pending';
+            document.getElementById('propOffShelfReason').value = '';
             document.getElementById('propStatusMonth').value = '';
             document.getElementById('propDesc').value = '';
             document.getElementById('propRemark').value = '';
             handleStatusChange();
         }
         
-        // 处理房源状态变化，显示/隐藏月份输入
+        // 处理房源状态变化，显示/隐藏子级别选择和月份输入
         function handleStatusChange() {
             const status = document.getElementById('propStatus').value;
+            const subSection = document.getElementById('offShelfSubSection');
             const monthSection = document.getElementById('statusMonthSection');
             const monthLabel = document.getElementById('statusMonthLabel');
             
-            if (status === 'renting') {
+            if (status === 'off_shelf') {
+                subSection.style.display = 'block';
+            } else {
+                subSection.style.display = 'none';
+                document.getElementById('propOffShelfReason').value = '';
+                monthSection.style.display = 'none';
+                document.getElementById('propStatusMonth').value = '';
+            }
+        }
+        
+        // 处理已下架原因变化，显示/隐藏月份输入
+        function handleOffShelfReasonChange() {
+            const reason = document.getElementById('propOffShelfReason').value;
+            const monthSection = document.getElementById('statusMonthSection');
+            const monthLabel = document.getElementById('statusMonthLabel');
+            
+            if (reason === 'renting') {
                 monthSection.style.display = 'block';
                 monthLabel.textContent = '出租月份';
                 document.getElementById('propStatusMonth').placeholder = '请输入已出租月份数';
-            } else if (status === 'self_using') {
+            } else if (reason === 'self_using') {
                 monthSection.style.display = 'block';
                 monthLabel.textContent = '自住月份';
                 document.getElementById('propStatusMonth').placeholder = '请输入已自住月份数';
@@ -8379,6 +8379,7 @@
                 landlord_phone: isAgentMode ? '' : landlordPhone,
                 landlord_wechat: isAgentMode ? '' : landlordWechat,
                 status,
+                off_shelf_reason: document.getElementById('propOffShelfReason').value || null,
                 status_month: document.getElementById('propStatusMonth').value ? parseInt(document.getElementById('propStatusMonth').value) : null,
                 type: saleOrRentType,
                 description: desc,
