@@ -2266,9 +2266,19 @@
                         </div>
                         <div class="filter-section">
                             <div class="filter-label">小区</div>
-                            <select class="filter-select" id="ownFilterCommunity">
-                                <option value="">全部</option>
-                            </select>
+                            <div class="searchable-select">
+                                <div class="searchable-select-trigger" onclick="toggleOwnCommunityDropdown()">
+                                    <span id="ownCommunityDisplay">全部</span>
+                                    <span class="searchable-select-arrow">▼</span>
+                                </div>
+                                <div class="searchable-select-dropdown" id="ownCommunityDropdown">
+                                    <input type="text" id="ownCommunitySearch" oninput="filterOwnCommunityOptions()" placeholder="搜索小区..." class="searchable-select-input">
+                                    <div class="searchable-select-options" id="ownCommunityOptions">
+                                        <div class="searchable-select-option" data-value="" onclick="selectOwnCommunity('')">全部</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="hidden" id="ownFilterCommunity" value="">
                         </div>
                         <div class="filter-section">
                             <div class="filter-label">户型</div>
@@ -7177,12 +7187,17 @@
                 });
             }
             
-            // 初始化自有房源小区下拉框
-            const ownCommunitySelect = document.getElementById('ownFilterCommunity');
-            if (ownCommunitySelect) {
-                ownCommunitySelect.innerHTML = '<option value="">全部</option>';
+            // 初始化自有房源小区搜索选择框
+            const ownCommunityOptions = document.getElementById('ownCommunityOptions');
+            if (ownCommunityOptions) {
+                ownCommunityOptions.innerHTML = '<div class="searchable-select-option" data-value="" onclick="selectOwnCommunity(\'\')">全部</div>';
                 communities.forEach(community => {
-                    ownCommunitySelect.innerHTML += `<option value="${community}">${community}</option>`;
+                    const option = document.createElement('div');
+                    option.className = 'searchable-select-option';
+                    option.dataset.value = community;
+                    option.textContent = community;
+                    option.onclick = function() { selectOwnCommunity(community); };
+                    ownCommunityOptions.appendChild(option);
                 });
             }
             
@@ -7409,12 +7424,91 @@
             document.querySelectorAll('.own-filter-middle-school').forEach(cb => cb.checked = false);
             const regionSelect = document.getElementById('ownFilterRegion');
             const communitySelect = document.getElementById('ownFilterCommunity');
+            const communityDisplay = document.getElementById('ownCommunityDisplay');
             const layoutSelect = document.getElementById('ownFilterLayout');
             if (regionSelect) regionSelect.value = '';
             if (communitySelect) communitySelect.value = '';
+            if (communityDisplay) communityDisplay.textContent = '全部';
             if (layoutSelect) layoutSelect.value = '';
             filteredProperties = [];
             renderPropertyList();
+        }
+
+        // 切换自有房源小区下拉框显示/隐藏
+        function toggleOwnCommunityDropdown() {
+            const dropdown = document.getElementById('ownCommunityDropdown');
+            const arrow = dropdown?.parentElement?.querySelector('.searchable-select-arrow');
+            
+            if (dropdown) {
+                dropdown.classList.toggle('open');
+                if (arrow) {
+                    arrow.classList.toggle('open');
+                }
+            }
+        }
+
+        // 自有房源小区搜索过滤函数
+        function filterOwnCommunityOptions() {
+            const searchInput = document.getElementById('ownCommunitySearch');
+            const optionsContainer = document.getElementById('ownCommunityOptions');
+            
+            if (!searchInput || !optionsContainer) return;
+            
+            const searchValue = searchInput.value.toLowerCase().trim();
+            const allCommunities = optionsData.community || [];
+            
+            const filteredCommunities = allCommunities.filter(community => {
+                return community.toLowerCase().includes(searchValue);
+            });
+            
+            optionsContainer.innerHTML = '<div class="searchable-select-option" data-value="" onclick="selectOwnCommunity(\'\')">全部</div>';
+            
+            if (filteredCommunities.length > 0) {
+                filteredCommunities.forEach(community => {
+                    const option = document.createElement('div');
+                    option.className = 'searchable-select-option';
+                    option.dataset.value = community;
+                    option.textContent = community;
+                    option.onclick = function() { selectOwnCommunity(community); };
+                    optionsContainer.appendChild(option);
+                });
+            } else if (searchValue !== '') {
+                const noResult = document.createElement('div');
+                noResult.className = 'searchable-select-option no-results';
+                noResult.textContent = '未找到匹配的小区';
+                optionsContainer.appendChild(noResult);
+            }
+        }
+
+        // 选择自有房源小区
+        function selectOwnCommunity(value) {
+            const display = document.getElementById('ownCommunityDisplay');
+            const hiddenInput = document.getElementById('ownFilterCommunity');
+            const dropdown = document.getElementById('ownCommunityDropdown');
+            const arrow = dropdown?.parentElement?.querySelector('.searchable-select-arrow');
+            const options = document.querySelectorAll('#ownCommunityOptions .searchable-select-option');
+            
+            if (display) {
+                display.textContent = value === '' ? '全部' : value;
+            }
+            
+            if (hiddenInput) {
+                hiddenInput.value = value;
+            }
+            
+            if (dropdown) {
+                dropdown.classList.remove('open');
+            }
+            if (arrow) {
+                arrow.classList.remove('open');
+            }
+            
+            options.forEach(opt => {
+                opt.classList.remove('selected');
+                if (opt.dataset.value === value) {
+                    opt.classList.add('selected');
+                }
+            });
         }
 
         // 应用筛选条件（兼容旧调用）
