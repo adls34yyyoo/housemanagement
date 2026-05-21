@@ -2234,13 +2234,13 @@
                             <div class="filter-label">类型</div>
                             <div class="filter-checkbox-group">
                                 <label class="filter-checkbox-item">
-                                    <input type="checkbox" value="all" class="own-filter-type"> 全部
+                                    <input type="checkbox" value="all" class="own-filter-type" onclick="toggleFilterGroup('own-filter-type', this)"> 全部
                                 </label>
                                 <label class="filter-checkbox-item">
-                                    <input type="checkbox" value="rent" class="own-filter-type"> 租房
+                                    <input type="checkbox" value="rent" class="own-filter-type" onclick="updateFilterAllStatus('own-filter-type')"> 租房
                                 </label>
                                 <label class="filter-checkbox-item">
-                                    <input type="checkbox" value="sale" class="own-filter-type"> 卖房
+                                    <input type="checkbox" value="sale" class="own-filter-type" onclick="updateFilterAllStatus('own-filter-type')"> 卖房
                                 </label>
                             </div>
                         </div>
@@ -2248,13 +2248,13 @@
                             <div class="filter-label">状态</div>
                             <div class="filter-checkbox-group">
                                 <label class="filter-checkbox-item">
-                                    <input type="checkbox" value="all" class="own-filter-status"> 全部
+                                    <input type="checkbox" value="all" class="own-filter-status" onclick="toggleFilterGroup('own-filter-status', this)"> 全部
                                 </label>
                                 <label class="filter-checkbox-item">
-                                    <input type="checkbox" value="pending" class="own-filter-status"> 待发布
+                                    <input type="checkbox" value="pending" class="own-filter-status" onclick="updateFilterAllStatus('own-filter-status')"> 待发布
                                 </label>
                                 <label class="filter-checkbox-item">
-                                    <input type="checkbox" value="off_shelf" class="own-filter-status"> 已下架
+                                    <input type="checkbox" value="off_shelf" class="own-filter-status" onclick="updateFilterAllStatus('own-filter-status')"> 已下架
                                 </label>
                             </div>
                         </div>
@@ -2275,6 +2275,84 @@
                             <select class="filter-select" id="ownFilterLayout">
                                 <option value="">全部</option>
                             </select>
+                        </div>
+                        <div class="filter-section">
+                            <div class="filter-label">装修</div>
+                            <div class="filter-checkbox-group" id="ownDecorationGroup">
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="all" class="own-filter-decoration" onclick="toggleFilterGroup('own-filter-decoration', this)"> 全部
+                                </label>
+                            </div>
+                        </div>
+                        <div class="filter-section">
+                            <div class="filter-label">楼层</div>
+                            <div class="filter-checkbox-group" id="ownFloorGroup">
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="all" class="own-filter-floor" onclick="toggleFilterGroup('own-filter-floor', this)"> 全部
+                                </label>
+                            </div>
+                        </div>
+                        <div class="filter-section">
+                            <div class="filter-label">面积</div>
+                            <div class="filter-checkbox-group">
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="all" class="own-filter-area" onclick="toggleFilterGroup('own-filter-area', this)"> 全部
+                                </label>
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="0-50" class="own-filter-area" onclick="updateFilterAllStatus('own-filter-area')"> 50平以下
+                                </label>
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="50-80" class="own-filter-area" onclick="updateFilterAllStatus('own-filter-area')"> 50-80平
+                                </label>
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="80-100" class="own-filter-area" onclick="updateFilterAllStatus('own-filter-area')"> 80-100平
+                                </label>
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="100-120" class="own-filter-area" onclick="updateFilterAllStatus('own-filter-area')"> 100-120平
+                                </label>
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="120+" class="own-filter-area" onclick="updateFilterAllStatus('own-filter-area')"> 120平以上
+                                </label>
+                            </div>
+                        </div>
+                        <div class="filter-section">
+                            <div class="filter-label">价格</div>
+                            <div class="filter-checkbox-group">
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="all" class="own-filter-price" onclick="toggleFilterGroup('own-filter-price', this)"> 全部
+                                </label>
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="0-100" class="own-filter-price" onclick="updateFilterAllStatus('own-filter-price')"> 100万以下
+                                </label>
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="100-200" class="own-filter-price" onclick="updateFilterAllStatus('own-filter-price')"> 100-200万
+                                </label>
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="200-300" class="own-filter-price" onclick="updateFilterAllStatus('own-filter-price')"> 200-300万
+                                </label>
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="300-500" class="own-filter-price" onclick="updateFilterAllStatus('own-filter-price')"> 300-500万
+                                </label>
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="500+" class="own-filter-price" onclick="updateFilterAllStatus('own-filter-price')"> 500万以上
+                                </label>
+                            </div>
+                        </div>
+                        <div class="filter-section">
+                            <div class="filter-label">小学</div>
+                            <div class="filter-checkbox-group" id="ownPrimarySchoolGroup">
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="all" class="own-filter-primary-school" onclick="toggleFilterGroup('own-filter-primary-school', this)"> 全部
+                                </label>
+                            </div>
+                        </div>
+                        <div class="filter-section">
+                            <div class="filter-label">初中</div>
+                            <div class="filter-checkbox-group" id="ownMiddleSchoolGroup">
+                                <label class="filter-checkbox-item">
+                                    <input type="checkbox" value="all" class="own-filter-middle-school" onclick="toggleFilterGroup('own-filter-middle-school', this)"> 全部
+                                </label>
+                            </div>
                         </div>
                         <div class="filter-actions">
                             <button class="filter-btn filter-btn-clear" onclick="clearOwnFilters()">清除筛选</button>
@@ -7063,21 +7141,32 @@
         // 初始化筛选选项
         function initFilterRegions() {
             console.log('开始初始化筛选选项...');
-            // 从所有房源中提取唯一的区域、小区、户型
+            // 从所有房源中提取唯一的区域、小区、户型、装修、楼层、小学、初中
             const allProperties = [...properties, ...agentProperties];
             console.log('房源总数:', allProperties.length);
             
             const regions = [...new Set(allProperties.map(p => p.region).filter(Boolean))];
             const communities = [...new Set(allProperties.map(p => p.community).filter(Boolean))];
             const layouts = [...new Set(allProperties.map(p => p.layout).filter(Boolean))];
+            const decorations = [...new Set(allProperties.map(p => p.decoration).filter(Boolean))];
+            const floors = [...new Set(allProperties.map(p => p.floor).filter(Boolean))];
+            const primarySchools = [...new Set(allProperties.map(p => p.primarySchool || p.primary_school).filter(Boolean))];
+            const middleSchools = [...new Set(allProperties.map(p => p.middleSchool || p.middle_school).filter(Boolean))];
             
             console.log('提取的筛选选项:');
             console.log('区域:', regions);
             console.log('小区:', communities);
             console.log('户型:', layouts);
+            console.log('装修:', decorations);
+            console.log('楼层:', floors);
+            console.log('小学:', primarySchools);
+            console.log('初中:', middleSchools);
             
             // 更新optionsData对象，确保一键转发页面能获取到完整的选项数据
             optionsData.community = communities;
+            optionsData.primarySchool = primarySchools;
+            optionsData.middleSchool = middleSchools;
+            optionsData.decoration = decorations;
             
             // 初始化自有房源区域下拉框
             const ownRegionSelect = document.getElementById('ownFilterRegion');
@@ -7104,6 +7193,62 @@
                 layouts.forEach(layout => {
                     ownLayoutSelect.innerHTML += `<option value="${layout}">${layout}</option>`;
                 });
+            }
+            
+            // 初始化自有房源装修复选框
+            const ownDecorationGroup = document.getElementById('ownDecorationGroup');
+            if (ownDecorationGroup) {
+                let decorationHtml = `<label class="filter-checkbox-item">
+                    <input type="checkbox" value="all" class="own-filter-decoration" onclick="toggleFilterGroup('own-filter-decoration', this)"> 全部
+                </label>`;
+                decorations.forEach(decoration => {
+                    decorationHtml += `<label class="filter-checkbox-item">
+                        <input type="checkbox" value="${decoration}" class="own-filter-decoration" onclick="updateFilterAllStatus('own-filter-decoration')"> ${decoration}
+                    </label>`;
+                });
+                ownDecorationGroup.innerHTML = decorationHtml;
+            }
+            
+            // 初始化自有房源楼层复选框
+            const ownFloorGroup = document.getElementById('ownFloorGroup');
+            if (ownFloorGroup) {
+                let floorHtml = `<label class="filter-checkbox-item">
+                    <input type="checkbox" value="all" class="own-filter-floor" onclick="toggleFilterGroup('own-filter-floor', this)"> 全部
+                </label>`;
+                floors.forEach(floor => {
+                    floorHtml += `<label class="filter-checkbox-item">
+                        <input type="checkbox" value="${floor}" class="own-filter-floor" onclick="updateFilterAllStatus('own-filter-floor')"> ${floor}
+                    </label>`;
+                });
+                ownFloorGroup.innerHTML = floorHtml;
+            }
+            
+            // 初始化自有房源小学复选框
+            const ownPrimarySchoolGroup = document.getElementById('ownPrimarySchoolGroup');
+            if (ownPrimarySchoolGroup) {
+                let primarySchoolHtml = `<label class="filter-checkbox-item">
+                    <input type="checkbox" value="all" class="own-filter-primary-school" onclick="toggleFilterGroup('own-filter-primary-school', this)"> 全部
+                </label>`;
+                primarySchools.forEach(school => {
+                    primarySchoolHtml += `<label class="filter-checkbox-item">
+                        <input type="checkbox" value="${school}" class="own-filter-primary-school" onclick="updateFilterAllStatus('own-filter-primary-school')"> ${school}
+                    </label>`;
+                });
+                ownPrimarySchoolGroup.innerHTML = primarySchoolHtml;
+            }
+            
+            // 初始化自有房源初中复选框
+            const ownMiddleSchoolGroup = document.getElementById('ownMiddleSchoolGroup');
+            if (ownMiddleSchoolGroup) {
+                let middleSchoolHtml = `<label class="filter-checkbox-item">
+                    <input type="checkbox" value="all" class="own-filter-middle-school" onclick="toggleFilterGroup('own-filter-middle-school', this)"> 全部
+                </label>`;
+                middleSchools.forEach(school => {
+                    middleSchoolHtml += `<label class="filter-checkbox-item">
+                        <input type="checkbox" value="${school}" class="own-filter-middle-school" onclick="updateFilterAllStatus('own-filter-middle-school')"> ${school}
+                    </label>`;
+                });
+                ownMiddleSchoolGroup.innerHTML = middleSchoolHtml;
             }
             
 
@@ -7149,16 +7294,52 @@
             console.log('筛选选项初始化完成');
         }
 
+        // 切换筛选组（全部选项联动）
+        function toggleFilterGroup(className, allCheckbox) {
+            const checkboxes = document.querySelectorAll(`.${className}`);
+            const isChecked = allCheckbox.checked;
+            checkboxes.forEach(cb => {
+                if (cb.value !== 'all') {
+                    cb.checked = isChecked;
+                }
+            });
+        }
+
+        // 更新全部选项状态
+        function updateFilterAllStatus(className) {
+            const checkboxes = document.querySelectorAll(`.${className}`);
+            const allCheckbox = Array.from(checkboxes).find(cb => cb.value === 'all');
+            if (!allCheckbox) return;
+            
+            const otherCheckboxes = Array.from(checkboxes).filter(cb => cb.value !== 'all');
+            const allOtherChecked = otherCheckboxes.every(cb => cb.checked);
+            const someOtherChecked = otherCheckboxes.some(cb => cb.checked);
+            
+            allCheckbox.checked = allOtherChecked;
+        }
+
         // 应用自有房源筛选条件
         function applyOwnFilters() {
             const typeCheckboxes = document.querySelectorAll('.own-filter-type:checked');
             const statusCheckboxes = document.querySelectorAll('.own-filter-status:checked');
+            const decorationCheckboxes = document.querySelectorAll('.own-filter-decoration:checked');
+            const floorCheckboxes = document.querySelectorAll('.own-filter-floor:checked');
+            const areaCheckboxes = document.querySelectorAll('.own-filter-area:checked');
+            const priceCheckboxes = document.querySelectorAll('.own-filter-price:checked');
+            const primarySchoolCheckboxes = document.querySelectorAll('.own-filter-primary-school:checked');
+            const middleSchoolCheckboxes = document.querySelectorAll('.own-filter-middle-school:checked');
             const regionSelect = document.getElementById('ownFilterRegion');
             const communitySelect = document.getElementById('ownFilterCommunity');
             const layoutSelect = document.getElementById('ownFilterLayout');
 
             const selectedTypes = Array.from(typeCheckboxes).map(cb => cb.value);
             const selectedStatuses = Array.from(statusCheckboxes).map(cb => cb.value);
+            const selectedDecorations = Array.from(decorationCheckboxes).map(cb => cb.value);
+            const selectedFloors = Array.from(floorCheckboxes).map(cb => cb.value);
+            const selectedAreas = Array.from(areaCheckboxes).map(cb => cb.value);
+            const selectedPrices = Array.from(priceCheckboxes).map(cb => cb.value);
+            const selectedPrimarySchools = Array.from(primarySchoolCheckboxes).map(cb => cb.value);
+            const selectedMiddleSchools = Array.from(middleSchoolCheckboxes).map(cb => cb.value);
             const selectedRegion = regionSelect ? regionSelect.value : '';
             const selectedCommunity = communitySelect ? communitySelect.value : '';
             const selectedLayout = layoutSelect ? layoutSelect.value : '';
@@ -7169,11 +7350,48 @@
                 
                 const matchType = selectedTypes.length === 0 || selectedTypes.includes('all') || selectedTypes.includes(p.type);
                 const matchStatus = selectedStatuses.length === 0 || selectedStatuses.includes('all') || selectedStatuses.includes(p.status);
+                const matchDecoration = selectedDecorations.length === 0 || selectedDecorations.includes('all') || selectedDecorations.includes(p.decoration);
+                const matchFloor = selectedFloors.length === 0 || selectedFloors.includes('all') || selectedFloors.includes(p.floor);
+                
+                // 面积筛选
+                let matchArea = true;
+                if (selectedAreas.length > 0 && !selectedAreas.includes('all') && p.area) {
+                    const area = parseFloat(p.area);
+                    matchArea = selectedAreas.some(areaRange => {
+                        if (areaRange === '0-50') return area < 50;
+                        if (areaRange === '50-80') return area >= 50 && area < 80;
+                        if (areaRange === '80-100') return area >= 80 && area < 100;
+                        if (areaRange === '100-120') return area >= 100 && area < 120;
+                        if (areaRange === '120+') return area >= 120;
+                        return false;
+                    });
+                }
+                
+                // 价格筛选
+                let matchPrice = true;
+                if (selectedPrices.length > 0 && !selectedPrices.includes('all') && p.price) {
+                    const price = parseFloat(p.price);
+                    matchPrice = selectedPrices.some(priceRange => {
+                        if (priceRange === '0-100') return price < 100;
+                        if (priceRange === '100-200') return price >= 100 && price < 200;
+                        if (priceRange === '200-300') return price >= 200 && price < 300;
+                        if (priceRange === '300-500') return price >= 300 && price < 500;
+                        if (priceRange === '500+') return price >= 500;
+                        return false;
+                    });
+                }
+                
+                const primarySchoolValue = p.primarySchool || p.primary_school;
+                const matchPrimarySchool = selectedPrimarySchools.length === 0 || selectedPrimarySchools.includes('all') || selectedPrimarySchools.includes(primarySchoolValue);
+                
+                const middleSchoolValue = p.middleSchool || p.middle_school;
+                const matchMiddleSchool = selectedMiddleSchools.length === 0 || selectedMiddleSchools.includes('all') || selectedMiddleSchools.includes(middleSchoolValue);
+                
                 const matchRegion = !selectedRegion || p.region === selectedRegion;
                 const matchCommunity = !selectedCommunity || p.community === selectedCommunity;
                 const matchLayout = !selectedLayout || p.layout === selectedLayout;
 
-                return matchType && matchStatus && matchRegion && matchCommunity && matchLayout;
+                return matchType && matchStatus && matchDecoration && matchFloor && matchArea && matchPrice && matchPrimarySchool && matchMiddleSchool && matchRegion && matchCommunity && matchLayout;
             });
 
             renderPropertyList();
@@ -7183,6 +7401,12 @@
         function clearOwnFilters() {
             document.querySelectorAll('.own-filter-type').forEach(cb => cb.checked = false);
             document.querySelectorAll('.own-filter-status').forEach(cb => cb.checked = false);
+            document.querySelectorAll('.own-filter-decoration').forEach(cb => cb.checked = false);
+            document.querySelectorAll('.own-filter-floor').forEach(cb => cb.checked = false);
+            document.querySelectorAll('.own-filter-area').forEach(cb => cb.checked = false);
+            document.querySelectorAll('.own-filter-price').forEach(cb => cb.checked = false);
+            document.querySelectorAll('.own-filter-primary-school').forEach(cb => cb.checked = false);
+            document.querySelectorAll('.own-filter-middle-school').forEach(cb => cb.checked = false);
             const regionSelect = document.getElementById('ownFilterRegion');
             const communitySelect = document.getElementById('ownFilterCommunity');
             const layoutSelect = document.getElementById('ownFilterLayout');
