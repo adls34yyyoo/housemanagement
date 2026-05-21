@@ -5111,7 +5111,8 @@
             const areaValue = document.getElementById('filterArea').value;
             const priceValue = document.getElementById('filterPrice').value;
             
-            filteredProperties = properties.filter(property => {
+            // 定义筛选函数
+            function filterProperty(property) {
                 let match = true;
                 
                 // 类型筛选（多选）
@@ -5165,7 +5166,21 @@
                 }
                 
                 return match;
+            }
+            
+            // 筛选自有房源和代理房源，合并去重
+            const allProps = [...properties, ...agentProperties];
+            const uniqueFilteredProps = [];
+            const seenIds = new Set();
+            
+            allProps.forEach(p => {
+                if (!seenIds.has(String(p.id)) && filterProperty(p)) {
+                    seenIds.add(String(p.id));
+                    uniqueFilteredProps.push(p);
+                }
             });
+            
+            filteredProperties = uniqueFilteredProps;
             
             renderPropertyList();
         }
