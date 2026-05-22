@@ -3931,6 +3931,9 @@
         // 从云数据库加载数据（兼容华为浏览器）
         function initApp() {
             if (typeof loadData === 'function') {
+                // 先加载学习到的数据
+                loadLearnedData();
+                
                 loadData().then(function() {
                     console.log('数据加载完成');
                     // 更新上海最新政策显示
@@ -3962,6 +3965,12 @@
         // 小区与学区的映射关系
         let communitySchoolMapping = {};
         
+        // 小区与地区的映射关系
+        let communityRegionMapping = {};
+        
+        // 小区与户型的映射关系（记录小区常见户型）
+        let communityLayoutMapping = {};
+        
         // 选项数据存储
         let optionsData = {
             community: ['金地城', '一方新城'],
@@ -3973,6 +3982,176 @@
             propertyType: ['商品房', '动迁房', '公寓', '别墅', '商铺', '写字楼'],
             propertyCertificate: ['满5唯一', '满5年', '满两年', '不满两年']
         };
+        
+        // 自动学习房源数据，增强自动识别功能
+        function learnPropertyData(community, primarySchool, middleSchool, region, layout, decoration, floor) {
+            if (!community) return;
+            
+            // 学习小区与学区的映射
+            if (primarySchool || middleSchool) {
+                if (!communitySchoolMapping[community]) {
+                    communitySchoolMapping[community] = {};
+                }
+                if (primarySchool) {
+                    communitySchoolMapping[community].primarySchool = primarySchool;
+                }
+                if (middleSchool) {
+                    communitySchoolMapping[community].middleSchool = middleSchool;
+                }
+            }
+            
+            // 学习小区与地区的映射
+            if (region) {
+                communityRegionMapping[community] = region;
+            }
+            
+            // 学习小区与户型的映射（记录小区常见户型）
+            if (layout) {
+                if (!communityLayoutMapping[community]) {
+                    communityLayoutMapping[community] = new Set();
+                }
+                communityLayoutMapping[community].add(layout);
+            }
+            
+            // 将新小区添加到选项列表
+            if (!optionsData.community.includes(community)) {
+                optionsData.community.push(community);
+            }
+            
+            // 将新小学添加到选项列表
+            if (primarySchool && !optionsData.primarySchool.includes(primarySchool)) {
+                optionsData.primarySchool.push(primarySchool);
+            }
+            
+            // 将新初中添加到选项列表
+            if (middleSchool && !optionsData.middleSchool.includes(middleSchool)) {
+                optionsData.middleSchool.push(middleSchool);
+            }
+            
+            // 将新户型添加到选项列表
+            if (layout && !optionsData.layout.includes(layout)) {
+                optionsData.layout.push(layout);
+            }
+            
+            // 将新装修类型添加到选项列表
+            if (decoration && !optionsData.decoration.includes(decoration)) {
+                optionsData.decoration.push(decoration);
+            }
+            
+            // 将新地区添加到选项列表
+            if (region && !optionsData.region.includes(region)) {
+                optionsData.region.push(region);
+            }
+            
+            // 将新楼层添加到全局楼层选项
+            if (floor) {
+                if (!window.floorOptions) {
+                    window.floorOptions = new Set();
+                }
+                window.floorOptions.add(floor);
+            }
+            
+            // 保存到本地存储
+            saveLearnedData();
+        }
+        
+        // 保存学习到的数据到本地存储
+        function saveLearnedData() {
+            try {
+                const learnedData = {
+                    communitySchoolMapping,
+                    communityRegionMapping,
+                    communityLayoutMapping,
+                    optionsData: {
+                        community: optionsData.community,
+                        primarySchool: optionsData.primarySchool,
+                        middleSchool: optionsData.middleSchool,
+                        decoration: optionsData.decoration,
+                        layout: optionsData.layout,
+                        region: optionsData.region
+                    }
+                };
+                localStorage.setItem('propertyLearnedData', JSON.stringify(learnedData));
+            } catch (error) {
+                console.error('保存学习数据失败:', error);
+            }
+        }
+        
+        // 从本地存储加载学习到的数据
+        function loadLearnedData() {
+            try {
+                const stored = localStorage.getItem('propertyLearnedData');
+                if (stored) {
+                    const learnedData = JSON.parse(stored);
+                    if (learnedData.communitySchoolMapping) {
+                        // 合并映射关系（新数据优先）
+                        communitySchoolMapping = { ...communitySchoolMapping, ...learnedData.communitySchoolMapping };
+                    }
+                    if (learnedData.communityRegionMapping) {
+                        communityRegionMapping = { ...communityRegionMapping, ...learnedData.communityRegionMapping };
+                    }
+                    if (learnedData.communityLayoutMapping) {
+                        // 合并户型映射
+                        Object.keys(learnedData.communityLayoutMapping).forEach(community => {
+                            if (!communityLayoutMapping[community]) {
+                                communityLayoutMapping[community] = new Set();
+                            }
+                            learnedData.communityLayoutMapping[community].forEach(layout => {
+                                communityLayoutMapping[community].add(layout);
+                            });
+                        });
+                    }
+                    if (learnedData.optionsData) {
+                        // 合并选项数据（不覆盖原有数据，只添加新数据）
+                        if (learnedData.optionsData.community) {
+                            learnedData.optionsData.community.forEach(c => {
+                                if (!optionsData.community.includes(c)) {
+                                    optionsData.community.push(c);
+                                }
+                            });
+                        }
+                        if (learnedData.optionsData.primarySchool) {
+                            learnedData.optionsData.primarySchool.forEach(s => {
+                                if (!optionsData.primarySchool.includes(s)) {
+                                    optionsData.primarySchool.push(s);
+                                }
+                            });
+                        }
+                        if (learnedData.optionsData.middleSchool) {
+                            learnedData.optionsData.middleSchool.forEach(s => {
+                                if (!optionsData.middleSchool.includes(s)) {
+                                    optionsData.middleSchool.push(s);
+                                }
+                            });
+                        }
+                        if (learnedData.optionsData.decoration) {
+                            learnedData.optionsData.decoration.forEach(d => {
+                                if (!optionsData.decoration.includes(d)) {
+                                    optionsData.decoration.push(d);
+                                }
+                            });
+                        }
+                        if (learnedData.optionsData.layout) {
+                            learnedData.optionsData.layout.forEach(l => {
+                                if (!optionsData.layout.includes(l)) {
+                                    optionsData.layout.push(l);
+                                }
+                            });
+                        }
+                        if (learnedData.optionsData.region) {
+                            learnedData.optionsData.region.forEach(r => {
+                                if (!optionsData.region.includes(r)) {
+                                    optionsData.region.push(r);
+                                }
+                            });
+                        }
+                    }
+                    console.log('已加载学习数据');
+                }
+            } catch (error) {
+                console.error('加载学习数据失败:', error);
+            }
+        }
 
         // 初始化选项下拉框
         function initSelectOptions() {
@@ -3993,12 +4172,14 @@
                 const primarySchoolCustom = document.getElementById('propPrimarySchoolCustom');
                 const middleSchoolSelect = document.getElementById('propMiddleSchool');
                 const middleSchoolCustom = document.getElementById('propMiddleSchoolCustom');
+                const regionSelect = document.getElementById('propRegion');
+                const layoutSelect = document.getElementById('propLayout');
                 
+                // 自动填充学区
                 if (selectedCommunity && communitySchoolMapping[selectedCommunity]) {
                     const mapping = communitySchoolMapping[selectedCommunity];
                     if (mapping.primarySchool) {
                         if (primarySchoolSelect) {
-                            // 检查是否在下拉选项中
                             let found = false;
                             for (let i = 0; i < primarySchoolSelect.options.length; i++) {
                                 if (primarySchoolSelect.options[i].value === mapping.primarySchool) {
@@ -4016,7 +4197,6 @@
                     }
                     if (mapping.middleSchool) {
                         if (middleSchoolSelect) {
-                            // 检查是否在下拉选项中
                             let found = false;
                             for (let i = 0; i < middleSchoolSelect.options.length; i++) {
                                 if (middleSchoolSelect.options[i].value === mapping.middleSchool) {
@@ -4031,6 +4211,21 @@
                                 middleSchoolCustom.value = mapping.middleSchool;
                             }
                         }
+                    }
+                }
+                
+                // 自动填充地区
+                if (selectedCommunity && communityRegionMapping[selectedCommunity]) {
+                    if (regionSelect) {
+                        regionSelect.value = communityRegionMapping[selectedCommunity];
+                    }
+                }
+                
+                // 自动填充常见户型（如果小区只有一个常见户型）
+                if (selectedCommunity && communityLayoutMapping[selectedCommunity]) {
+                    const layouts = Array.from(communityLayoutMapping[selectedCommunity]);
+                    if (layouts.length === 1 && layoutSelect) {
+                        layoutSelect.value = layouts[0];
                     }
                 }
             });
@@ -8759,6 +8954,9 @@
                         properties.push(property);
                     }
                 }
+                
+                // 自动学习并更新数据映射关系
+                learnPropertyData(community, primarySchool, middleSchool, region, layout, decoration, floor);
                 
                 // 重新加载数据
                 try {
