@@ -8524,9 +8524,8 @@
             const status = document.getElementById('propStatus').value;
             const desc = document.getElementById('propDesc').value;
             const remark = document.getElementById('propRemark').value;
-            const floorplan = document.getElementById('propFloorplan').value;
 
-            console.log('保存房源 - 表单数据:', { community, primarySchool, middleSchool, decoration, price, region, propType, propertyCertificate, layout, area, floor, doorNumber, floorplan });
+            console.log('保存房源 - 表单数据:', { community, primarySchool, middleSchool, decoration, price, region, propType, propertyCertificate, layout, area, floor, doorNumber });
 
             if (!community) {
                 showToast('请输入小区名称');
@@ -8771,7 +8770,6 @@
                 type: saleOrRentType,
                 description: desc,
                 remark,
-                floorplan: floorplan || null,
                 change_history: changeHistoryRecord,
                 communication_records: originalProperty?.communication_records || originalProperty?.communicationRecords || [],
                 created_at: originalProperty?.created_at || new Date().toISOString(),
@@ -8835,7 +8833,6 @@
                     type: property.type,
                     description: property.description,
                     remark: property.remark,
-                    floorplan: property.floorplan || null,
                     created_at: property.created_at || new Date().toISOString(),
                     updated_at: property.updated_at || new Date().toISOString(),
                     // 总是添加可选字段，即使为空
@@ -8904,7 +8901,6 @@
                         type: property.type || 'rent',
                         description: property.description || '',
                         remark: property.remark || '',
-                        floorplan: property.floorplan || null,
                         created_at: property.created_at || new Date().toISOString(),
                         updated_at: new Date().toISOString(),
                         primary_school: primarySchool || property.primarySchool || property.primary_school || '',
