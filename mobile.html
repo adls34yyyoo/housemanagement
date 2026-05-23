@@ -3409,11 +3409,29 @@
 
             const detailHTML = `
                 <div style="padding: 16px;">
-                    <div style="text-align: center; margin-bottom: 24px;">
-                        <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 8px;">${property.community || '未知小区'}</h3>
-                        <div style="padding: 6px 16px; background: rgba(59, 130, 246, 0.1); color: var(--primary); border-radius: 20px; display: inline-block; font-weight: 600; cursor: pointer;" onclick="showRentSaleToggleModal('${property.id}')">
-                            ${typeText}
+                    <div style="display: flex; align-items: flex-start; gap: 16px; margin-bottom: 24px;">
+                        <div style="flex: 1;">
+                            <div style="text-align: left;">
+                                <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 8px;">${property.community || '未知小区'}</h3>
+                                <div style="padding: 6px 16px; background: rgba(59, 130, 246, 0.1); color: var(--primary); border-radius: 20px; display: inline-block; font-weight: 600; cursor: pointer;" onclick="showRentSaleToggleModal('${property.id}')">
+                                    ${typeText}
+                                </div>
+                            </div>
                         </div>
+                        ${propertyFloorplan ? `
+                            <div style="width: 120px; flex-shrink: 0; cursor: pointer;" onclick="openFloorplanViewFromDetail('${property.id}')">
+                                <img src="${propertyFloorplan}" alt="户型图" style="width: 100%; height: auto; border-radius: var(--radius); object-fit: cover; border: 2px solid var(--border);">
+                                <div style="text-align: center; font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">
+                                    查看大图
+                                </div>
+                            </div>
+                        ` : `
+                            <div style="width: 120px; flex-shrink: 0;">
+                                <div style="width: 100%; height: 100px; background: var(--background); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; border: 2px dashed var(--border);">
+                                    <span style="color: var(--text-tertiary); font-size: 12px;">暂无户型图</span>
+                                </div>
+                            </div>
+                        `}
                     </div>
                     
                     <div style="background: var(--background); border-radius: var(--radius); padding: 20px; margin-bottom: 20px;">
@@ -3437,27 +3455,6 @@
                             <span style="color: var(--text-secondary);">户型</span>
                             <span style="cursor: pointer; color: var(--primary); text-decoration: underline;" onclick="editPropertyField('${property.id}', 'layout', '户型', '${property.layout || ''}', 'select');">${property.layout || '未知户型'}</span>
                         </div>
-                        ${propertyFloorplan ? `
-                            <div style="margin-top: 16px;">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                                    <span style="color: var(--text-secondary);">户型图</span>
-                                    <span style="cursor: pointer; color: var(--primary); text-decoration: underline;" onclick="openFloorplanViewFromDetail('${property.id}')">查看大图</span>
-                                </div>
-                                <div style="border-radius: var(--radius); overflow: hidden; cursor: pointer;" onclick="openFloorplanViewFromDetail('${property.id}')">
-                                    <img src="${propertyFloorplan}" alt="户型图" style="width: 100%; max-height: 250px; object-fit: contain; background: var(--background);">
-                                </div>
-                                <div style="margin-top: 8px; font-size: 12px; color: var(--text-tertiary); text-align: center;">
-                                    点击查看大图
-                                </div>
-                            </div>
-                        ` : `
-                            <div style="margin-top: 16px;">
-                                <div style="color: var(--text-secondary); margin-bottom: 8px;">户型图</div>
-                                <div style="background: var(--background); border-radius: var(--radius); padding: 24px; text-align: center; color: var(--text-tertiary);">
-                                    暂无户型图
-                                </div>
-                            </div>
-                        `}
                         <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                             <span style="color: var(--text-secondary);">面积</span>
                             <span style="cursor: pointer; color: var(--primary); text-decoration: underline;" onclick="editPropertyField('${property.id}', 'area', '面积', '${property.area || ''}', 'number');">${property.area ? property.area + '平' : '未知面积'}</span>
@@ -9018,9 +9015,25 @@
                 // 自动学习并更新数据映射关系
                 learnPropertyData(community, primarySchool, middleSchool, region, layout, decoration, floor);
                 
-                // 保存户型图与房源的关联
+                // 保存户型图与房源的关联，并上传到远程存储
                 if (floorplanUrl && property.id) {
+                    // 先保存到本地
                     saveFloorplanForProperty(property.id, floorplanUrl);
+                    
+                    // 异步上传到远程存储（不阻塞保存流程）
+                    if (floorplanUrl.startsWith('data:image')) {
+                        uploadFloorplanToStorage(property.id, floorplanUrl)
+                            .then(remoteUrl => {
+                                if (remoteUrl) {
+                                    // 如果上传成功，更新为远程URL
+                                    console.log('户型图已上传到远程存储，更新本地映射');
+                                    saveFloorplanForProperty(property.id, remoteUrl);
+                                }
+                            })
+                            .catch(err => {
+                                console.error('上传户型图到远程存储失败:', err);
+                            });
+                    }
                 }
                 
                 // 重新加载数据
@@ -14975,7 +14988,7 @@
             document.getElementById('floorplanFileInput').click();
         }
         
-        // 高级去水印算法
+        // 高级去水印算法 - 改进版
         function removeWatermarkAdvanced(imageData, width, height) {
             const data = imageData.data;
             
@@ -14983,7 +14996,9 @@
             const edgeHeight = Math.floor(height * 0.12); // 检测边缘12%的区域
             const edgeWidth = Math.floor(width * 0.25); // 检测边缘25%的区域
             
-            // 遍历边缘区域，检测并去除水印
+            // 第一步：识别并标记水印像素
+            const watermarkMask = new Uint8Array(width * height);
+            
             for (let y = 0; y < height; y++) {
                 for (let x = 0; x < width; x++) {
                     const idx = (y * width + x) * 4;
@@ -14995,50 +15010,104 @@
                     const isRightEdge = x > width - edgeWidth;
                     
                     if (isBottomEdge || isTopEdge || isLeftEdge || isRightEdge) {
-                        // 检测是否为水印颜色（通常是较深的颜色）
                         const r = data[idx];
                         const g = data[idx + 1];
                         const b = data[idx + 2];
-                        const a = data[idx + 3];
                         
-                        // 如果颜色饱和度低且亮度较高，可能是水印文字
+                        // 更智能的水印检测
                         const brightness = (r + g + b) / 3;
                         const saturation = Math.max(r, g, b) - Math.min(r, g, b);
                         
-                        if (saturation < 50 && brightness > 200) {
-                            // 使用周围像素的平均值替换
-                            let sumR = 0, sumG = 0, sumB = 0, count = 0;
-                            
-                            // 从中心区域获取周围像素
-                            for (let dy = -5; dy <= 5; dy += 2) {
-                                for (let dx = -5; dx <= 5; dx += 2) {
-                                    const nx = x + dx;
-                                    const ny = y + dy;
-                                    if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-                                        // 避开边缘区域
-                                        if (!(ny > height - edgeHeight || ny < edgeHeight / 2 || 
-                                              nx < edgeWidth / 2 || nx > width - edgeWidth)) {
-                                            const nIdx = (ny * width + nx) * 4;
-                                            sumR += data[nIdx];
-                                            sumG += data[nIdx + 1];
-                                            sumB += data[nIdx + 2];
-                                            count++;
-                                        }
-                                    }
-                                }
-                            }
-                            
-                            if (count > 0) {
-                                data[idx] = Math.round(sumR / count);
-                                data[idx + 1] = Math.round(sumG / count);
-                                data[idx + 2] = Math.round(sumB / count);
-                            }
+                        // 检测半透明水印或文字水印
+                        const isSemiTransparent = (saturation < 60 && brightness > 180) || 
+                                                 (Math.abs(r - g) < 20 && Math.abs(g - b) < 20 && Math.abs(r - b) < 20);
+                        
+                        // 检测灰度化的文字
+                        const isGrayText = (saturation < 40 && brightness > 200);
+                        
+                        if (isSemiTransparent || isGrayText) {
+                            watermarkMask[y * width + x] = 1; // 标记为水印像素
                         }
                     }
                 }
             }
             
+            // 第二步：使用邻域插值修复水印区域
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    if (watermarkMask[y * width + x] === 1) {
+                        const idx = (y * width + x) * 4;
+                        
+                        // 使用更大的采样窗口获取周围像素
+                        let sumR = 0, sumG = 0, sumB = 0, count = 0;
+                        
+                        for (let dy = -8; dy <= 8; dy++) {
+                            for (let dx = -8; dx <= 8; dx++) {
+                                const nx = x + dx;
+                                const ny = y + dy;
+                                
+                                if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                                    // 只使用非水印像素
+                                    if (watermarkMask[ny * width + nx] === 0) {
+                                        const nIdx = (ny * width + nx) * 4;
+                                        const weight = 1 / (Math.sqrt(dx * dx + dy * dy) + 1); // 距离加权
+                                        sumR += data[nIdx] * weight;
+                                        sumG += data[nIdx + 1] * weight;
+                                        sumB += data[nIdx + 2] * weight;
+                                        count += weight;
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if (count > 0) {
+                            data[idx] = Math.round(sumR / count);
+                            data[idx + 1] = Math.round(sumG / count);
+                            data[idx + 2] = Math.round(sumB / count);
+                        }
+                    }
+                }
+            }
+            
+            // 第三步：简单裁剪边缘区域
+            for (let y = 0; y < Math.min(edgeHeight / 2, height); y++) {
+                for (let x = 0; x < width; x++) {
+                    const idx = (y * width + x) * 4;
+                    const sourceIdx = ((Math.floor(edgeHeight / 2) + 1) * width + x) * 4;
+                    data[idx] = data[sourceIdx];
+                    data[idx + 1] = data[sourceIdx + 1];
+                    data[idx + 2] = data[sourceIdx + 2];
+                }
+            }
+            for (let y = Math.max(height - edgeHeight, 0); y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const idx = (y * width + x) * 4;
+                    const sourceIdx = ((Math.floor(height - edgeHeight - 1)) * width + x) * 4;
+                    data[idx] = data[sourceIdx];
+                    data[idx + 1] = data[sourceIdx + 1];
+                    data[idx + 2] = data[sourceIdx + 2];
+                }
+            }
+            
             return imageData;
+        }
+        
+        // 缩小图片函数
+        function resizeImage(img, scaleFactor) {
+            return new Promise((resolve) => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                canvas.width = Math.floor(img.width * scaleFactor);
+                canvas.height = Math.floor(img.height * scaleFactor);
+                
+                // 使用高质量缩放
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                
+                resolve(canvas.toDataURL('image/jpeg', 0.95));
+            });
         }
         
         // 简约风格转换（优化画质，保留原始色彩）
@@ -15167,24 +15236,32 @@
                         // 步骤2：转换为简约风格
                         const simpleUrl = await convertToSimpleStyle(cleanedImg);
                         
-                        // 保存处理结果
-                        const tempId = Date.now();
-                        floorplanData[tempId] = {
-                            url: simpleUrl,
-                            originalUrl: canvas1.toDataURL('image/jpeg', 0.95),
-                            title: file.name,
-                            confirmed: true,
-                            uploadedAt: new Date().toISOString(),
-                            isLocal: true,
-                            watermarkRemoved: true,
-                            simpleStyle: true
+                        // 步骤3：缩小图片一半
+                        const resizeImg = new Image();
+                        resizeImg.onload = async function() {
+                            const resizedUrl = await resizeImage(resizeImg, 0.5);
+                            
+                            // 保存处理结果
+                            const tempId = Date.now();
+                            floorplanData[tempId] = {
+                                url: resizedUrl,
+                                originalUrl: canvas1.toDataURL('image/jpeg', 0.95),
+                                title: file.name,
+                                confirmed: true,
+                                uploadedAt: new Date().toISOString(),
+                                isLocal: true,
+                                watermarkRemoved: true,
+                                simpleStyle: true,
+                                resized: true
+                            };
+                            
+                            // 立即应用到表单
+                            applyFloorplan(resizedUrl);
+                            localStorage.setItem('floorplanData', JSON.stringify(floorplanData));
+                            
+                            showToast('户型图已上传，已去除水印、优化画质并缩小');
                         };
-                        
-                        // 立即应用到表单
-                        applyFloorplan(simpleUrl);
-                        localStorage.setItem('floorplanData', JSON.stringify(floorplanData));
-                        
-                        showToast('户型图已上传，已去除水印并优化画质');
+                        resizeImg.src = simpleUrl;
                     };
                     cleanedImg.src = canvas1.toDataURL('image/jpeg', 0.95);
                 };
@@ -15288,6 +15365,65 @@
                 return floorplanMap[propertyId] || null;
             }
             return null;
+        }
+        
+        // 将base64转换为File对象
+        function dataURLToFile(dataURL, filename) {
+            const arr = dataURL.split(',');
+            const mime = arr[0].match(/:(.*?);/)[1];
+            const bstr = atob(arr[1]);
+            let n = bstr.length;
+            const u8arr = new Uint8Array(n);
+            while(n--) {
+                u8arr[n] = bstr.charCodeAt(n);
+            }
+            return new File([u8arr], filename, {type: mime});
+        }
+        
+        // 上传户型图到Supabase Storage
+        async function uploadFloorplanToStorage(propertyId, dataURL) {
+            if (!supabaseClient || !dataURL || !propertyId) {
+                console.log('跳过上传户型图到远程存储');
+                return null;
+            }
+            
+            try {
+                console.log('开始上传户型图到远程存储...');
+                
+                // 生成文件名
+                const timestamp = Date.now();
+                const fileName = `floorplan_${propertyId}_${timestamp}.jpg`;
+                
+                // 转换为File对象
+                const file = dataURLToFile(dataURL, fileName);
+                
+                // 上传到bucket
+                const { data, error } = await supabaseClient
+                    .storage
+                    .from('floorplans')
+                    .upload(fileName, file, {
+                        cacheControl: '3600',
+                        upsert: true
+                    });
+                
+                if (error) {
+                    console.error('上传户型图失败:', error);
+                    return null;
+                }
+                
+                // 获取公开URL
+                const { data: { publicUrl } } = await supabaseClient
+                    .storage
+                    .from('floorplans')
+                    .getPublicUrl(fileName);
+                
+                console.log('户型图上传成功:', publicUrl);
+                return publicUrl;
+                
+            } catch (err) {
+                console.error('上传户型图时出错:', err);
+                return null;
+            }
         }
         
         // 初始化户型图功能
