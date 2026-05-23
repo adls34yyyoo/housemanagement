@@ -3037,7 +3037,7 @@
                             <button type="button" class="btn btn-primary" onclick="uploadFloorplan()" style="flex: 1;">上传户型图</button>
                         </div>
                         <div style="font-size: 12px; color: var(--text-secondary); margin-top: 8px; text-align: center;">
-                            上传后自动去除水印并生成手绘风格
+                            上传后自动去除水印并优化画质
                         </div>
                         <input type="hidden" id="propFloorplan" placeholder="户型图URL">
                         <input type="file" id="floorplanFileInput" accept="image/*" style="display: none;" onchange="handleFloorplanUpload(event)">
@@ -8545,8 +8545,9 @@
             const status = document.getElementById('propStatus').value;
             const desc = document.getElementById('propDesc').value;
             const remark = document.getElementById('propRemark').value;
+            const floorplanUrl = document.getElementById('propFloorplan').value;
 
-            console.log('保存房源 - 表单数据:', { community, primarySchool, middleSchool, decoration, price, region, propType, propertyCertificate, layout, area, floor, doorNumber });
+            console.log('保存房源 - 表单数据:', { community, primarySchool, middleSchool, decoration, price, region, propType, propertyCertificate, layout, area, floor, doorNumber, floorplanUrl });
 
             if (!community) {
                 showToast('请输入小区名称');
@@ -8791,6 +8792,7 @@
                 type: saleOrRentType,
                 description: desc,
                 remark,
+                floorplan: floorplanUrl || null,
                 change_history: changeHistoryRecord,
                 communication_records: originalProperty?.communication_records || originalProperty?.communicationRecords || [],
                 created_at: originalProperty?.created_at || new Date().toISOString(),
@@ -8854,6 +8856,7 @@
                     type: property.type,
                     description: property.description,
                     remark: property.remark,
+                    floorplan: property.floorplan || null,
                     created_at: property.created_at || new Date().toISOString(),
                     updated_at: property.updated_at || new Date().toISOString(),
                     // 总是添加可选字段，即使为空
@@ -8922,6 +8925,7 @@
                         type: property.type || 'rent',
                         description: property.description || '',
                         remark: property.remark || '',
+                        floorplan: property.floorplan || null,
                         created_at: property.created_at || new Date().toISOString(),
                         updated_at: new Date().toISOString(),
                         primary_school: primarySchool || property.primarySchool || property.primary_school || '',
@@ -15031,8 +15035,8 @@
             return imageData;
         }
         
-        // 手绘风格转换
-        function convertToHandDrawnStyle(img) {
+        // 简约风格转换（优化画质，保留原始色彩）
+        function convertToSimpleStyle(img) {
             return new Promise((resolve) => {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
@@ -15043,66 +15047,76 @@
                 // 绘制原图
                 ctx.drawImage(img, 0, 0);
                 
-                // 获取图像数据
+                // 获取图像数据进行优化
                 const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 const data = imageData.data;
                 const width = imageData.width;
                 const height = imageData.height;
                 
-                // 转换为灰度
-                const gray = new Float32Array(width * height);
-                for (let i = 0; i < width * height; i++) {
-                    const idx = i * 4;
-                    gray[i] = data[idx] * 0.299 + data[idx + 1] * 0.587 + data[idx + 2] * 0.114;
-                }
-                
-                // Sobel边缘检测
-                const edges = new Float32Array(width * height);
-                const sobelX = [-1, 0, 1, -2, 0, 2, -1, 0, 1];
-                const sobelY = [-1, -2, -1, 0, 0, 0, 1, 2, 1];
-                
-                for (let y = 1; y < height - 1; y++) {
-                    for (let x = 1; x < width - 1; x++) {
-                        let gx = 0, gy = 0;
-                        for (let ky = -1; ky <= 1; ky++) {
-                            for (let kx = -1; kx <= 1; kx++) {
-                                const pixel = gray[(y + ky) * width + (x + kx)];
-                                gx += pixel * sobelX[(ky + 1) * 3 + (kx + 1)];
-                                gy += pixel * sobelY[(ky + 1) * 3 + (kx + 1)];
+                // 简约风格：轻微增强对比度，提升清晰度
+                for (let i = 0; i < data.length; i += 4) {
+                    // 获取当前像素颜色
+                    let r = data[i];
+                    let g = data[i + 1];
+                    let b = data[i + 2];
+                    
+                    // 转换为灰度计算亮度
+                    const brightness = (r + g + b) / 3;
+                    
+                    // 轻微增强对比度
+                    const contrast = 1.05; // 增强5%
+                    r = Math.min(255, Math.max(0, (r - 128) * contrast + 128));
+                    g = Math.min(255, Math.max(0, (g - 128) * contrast + 128));
+                    b = Math.min(255, Math.max(0, (b - 128) * contrast + 128));
+                    
+                    // 轻微锐化（提升清晰度）
+                    if (i >= 4 * width && i < data.length - 4 * width) {
+                        const idx = i / 4;
+                        const y = Math.floor(idx / width);
+                        const x = idx % width;
+                        
+                        // 只对非边缘区域进行锐化
+                        if (y > 1 && y < height - 2 && x > 1 && x < width - 2) {
+                            // 获取周围像素
+                            const upIdx = ((y - 1) * width + x) * 4;
+                            const downIdx = ((y + 1) * width + x) * 4;
+                            const leftIdx = (y * width + x - 1) * 4;
+                            const rightIdx = (y * width + x + 1) * 4;
+                            
+                            const upBrightness = (data[upIdx] + data[upIdx + 1] + data[upIdx + 2]) / 3;
+                            const downBrightness = (data[downIdx] + data[downIdx + 1] + data[downIdx + 2]) / 3;
+                            const leftBrightness = (data[leftIdx] + data[leftIdx + 1] + data[leftIdx + 2]) / 3;
+                            const rightBrightness = (data[rightIdx] + data[rightIdx + 1] + data[rightIdx + 2]) / 3;
+                            
+                            const edgeStrength = Math.abs(brightness - upBrightness) + 
+                                                Math.abs(brightness - downBrightness) + 
+                                                Math.abs(brightness - leftBrightness) + 
+                                                Math.abs(brightness - rightBrightness);
+                            
+                            // 轻微增强边缘
+                            if (edgeStrength > 30) {
+                                const sharpenAmount = 0.15; // 锐化强度15%
+                                r = Math.min(255, Math.max(0, r + (r - (upBrightness + downBrightness + leftBrightness + rightBrightness) / 4) * sharpenAmount));
+                                g = Math.min(255, Math.max(0, g + (g - (upBrightness + downBrightness + leftBrightness + rightBrightness) / 4) * sharpenAmount));
+                                b = Math.min(255, Math.max(0, b + (b - (upBrightness + downBrightness + leftBrightness + rightBrightness) / 4) * sharpenAmount));
                             }
                         }
-                        edges[y * width + x] = Math.sqrt(gx * gx + gy * gy);
                     }
+                    
+                    // 写回处理后的像素
+                    data[i] = Math.round(r);
+                    data[i + 1] = Math.round(g);
+                    data[i + 2] = Math.round(b);
                 }
                 
-                // 创建手绘效果
-                const resultData = ctx.createImageData(width, height);
-                for (let i = 0; i < width * height; i++) {
-                    const idx = i * 4;
-                    const edge = Math.min(255, edges[i] * 2);
-                    
-                    // 添加纸张纹理效果
-                    const noise = (Math.random() - 0.5) * 10;
-                    const value = Math.max(0, Math.min(255, gray[i] + noise));
-                    
-                    // 边缘变深色，非边缘变浅色
-                    const factor = 1 - edge / 255 * 0.3;
-                    const finalValue = Math.max(0, Math.min(255, value * factor + noise));
-                    
-                    resultData.data[idx] = finalValue;
-                    resultData.data[idx + 1] = finalValue;
-                    resultData.data[idx + 2] = finalValue;
-                    resultData.data[idx + 3] = 255;
-                }
+                ctx.putImageData(imageData, 0, 0);
                 
-                ctx.putImageData(resultData, 0, 0);
-                
-                // 返回手绘风格图片
-                resolve(canvas.toDataURL('image/png', 0.95));
+                // 返回简约风格图片
+                resolve(canvas.toDataURL('image/jpeg', 0.98));
             });
         }
         
-        // 处理户型图文件上传（高级去水印 + 手绘风格转换）
+        // 处理户型图文件上传（高级去水印 + 简约风格转换）
         function handleFloorplanUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -15119,7 +15133,7 @@
                 return;
             }
             
-            showToast('正在处理图片（去除水印 + 生成手绘风格），请稍候...');
+            showToast('正在处理图片（去除水印 + 优化画质），请稍候...');
             
             // 读取文件
             const reader = new FileReader();
@@ -15141,29 +15155,30 @@
                     const cleanedData = removeWatermarkAdvanced(imageData, canvas1.width, canvas1.height);
                     ctx1.putImageData(cleanedData, 0, 0);
                     
-                    // 转换为Image对象以进行手绘风格转换
+                    // 转换为Image对象以进行简约风格转换
                     const cleanedImg = new Image();
                     cleanedImg.onload = async function() {
-                        // 步骤2：转换为手绘风格
-                        const handDrawnUrl = await convertToHandDrawnStyle(cleanedImg);
+                        // 步骤2：转换为简约风格
+                        const simpleUrl = await convertToSimpleStyle(cleanedImg);
                         
                         // 保存处理结果
                         const tempId = Date.now();
                         floorplanData[tempId] = {
-                            url: handDrawnUrl,
+                            url: simpleUrl,
                             originalUrl: canvas1.toDataURL('image/jpeg', 0.95),
                             title: file.name,
                             confirmed: true,
                             uploadedAt: new Date().toISOString(),
                             isLocal: true,
                             watermarkRemoved: true,
-                            handDrawnStyle: true
+                            simpleStyle: true
                         };
                         
-                        applyFloorplan(handDrawnUrl);
+                        // 立即应用到表单
+                        applyFloorplan(simpleUrl);
                         localStorage.setItem('floorplanData', JSON.stringify(floorplanData));
                         
-                        showToast('户型图已上传，已去除水印并转换为手绘风格');
+                        showToast('户型图已上传，已去除水印并优化画质');
                     };
                     cleanedImg.src = canvas1.toDataURL('image/jpeg', 0.95);
                 };
