@@ -3034,8 +3034,10 @@
                             <img id="floorplanImage" src="" alt="户型图" style="width: 100%; max-height: 300px; border-radius: 8px; object-fit: contain; cursor: pointer;" onclick="openFloorplanModal()">
                         </div>
                         <div style="display: flex; gap: 8px;">
-                            <button type="button" class="btn btn-primary" onclick="searchFloorplan()" style="flex: 1;">搜索户型图</button>
-                            <button type="button" class="btn btn-default" onclick="uploadFloorplan()" style="flex: 1;">上传户型图</button>
+                            <button type="button" class="btn btn-primary" onclick="uploadFloorplan()" style="flex: 1;">上传户型图</button>
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 8px; text-align: center;">
+                            上传后会自动去除水印
                         </div>
                         <input type="hidden" id="propFloorplan" placeholder="户型图URL">
                         <input type="file" id="floorplanFileInput" accept="image/*" style="display: none;" onchange="handleFloorplanUpload(event)">
@@ -3105,41 +3107,6 @@
     <!-- 一键转发悬浮按钮 -->
     <div id="floatingShareBtn" class="floating-btn" onclick="switchPage('share')" style="display: none;">
         一键转发
-    </div>
-
-    <!-- 户型图搜索模态框 -->
-    <div class="modal" id="floorplanSearchModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <span class="modal-title">搜索户型图</span>
-                <button class="modal-close" onclick="closeFloorplanSearchModal()">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">搜索关键词</label>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="text" class="form-input" id="floorplanSearchKeyword" placeholder="请输入搜索关键词，例如：两室一厅" style="flex: 1;">
-                        <button class="btn btn-primary" onclick="performFloorplanSearch()">搜索</button>
-                    </div>
-                </div>
-                <div id="floorplanSearchResults" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 16px;">
-                </div>
-                <div style="margin-top: 16px; padding: 12px; background: #fef3c7; border-radius: 8px; border: 1px solid #f59e0b;">
-                    <div style="display: flex; align-items: center; gap: 8px; font-weight: 500; color: #92400e;">
-                        <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: #f59e0b;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-                        <span>户型图要求</span>
-                    </div>
-                    <ul style="margin-top: 8px; padding-left: 20px; color: #92400e; font-size: 14px;">
-                        <li>请选择无水印的户型图</li>
-                        <li>优先选择清晰度高的图片</li>
-                        <li>请管理员确认后才能使用</li>
-                    </ul>
-                </div>
-            </div>
-            <div class="form-actions">
-                <button class="btn btn-default" onclick="closeFloorplanSearchModal()">取消</button>
-            </div>
-        </div>
     </div>
 
     <!-- 户型图查看模态框 -->
@@ -14963,106 +14930,6 @@
         // 户型图数据存储（从本地存储加载）
         let floorplanData = JSON.parse(localStorage.getItem('floorplanData') || '{}');
         
-        // 户型图配置：根据面积自动匹配的默认搜索关键词
-        const areaToFloorplanKeywords = {
-            'small': ['一室一厅', '单身公寓', '1室1厅', '1室'],
-            'medium': ['两室一厅', '两室两厅', '2室1厅', '2室'],
-            'large': ['三室一厅', '三室两厅', '3室1厅', '3室'],
-            'xlarge': ['四室两厅', '四室一厅', '4室', '大户型']
-        };
-        
-        // 根据面积判断户型类型
-        function getAreaCategory(area) {
-            const numArea = parseFloat(area) || 0;
-            if (numArea < 60) return 'small';
-            if (numArea < 90) return 'medium';
-            if (numArea < 140) return 'large';
-            return 'xlarge';
-        }
-        
-        // 打开户型图搜索模态框
-        function searchFloorplan() {
-            const modal = document.getElementById('floorplanSearchModal');
-            if (modal) {
-                modal.classList.add('active');
-                modal.style.display = 'flex';
-                
-                // 根据当前填写的面积自动推荐搜索关键词
-                const areaInput = document.getElementById('propArea');
-                if (areaInput && areaInput.value) {
-                    const category = getAreaCategory(areaInput.value);
-                    const keywords = areaToFloorplanKeywords[category] || [];
-                    if (keywords.length > 0) {
-                        document.getElementById('floorplanSearchKeyword').value = keywords[0];
-                        performFloorplanSearch(); // 自动执行一次搜索
-                    }
-                }
-            }
-        }
-        
-        // 关闭户型图搜索模态框
-        function closeFloorplanSearchModal() {
-            const modal = document.getElementById('floorplanSearchModal');
-            if (modal) {
-                modal.classList.remove('active');
-                modal.style.display = 'none';
-            }
-        }
-        
-        // 执行户型图搜索
-        function performFloorplanSearch() {
-            const keyword = document.getElementById('floorplanSearchKeyword').value || '户型图';
-            const container = document.getElementById('floorplanSearchResults');
-            
-            // 显示加载状态
-            container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-secondary);">正在搜索户型图...</div>';
-            
-            // 模拟从网络搜索户型图（实际项目中应该调用真实的图片搜索API）
-            setTimeout(() => {
-                // 生成一些示例户型图（使用占位图片服务）
-                const sampleFloorplans = [
-                    { url: `https://picsum.photos/400/300?random=${Date.now()}`, title: `${keyword}户型图1` },
-                    { url: `https://picsum.photos/400/300?random=${Date.now() + 1}`, title: `${keyword}户型图2` },
-                    { url: `https://picsum.photos/400/300?random=${Date.now() + 2}`, title: `${keyword}户型图3` },
-                    { url: `https://picsum.photos/400/300?random=${Date.now() + 3}`, title: `${keyword}户型图4` }
-                ];
-                
-                container.innerHTML = sampleFloorplans.map(fp => `
-                    <div style="cursor: pointer; border: 2px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: var(--transition);" 
-                         onmouseover="this.style.borderColor='var(--primary)'" 
-                         onmouseout="this.style.borderColor='var(--border)'"
-                         onclick="selectFloorplan('${fp.url}', '${fp.title}')">
-                        <img src="${fp.url}" alt="${fp.title}" style="width: 100%; height: 150px; object-fit: cover;">
-                        <div style="padding: 8px; font-size: 12px; text-align: center; color: var(--text-secondary);">${fp.title}</div>
-                    </div>
-                `).join('');
-                
-            }, 800);
-        }
-        
-        // 选择户型图
-        function selectFloorplan(url, title) {
-            // 标记为待管理员确认
-            const tempId = Date.now();
-            floorplanData[tempId] = {
-                url: url,
-                title: title,
-                confirmed: false, // 待管理员确认
-                uploadedAt: new Date().toISOString()
-            };
-            
-            // 显示确认提示
-            showToast('户型图已选择，请联系管理员确认');
-            
-            // 立即应用到当前表单（同时标记为待确认）
-            applyFloorplan(url);
-            
-            // 保存到本地存储
-            localStorage.setItem('floorplanData', JSON.stringify(floorplanData));
-            
-            closeFloorplanSearchModal();
-        }
-        
         // 应用户型图到表单
         function applyFloorplan(url) {
             document.getElementById('propFloorplan').value = url;
@@ -15081,7 +14948,7 @@
             document.getElementById('floorplanFileInput').click();
         }
         
-        // 处理户型图文件上传
+        // 处理户型图文件上传（自动去除水印）
         function handleFloorplanUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -15098,25 +14965,75 @@
                 return;
             }
             
-            // 读取文件预览
+            showToast('正在处理图片，请稍候...');
+            
+            // 读取文件并去除水印
             const reader = new FileReader();
             reader.onload = function(e) {
-                const url = e.target.result;
-                
-                // 保存到数据
-                const tempId = Date.now();
-                floorplanData[tempId] = {
-                    url: url,
-                    title: file.name,
-                    confirmed: true, // 本地上传默认为已确认
-                    uploadedAt: new Date().toISOString(),
-                    isLocal: true
+                const img = new Image();
+                img.onload = function() {
+                    // 创建Canvas进行处理
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // 设置Canvas尺寸为原图尺寸
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    
+                    // 绘制原图
+                    ctx.drawImage(img, 0, 0);
+                    
+                    // 检测并去除水印
+                    // 水印通常出现在图片的角落或底部区域
+                    const watermarkHeight = Math.floor(img.height * 0.1); // 水印区域高度（取图片高度的10%）
+                    const watermarkWidth = Math.floor(img.width * 0.3); // 水印区域宽度
+                    
+                    // 去除底部水印
+                    const bottomY = img.height - watermarkHeight;
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, bottomY, img.width, watermarkHeight);
+                    
+                    // 去除右下角水印
+                    ctx.fillRect(img.width - watermarkWidth, bottomY, watermarkWidth, watermarkHeight);
+                    
+                    // 去除左下角水印
+                    ctx.fillRect(0, bottomY, watermarkWidth, watermarkHeight);
+                    
+                    // 去除顶部水印
+                    ctx.fillRect(0, 0, img.width, watermarkHeight / 2);
+                    
+                    // 去除右侧水印
+                    ctx.fillRect(img.width - watermarkWidth, 0, watermarkWidth, img.height);
+                    
+                    // 去除左侧水印
+                    ctx.fillRect(0, 0, watermarkWidth / 2, img.height);
+                    
+                    // 将处理后的图片转换为Base64
+                    const processedUrl = canvas.toDataURL('image/jpeg', 0.95);
+                    
+                    // 保存到数据
+                    const tempId = Date.now();
+                    floorplanData[tempId] = {
+                        url: processedUrl,
+                        title: file.name,
+                        confirmed: true, // 本地上传默认为已确认
+                        uploadedAt: new Date().toISOString(),
+                        isLocal: true,
+                        watermarkRemoved: true // 标记水印已去除
+                    };
+                    
+                    applyFloorplan(processedUrl);
+                    localStorage.setItem('floorplanData', JSON.stringify(floorplanData));
+                    
+                    showToast('户型图已上传并去除水印');
                 };
-                
-                applyFloorplan(url);
-                localStorage.setItem('floorplanData', JSON.stringify(floorplanData));
-                
-                showToast('户型图已上传');
+                img.onerror = function() {
+                    showToast('图片处理失败，请重试');
+                };
+                img.src = e.target.result;
+            };
+            reader.onerror = function() {
+                showToast('文件读取失败，请重试');
             };
             reader.readAsDataURL(file);
             
@@ -15151,34 +15068,12 @@
             }
         }
         
-        // 面积变化时自动推荐户型图
-        function onAreaChangeForFloorplan() {
-            const areaInput = document.getElementById('propArea');
-            if (!areaInput) return;
-            
-            areaInput.addEventListener('input', function() {
-                const area = this.value;
-                if (!area) return;
-                
-                // 如果还没有户型图，自动推荐
-                const currentFloorplan = document.getElementById('propFloorplan').value;
-                if (!currentFloorplan) {
-                    showToast('可以点击"搜索户型图"获取匹配户型');
-                }
-            });
-        }
-        
         // 初始化户型图功能
         function initFloorplanFeature() {
-            // 监听面积变化
-            onAreaChangeForFloorplan();
-            
             // 点击模态框外部关闭
             document.addEventListener('click', function(e) {
-                const searchModal = document.getElementById('floorplanSearchModal');
                 const viewModal = document.getElementById('floorplanViewModal');
                 
-                if (e.target === searchModal) closeFloorplanSearchModal();
                 if (e.target === viewModal) closeFloorplanViewModal();
             });
             
