@@ -3382,6 +3382,9 @@
             const priceUnit = property.type === 'sale' ? '万元' : '元/月';
             const typeText = property.type === 'sale' ? '出售' : '出租';
             
+            // 从映射中获取户型图
+            const propertyFloorplan = getFloorplanForProperty(property.id);
+            
             // 判断是否为代理房源，决定调用哪个编辑函数
             const isAgentProperty = agentProperties.some(p => String(p.id) === String(propertyId));
             const editFunction = isAgentProperty ? 'editAgentProperty' : 'editProperty';
@@ -3434,14 +3437,14 @@
                             <span style="color: var(--text-secondary);">户型</span>
                             <span style="cursor: pointer; color: var(--primary); text-decoration: underline;" onclick="editPropertyField('${property.id}', 'layout', '户型', '${property.layout || ''}', 'select');">${property.layout || '未知户型'}</span>
                         </div>
-                        ${property.floorplan ? `
+                        ${propertyFloorplan ? `
                             <div style="margin-top: 16px;">
                                 <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                                     <span style="color: var(--text-secondary);">户型图</span>
                                     <span style="cursor: pointer; color: var(--primary); text-decoration: underline;" onclick="openFloorplanViewFromDetail('${property.id}')">查看大图</span>
                                 </div>
                                 <div style="border-radius: var(--radius); overflow: hidden; cursor: pointer;" onclick="openFloorplanViewFromDetail('${property.id}')">
-                                    <img src="${property.floorplan}" alt="户型图" style="width: 100%; max-height: 250px; object-fit: contain; background: var(--background);">
+                                    <img src="${propertyFloorplan}" alt="户型图" style="width: 100%; max-height: 250px; object-fit: contain; background: var(--background);">
                                 </div>
                                 <div style="margin-top: 8px; font-size: 12px; color: var(--text-tertiary); text-align: center;">
                                     点击查看大图
@@ -8856,7 +8859,6 @@
                     type: property.type,
                     description: property.description,
                     remark: property.remark,
-                    floorplan: property.floorplan || null,
                     created_at: property.created_at || new Date().toISOString(),
                     updated_at: property.updated_at || new Date().toISOString(),
                     // 总是添加可选字段，即使为空
@@ -8925,7 +8927,6 @@
                         type: property.type || 'rent',
                         description: property.description || '',
                         remark: property.remark || '',
-                        floorplan: property.floorplan || null,
                         created_at: property.created_at || new Date().toISOString(),
                         updated_at: new Date().toISOString(),
                         primary_school: primarySchool || property.primarySchool || property.primary_school || '',
@@ -9017,6 +9018,11 @@
                 
                 // 自动学习并更新数据映射关系
                 learnPropertyData(community, primarySchool, middleSchool, region, layout, decoration, floor);
+                
+                // 保存户型图与房源的关联
+                if (floorplanUrl && property.id) {
+                    saveFloorplanForProperty(property.id, floorplanUrl);
+                }
                 
                 // 重新加载数据
                 try {
@@ -9127,9 +9133,10 @@
             document.getElementById('propDesc').value = property.description || '';
             document.getElementById('propRemark').value = property.remark || '';
             
-            // 加载户型图
-            if (property.floorplan) {
-                applyFloorplan(property.floorplan);
+            // 加载户型图（从映射中获取）
+            const savedFloorplan = getFloorplanForProperty(property.id);
+            if (savedFloorplan) {
+                applyFloorplan(savedFloorplan);
             } else {
                 // 清空户型图预览
                 document.getElementById('propFloorplan').value = '';
@@ -15225,11 +15232,10 @@
         
         // 从房源详情打开户型图预览
         function openFloorplanViewFromDetail(propertyId) {
-            // 从房源列表中查找对应的房源
-            const property = properties.find(p => String(p.id) === String(propertyId)) || 
-                           agentProperties.find(p => String(p.id) === String(propertyId));
+            // 从映射中获取户型图
+            const floorplanUrl = getFloorplanForProperty(propertyId);
             
-            if (!property || !property.floorplan) {
+            if (!floorplanUrl) {
                 showToast('暂无户型图');
                 return;
             }
@@ -15238,14 +15244,58 @@
             const img = document.getElementById('floorplanViewImage');
             
             if (modal && img) {
-                img.src = property.floorplan;
+                img.src = floorplanUrl;
                 modal.classList.add('active');
                 modal.style.display = 'flex';
             }
         }
         
+        // 户型图与房源ID关联管理
+        let floorplanMap = {}; // 存储 { propertyId: floorplanUrl }
+        
+        // 从本地存储加载户型图映射
+        function loadFloorplanMap() {
+            try {
+                const saved = localStorage.getItem('floorplanMap');
+                if (saved) {
+                    floorplanMap = JSON.parse(saved);
+                }
+            } catch (e) {
+                console.error('加载户型图映射失败:', e);
+                floorplanMap = {};
+            }
+        }
+        
+        // 保存户型图映射到本地存储
+        function saveFloorplanMap() {
+            try {
+                localStorage.setItem('floorplanMap', JSON.stringify(floorplanMap));
+            } catch (e) {
+                console.error('保存户型图映射失败:', e);
+            }
+        }
+        
+        // 保存房源与户型图的关联
+        function saveFloorplanForProperty(propertyId, floorplanUrl) {
+            if (propertyId && floorplanUrl) {
+                floorplanMap[propertyId] = floorplanUrl;
+                saveFloorplanMap();
+            }
+        }
+        
+        // 获取房源的户型图
+        function getFloorplanForProperty(propertyId) {
+            if (propertyId) {
+                return floorplanMap[propertyId] || null;
+            }
+            return null;
+        }
+        
         // 初始化户型图功能
         function initFloorplanFeature() {
+            // 加载户型图映射
+            loadFloorplanMap();
+            
             // 点击模态框外部关闭
             document.addEventListener('click', function(e) {
                 const viewModal = document.getElementById('floorplanViewModal');
