@@ -3037,7 +3037,7 @@
                             <button type="button" class="btn btn-primary" onclick="uploadFloorplan()" style="flex: 1;">上传户型图</button>
                         </div>
                         <div style="font-size: 12px; color: var(--text-secondary); margin-top: 8px; text-align: center;">
-                            上传后会自动去除水印
+                            上传后自动去除水印并生成手绘风格
                         </div>
                         <input type="hidden" id="propFloorplan" placeholder="户型图URL">
                         <input type="file" id="floorplanFileInput" accept="image/*" style="display: none;" onchange="handleFloorplanUpload(event)">
@@ -3434,6 +3434,27 @@
                             <span style="color: var(--text-secondary);">户型</span>
                             <span style="cursor: pointer; color: var(--primary); text-decoration: underline;" onclick="editPropertyField('${property.id}', 'layout', '户型', '${property.layout || ''}', 'select');">${property.layout || '未知户型'}</span>
                         </div>
+                        ${property.floorplan ? `
+                            <div style="margin-top: 16px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <span style="color: var(--text-secondary);">户型图</span>
+                                    <span style="cursor: pointer; color: var(--primary); text-decoration: underline;" onclick="openFloorplanViewFromDetail('${property.id}')">查看大图</span>
+                                </div>
+                                <div style="border-radius: var(--radius); overflow: hidden; cursor: pointer;" onclick="openFloorplanViewFromDetail('${property.id}')">
+                                    <img src="${property.floorplan}" alt="户型图" style="width: 100%; max-height: 250px; object-fit: contain; background: var(--background);">
+                                </div>
+                                <div style="margin-top: 8px; font-size: 12px; color: var(--text-tertiary); text-align: center;">
+                                    点击查看大图
+                                </div>
+                            </div>
+                        ` : `
+                            <div style="margin-top: 16px;">
+                                <div style="color: var(--text-secondary); margin-bottom: 8px;">户型图</div>
+                                <div style="background: var(--background); border-radius: var(--radius); padding: 24px; text-align: center; color: var(--text-tertiary);">
+                                    暂无户型图
+                                </div>
+                            </div>
+                        `}
                         <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                             <span style="color: var(--text-secondary);">面积</span>
                             <span style="cursor: pointer; color: var(--primary); text-decoration: underline;" onclick="editPropertyField('${property.id}', 'area', '面积', '${property.area || ''}', 'number');">${property.area ? property.area + '平' : '未知面积'}</span>
@@ -14944,7 +14965,144 @@
             document.getElementById('floorplanFileInput').click();
         }
         
-        // 处理户型图文件上传（自动去除水印）
+        // 高级去水印算法
+        function removeWatermarkAdvanced(imageData, width, height) {
+            const data = imageData.data;
+            
+            // 水印检测区域（通常是边缘区域）
+            const edgeHeight = Math.floor(height * 0.12); // 检测边缘12%的区域
+            const edgeWidth = Math.floor(width * 0.25); // 检测边缘25%的区域
+            
+            // 遍历边缘区域，检测并去除水印
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const idx = (y * width + x) * 4;
+                    
+                    // 检查是否在边缘区域
+                    const isBottomEdge = y > height - edgeHeight;
+                    const isTopEdge = y < edgeHeight / 2;
+                    const isLeftEdge = x < edgeWidth / 2;
+                    const isRightEdge = x > width - edgeWidth;
+                    
+                    if (isBottomEdge || isTopEdge || isLeftEdge || isRightEdge) {
+                        // 检测是否为水印颜色（通常是较深的颜色）
+                        const r = data[idx];
+                        const g = data[idx + 1];
+                        const b = data[idx + 2];
+                        const a = data[idx + 3];
+                        
+                        // 如果颜色饱和度低且亮度较高，可能是水印文字
+                        const brightness = (r + g + b) / 3;
+                        const saturation = Math.max(r, g, b) - Math.min(r, g, b);
+                        
+                        if (saturation < 50 && brightness > 200) {
+                            // 使用周围像素的平均值替换
+                            let sumR = 0, sumG = 0, sumB = 0, count = 0;
+                            
+                            // 从中心区域获取周围像素
+                            for (let dy = -5; dy <= 5; dy += 2) {
+                                for (let dx = -5; dx <= 5; dx += 2) {
+                                    const nx = x + dx;
+                                    const ny = y + dy;
+                                    if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                                        // 避开边缘区域
+                                        if (!(ny > height - edgeHeight || ny < edgeHeight / 2 || 
+                                              nx < edgeWidth / 2 || nx > width - edgeWidth)) {
+                                            const nIdx = (ny * width + nx) * 4;
+                                            sumR += data[nIdx];
+                                            sumG += data[nIdx + 1];
+                                            sumB += data[nIdx + 2];
+                                            count++;
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            if (count > 0) {
+                                data[idx] = Math.round(sumR / count);
+                                data[idx + 1] = Math.round(sumG / count);
+                                data[idx + 2] = Math.round(sumB / count);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return imageData;
+        }
+        
+        // 手绘风格转换
+        function convertToHandDrawnStyle(img) {
+            return new Promise((resolve) => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                canvas.width = img.width;
+                canvas.height = img.height;
+                
+                // 绘制原图
+                ctx.drawImage(img, 0, 0);
+                
+                // 获取图像数据
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imageData.data;
+                const width = imageData.width;
+                const height = imageData.height;
+                
+                // 转换为灰度
+                const gray = new Float32Array(width * height);
+                for (let i = 0; i < width * height; i++) {
+                    const idx = i * 4;
+                    gray[i] = data[idx] * 0.299 + data[idx + 1] * 0.587 + data[idx + 2] * 0.114;
+                }
+                
+                // Sobel边缘检测
+                const edges = new Float32Array(width * height);
+                const sobelX = [-1, 0, 1, -2, 0, 2, -1, 0, 1];
+                const sobelY = [-1, -2, -1, 0, 0, 0, 1, 2, 1];
+                
+                for (let y = 1; y < height - 1; y++) {
+                    for (let x = 1; x < width - 1; x++) {
+                        let gx = 0, gy = 0;
+                        for (let ky = -1; ky <= 1; ky++) {
+                            for (let kx = -1; kx <= 1; kx++) {
+                                const pixel = gray[(y + ky) * width + (x + kx)];
+                                gx += pixel * sobelX[(ky + 1) * 3 + (kx + 1)];
+                                gy += pixel * sobelY[(ky + 1) * 3 + (kx + 1)];
+                            }
+                        }
+                        edges[y * width + x] = Math.sqrt(gx * gx + gy * gy);
+                    }
+                }
+                
+                // 创建手绘效果
+                const resultData = ctx.createImageData(width, height);
+                for (let i = 0; i < width * height; i++) {
+                    const idx = i * 4;
+                    const edge = Math.min(255, edges[i] * 2);
+                    
+                    // 添加纸张纹理效果
+                    const noise = (Math.random() - 0.5) * 10;
+                    const value = Math.max(0, Math.min(255, gray[i] + noise));
+                    
+                    // 边缘变深色，非边缘变浅色
+                    const factor = 1 - edge / 255 * 0.3;
+                    const finalValue = Math.max(0, Math.min(255, value * factor + noise));
+                    
+                    resultData.data[idx] = finalValue;
+                    resultData.data[idx + 1] = finalValue;
+                    resultData.data[idx + 2] = finalValue;
+                    resultData.data[idx + 3] = 255;
+                }
+                
+                ctx.putImageData(resultData, 0, 0);
+                
+                // 返回手绘风格图片
+                resolve(canvas.toDataURL('image/png', 0.95));
+            });
+        }
+        
+        // 处理户型图文件上传（高级去水印 + 手绘风格转换）
         function handleFloorplanUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -14961,67 +15119,53 @@
                 return;
             }
             
-            showToast('正在处理图片，请稍候...');
+            showToast('正在处理图片（去除水印 + 生成手绘风格），请稍候...');
             
-            // 读取文件并去除水印
+            // 读取文件
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = async function(e) {
                 const img = new Image();
-                img.onload = function() {
-                    // 创建Canvas进行处理
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
+                img.onload = async function() {
+                    // 步骤1：创建Canvas进行去水印处理
+                    const canvas1 = document.createElement('canvas');
+                    const ctx1 = canvas1.getContext('2d');
                     
-                    // 设置Canvas尺寸为原图尺寸
-                    canvas.width = img.width;
-                    canvas.height = img.height;
+                    canvas1.width = img.width;
+                    canvas1.height = img.height;
+                    ctx1.drawImage(img, 0, 0);
                     
-                    // 绘制原图
-                    ctx.drawImage(img, 0, 0);
+                    // 获取图像数据
+                    const imageData = ctx1.getImageData(0, 0, canvas1.width, canvas1.height);
                     
-                    // 检测并去除水印
-                    // 水印通常出现在图片的角落或底部区域
-                    const watermarkHeight = Math.floor(img.height * 0.1); // 水印区域高度（取图片高度的10%）
-                    const watermarkWidth = Math.floor(img.width * 0.3); // 水印区域宽度
+                    // 执行高级去水印
+                    const cleanedData = removeWatermarkAdvanced(imageData, canvas1.width, canvas1.height);
+                    ctx1.putImageData(cleanedData, 0, 0);
                     
-                    // 去除底部水印
-                    const bottomY = img.height - watermarkHeight;
-                    ctx.fillStyle = 'white';
-                    ctx.fillRect(0, bottomY, img.width, watermarkHeight);
-                    
-                    // 去除右下角水印
-                    ctx.fillRect(img.width - watermarkWidth, bottomY, watermarkWidth, watermarkHeight);
-                    
-                    // 去除左下角水印
-                    ctx.fillRect(0, bottomY, watermarkWidth, watermarkHeight);
-                    
-                    // 去除顶部水印
-                    ctx.fillRect(0, 0, img.width, watermarkHeight / 2);
-                    
-                    // 去除右侧水印
-                    ctx.fillRect(img.width - watermarkWidth, 0, watermarkWidth, img.height);
-                    
-                    // 去除左侧水印
-                    ctx.fillRect(0, 0, watermarkWidth / 2, img.height);
-                    
-                    // 将处理后的图片转换为Base64
-                    const processedUrl = canvas.toDataURL('image/jpeg', 0.95);
-                    
-                    // 保存到数据
-                    const tempId = Date.now();
-                    floorplanData[tempId] = {
-                        url: processedUrl,
-                        title: file.name,
-                        confirmed: true, // 本地上传默认为已确认
-                        uploadedAt: new Date().toISOString(),
-                        isLocal: true,
-                        watermarkRemoved: true // 标记水印已去除
+                    // 转换为Image对象以进行手绘风格转换
+                    const cleanedImg = new Image();
+                    cleanedImg.onload = async function() {
+                        // 步骤2：转换为手绘风格
+                        const handDrawnUrl = await convertToHandDrawnStyle(cleanedImg);
+                        
+                        // 保存处理结果
+                        const tempId = Date.now();
+                        floorplanData[tempId] = {
+                            url: handDrawnUrl,
+                            originalUrl: canvas1.toDataURL('image/jpeg', 0.95),
+                            title: file.name,
+                            confirmed: true,
+                            uploadedAt: new Date().toISOString(),
+                            isLocal: true,
+                            watermarkRemoved: true,
+                            handDrawnStyle: true
+                        };
+                        
+                        applyFloorplan(handDrawnUrl);
+                        localStorage.setItem('floorplanData', JSON.stringify(floorplanData));
+                        
+                        showToast('户型图已上传，已去除水印并转换为手绘风格');
                     };
-                    
-                    applyFloorplan(processedUrl);
-                    localStorage.setItem('floorplanData', JSON.stringify(floorplanData));
-                    
-                    showToast('户型图已上传并去除水印');
+                    cleanedImg.src = canvas1.toDataURL('image/jpeg', 0.95);
                 };
                 img.onerror = function() {
                     showToast('图片处理失败，请重试');
@@ -15061,6 +15205,27 @@
             if (modal) {
                 modal.classList.remove('active');
                 modal.style.display = 'none';
+            }
+        }
+        
+        // 从房源详情打开户型图预览
+        function openFloorplanViewFromDetail(propertyId) {
+            // 从房源列表中查找对应的房源
+            const property = properties.find(p => String(p.id) === String(propertyId)) || 
+                           agentProperties.find(p => String(p.id) === String(propertyId));
+            
+            if (!property || !property.floorplan) {
+                showToast('暂无户型图');
+                return;
+            }
+            
+            const modal = document.getElementById('floorplanViewModal');
+            const img = document.getElementById('floorplanViewImage');
+            
+            if (modal && img) {
+                img.src = property.floorplan;
+                modal.classList.add('active');
+                modal.style.display = 'flex';
             }
         }
         
