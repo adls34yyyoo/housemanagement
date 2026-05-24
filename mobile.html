@@ -14988,15 +14988,15 @@
             document.getElementById('floorplanFileInput').click();
         }
         
-        // 高级去水印算法 - 增强版
+        // 高级去水印算法 - 全面版（含中间水印检测）
         function removeWatermarkAdvanced(imageData, width, height) {
             const data = imageData.data;
             
-            // 水印检测区域（检测更大的边缘区域）
-            const edgeHeight = Math.floor(height * 0.15); // 检测15%的边缘
-            const edgeWidth = Math.floor(width * 0.3); // 检测30%的边缘
+            // 边缘检测区域
+            const edgeHeight = Math.floor(height * 0.15);
+            const edgeWidth = Math.floor(width * 0.3);
             
-            // 第一步：识别并标记水印像素
+            // 第一步：识别并标记水印像素（全图检测）
             const watermarkMask = new Uint8Array(width * height);
             
             for (let y = 0; y < height; y++) {
@@ -15008,67 +15008,103 @@
                     const isTopEdge = y < edgeHeight;
                     const isLeftEdge = x < edgeWidth;
                     const isRightEdge = x > width - edgeWidth;
+                    const isEdgeArea = isBottomEdge || isTopEdge || isLeftEdge || isRightEdge;
                     
-                    if (isBottomEdge || isTopEdge || isLeftEdge || isRightEdge) {
-                        const r = data[idx];
-                        const g = data[idx + 1];
-                        const b = data[idx + 2];
-                        
-                        // 更全面的水印检测
-                        const brightness = (r + g + b) / 3;
-                        const saturation = Math.max(r, g, b) - Math.min(r, g, b);
-                        
-                        // 检测1：半透明/浅灰色水印
-                        const isSemiTransparent = saturation < 80 && brightness > 150;
-                        
-                        // 检测2：灰度文字水印
-                        const isGrayText = saturation < 50 && brightness > 180;
-                        
-                        // 检测3：绿色/蓝色水印（像链家这类）
-                        const isBrandColor = (g > r + 30 && g > b + 20) ||  // 偏绿
-                                            (b > r + 30 && b > g + 20);     // 偏蓝
-                        
-                        // 检测4：颜色相近的水印
-                        const isSimilarColor = Math.abs(r - g) < 40 && Math.abs(g - b) < 40 && Math.abs(r - b) < 40;
-                        
-                        // 检测5：结合邻居检测（水印通常成片出现）
-                        let neighborWatermarks = 0;
-                        for (let dy = -2; dy <= 2; dy++) {
-                            for (let dx = -2; dx <= 2; dx++) {
-                                const ny = y + dy;
-                                const nx = x + dx;
-                                if (ny > 0 && ny < height && nx > 0 && nx < width) {
-                                    if (watermarkMask[ny * width + nx] === 1) {
-                                        neighborWatermarks++;
-                                    }
+                    const r = data[idx];
+                    const g = data[idx + 1];
+                    const b = data[idx + 2];
+                    
+                    // 全面的水印检测
+                    const brightness = (r + g + b) / 3;
+                    const saturation = Math.max(r, g, b) - Math.min(r, g, b);
+                    
+                    // 检测1：半透明/浅灰色水印（边缘区域更敏感）
+                    let isSemiTransparent = false;
+                    if (isEdgeArea) {
+                        isSemiTransparent = saturation < 80 && brightness > 150;
+                    }
+                    
+                    // 检测2：灰度文字水印（边缘区域更敏感）
+                    let isGrayText = false;
+                    if (isEdgeArea) {
+                        isGrayText = saturation < 50 && brightness > 180;
+                    }
+                    
+                    // 检测3：绿色/蓝色水印（品牌水印，全图检测，更严格）
+                    const isBrandGreen = g > r + 25 && g > b + 15 && saturation > 30;
+                    const isBrandBlue = b > r + 25 && b > g + 15 && saturation > 30;
+                    const isBrandColor = isBrandGreen || isBrandBlue;
+                    
+                    // 检测4：半透明叠加检测（全图检测）
+                    // 计算与相邻像素的相似度
+                    let hasSimilarNeighbors = false;
+                    let similarCount = 0;
+                    for (let dy = -1; dy <= 1; dy++) {
+                        for (let dx = -1; dx <= 1; dx++) {
+                            if (dx === 0 && dy === 0) continue;
+                            const ny = y + dy;
+                            const nx = x + dx;
+                            if (ny > 0 && ny < height && nx > 0 && nx < width) {
+                                const nIdx = (ny * width + nx) * 4;
+                                const nr = data[nIdx];
+                                const ng = data[nIdx + 1];
+                                const nb = data[nIdx + 2];
+                                const diff = Math.abs(r - nr) + Math.abs(g - ng) + Math.abs(b - nb);
+                                if (diff < 60) {
+                                    similarCount++;
                                 }
                             }
                         }
-                        
-                        // 如果附近有很多水印像素，这个像素也很可能是水印
-                        const isNearWatermark = neighborWatermarks >= 3;
-                        
-                        if (isSemiTransparent || isGrayText || isBrandColor || 
-                            (isSimilarColor && brightness > 160) || isNearWatermark) {
-                            watermarkMask[y * width + x] = 1;
+                    }
+                    
+                    // 检测5：颜色相近的水印
+                    const isSimilarColor = Math.abs(r - g) < 35 && Math.abs(g - b) < 35 && Math.abs(r - b) < 35;
+                    
+                    // 检测6：结合邻居检测（水印通常成片出现）
+                    let neighborWatermarks = 0;
+                    for (let dy = -2; dy <= 2; dy++) {
+                        for (let dx = -2; dx <= 2; dx++) {
+                            const ny = y + dy;
+                            const nx = x + dx;
+                            if (ny > 0 && ny < height && nx > 0 && nx < width) {
+                                if (watermarkMask[ny * width + nx] === 1) {
+                                    neighborWatermarks++;
+                                }
+                            }
                         }
+                    }
+                    const isNearWatermark = neighborWatermarks >= 2;
+                    
+                    // 品牌水印检测（全图）
+                    const isBrandWatermark = isBrandColor || (isSimilarColor && similarCount >= 5);
+                    
+                    // 边缘区域水印检测
+                    const isEdgeWatermark = isSemiTransparent || isGrayText || 
+                                           (isSimilarColor && brightness > 160);
+                    
+                    if (isBrandWatermark || (isEdgeArea && isEdgeWatermark) || isNearWatermark) {
+                        watermarkMask[y * width + x] = 1;
                     }
                 }
             }
             
             // 第二步：扩展水印区域（连接附近的水印像素）
             const expandedMask = new Uint8Array(watermarkMask);
-            for (let i = 0; i < 2; i++) { // 膨胀两次
-                for (let y = 1; y < height - 1; y++) {
-                    for (let x = 1; x < width - 1; x++) {
+            for (let i = 0; i < 3; i++) { // 膨胀三次
+                for (let y = 2; y < height - 2; y++) {
+                    for (let x = 2; x < width - 2; x++) {
                         if (watermarkMask[y * width + x] === 1) {
-                            for (let dy = -2; dy <= 2; dy++) {
-                                for (let dx = -2; dx <= 2; dx++) {
+                            for (let dy = -3; dy <= 3; dy++) {
+                                for (let dx = -3; dx <= 3; dx++) {
                                     expandedMask[(y + dy) * width + (x + dx)] = 1;
                                 }
                             }
                         }
                     }
+                }
+                // 更新watermarkMask用于下一轮
+                for (let i = 0; i < width * height; i++) {
+                    watermarkMask[i] = expandedMask[i];
                 }
             }
             
@@ -15081,8 +15117,8 @@
                         // 使用更大的采样窗口获取周围像素
                         let sumR = 0, sumG = 0, sumB = 0, count = 0;
                         
-                        for (let dy = -15; dy <= 15; dy += 2) {
-                            for (let dx = -15; dx <= 15; dx += 2) {
+                        for (let dy = -20; dy <= 20; dy += 2) {
+                            for (let dx = -20; dx <= 20; dx += 2) {
                                 const nx = x + dx;
                                 const ny = y + dy;
                                 
@@ -15110,16 +15146,16 @@
             }
             
             // 第四步：边缘裁剪（彻底移除边缘水印）
-            const cropTop = Math.floor(edgeHeight * 0.5);
-            const cropBottom = height - Math.floor(edgeHeight * 0.7);
-            const cropLeft = Math.floor(edgeWidth * 0.4);
-            const cropRight = width - Math.floor(edgeWidth * 0.6);
+            const cropTop = Math.floor(edgeHeight * 0.4);
+            const cropBottom = height - Math.floor(edgeHeight * 0.6);
+            const cropLeft = Math.floor(edgeWidth * 0.3);
+            const cropRight = width - Math.floor(edgeWidth * 0.5);
             
             // 填充顶部
             for (let y = 0; y < cropTop; y++) {
                 for (let x = 0; x < width; x++) {
                     const idx = (y * width + x) * 4;
-                    const sourceIdx = ((cropTop + 2) * width + x) * 4;
+                    const sourceIdx = ((cropTop + 3) * width + x) * 4;
                     data[idx] = data[sourceIdx];
                     data[idx + 1] = data[sourceIdx + 1];
                     data[idx + 2] = data[sourceIdx + 2];
@@ -15130,7 +15166,7 @@
             for (let y = cropBottom; y < height; y++) {
                 for (let x = 0; x < width; x++) {
                     const idx = (y * width + x) * 4;
-                    const sourceIdx = ((cropBottom - 3) * width + x) * 4;
+                    const sourceIdx = ((cropBottom - 4) * width + x) * 4;
                     data[idx] = data[sourceIdx];
                     data[idx + 1] = data[sourceIdx + 1];
                     data[idx + 2] = data[sourceIdx + 2];
@@ -15141,7 +15177,7 @@
             for (let y = cropTop; y < cropBottom; y++) {
                 for (let x = 0; x < cropLeft; x++) {
                     const idx = (y * width + x) * 4;
-                    const sourceIdx = (y * width + cropLeft + 3) * 4;
+                    const sourceIdx = (y * width + cropLeft + 4) * 4;
                     data[idx] = data[sourceIdx];
                     data[idx + 1] = data[sourceIdx + 1];
                     data[idx + 2] = data[sourceIdx + 2];
@@ -15152,7 +15188,7 @@
             for (let y = cropTop; y < cropBottom; y++) {
                 for (let x = cropRight; x < width; x++) {
                     const idx = (y * width + x) * 4;
-                    const sourceIdx = (y * width + cropRight - 4) * 4;
+                    const sourceIdx = (y * width + cropRight - 5) * 4;
                     data[idx] = data[sourceIdx];
                     data[idx + 1] = data[sourceIdx + 1];
                     data[idx + 2] = data[sourceIdx + 2];
