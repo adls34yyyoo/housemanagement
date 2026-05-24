@@ -14988,210 +14988,171 @@
             document.getElementById('floorplanFileInput').click();
         }
         
-        // 高级去水印算法 - 全面版（含中间水印检测）
+        // 强力去水印算法 - 链家专版
         function removeWatermarkAdvanced(imageData, width, height) {
             const data = imageData.data;
             
-            // 边缘检测区域
-            const edgeHeight = Math.floor(height * 0.15);
-            const edgeWidth = Math.floor(width * 0.3);
+            // 第一步：智能裁剪外围量尺（裁剪掉外围10%）
+            const cropPercent = 0.10;
+            const cropLeft = Math.floor(width * cropPercent);
+            const cropRight = width - Math.floor(width * cropPercent);
+            const cropTop = Math.floor(height * cropPercent);
+            const cropBottom = height - Math.floor(height * cropPercent);
             
-            // 第一步：识别并标记水印像素（全图检测）
+            // 创建水印掩码
             const watermarkMask = new Uint8Array(width * height);
             
+            // 第二步：强力检测链家绿色水印（全图检测）
             for (let y = 0; y < height; y++) {
                 for (let x = 0; x < width; x++) {
                     const idx = (y * width + x) * 4;
-                    
-                    // 检查是否在边缘区域
-                    const isBottomEdge = y > height - edgeHeight;
-                    const isTopEdge = y < edgeHeight;
-                    const isLeftEdge = x < edgeWidth;
-                    const isRightEdge = x > width - edgeWidth;
-                    const isEdgeArea = isBottomEdge || isTopEdge || isLeftEdge || isRightEdge;
-                    
                     const r = data[idx];
                     const g = data[idx + 1];
                     const b = data[idx + 2];
                     
-                    // 全面的水印检测
+                    // 链家绿色水印检测（更严格）
+                    const greenDominant = g > r + 20 && g > b + 15;
+                    const hasSaturation = (Math.max(r, g, b) - Math.min(r, g, b)) > 25;
+                    const notTooBright = (r + g + b) / 3 < 220;
+                    
+                    const isLianjiaGreen = greenDominant && hasSaturation && notTooBright;
+                    
+                    // 蓝色水印检测
+                    const blueDominant = b > r + 20 && b > g + 15;
+                    const isBlueWatermark = blueDominant && hasSaturation;
+                    
+                    // 半透明水印检测
                     const brightness = (r + g + b) / 3;
                     const saturation = Math.max(r, g, b) - Math.min(r, g, b);
+                    const isSemiTransparent = saturation < 60 && brightness > 140;
                     
-                    // 检测1：半透明/浅灰色水印（边缘区域更敏感）
-                    let isSemiTransparent = false;
-                    if (isEdgeArea) {
-                        isSemiTransparent = saturation < 80 && brightness > 150;
-                    }
+                    // 检查是否在外围裁剪区域内
+                    const isOuterArea = x < cropLeft || x > cropRight || y < cropTop || y > cropBottom;
                     
-                    // 检测2：灰度文字水印（边缘区域更敏感）
-                    let isGrayText = false;
-                    if (isEdgeArea) {
-                        isGrayText = saturation < 50 && brightness > 180;
-                    }
-                    
-                    // 检测3：绿色/蓝色水印（品牌水印，全图检测，更严格）
-                    const isBrandGreen = g > r + 25 && g > b + 15 && saturation > 30;
-                    const isBrandBlue = b > r + 25 && b > g + 15 && saturation > 30;
-                    const isBrandColor = isBrandGreen || isBrandBlue;
-                    
-                    // 检测4：半透明叠加检测（全图检测）
-                    // 计算与相邻像素的相似度
-                    let hasSimilarNeighbors = false;
-                    let similarCount = 0;
-                    for (let dy = -1; dy <= 1; dy++) {
-                        for (let dx = -1; dx <= 1; dx++) {
-                            if (dx === 0 && dy === 0) continue;
-                            const ny = y + dy;
-                            const nx = x + dx;
-                            if (ny > 0 && ny < height && nx > 0 && nx < width) {
-                                const nIdx = (ny * width + nx) * 4;
-                                const nr = data[nIdx];
-                                const ng = data[nIdx + 1];
-                                const nb = data[nIdx + 2];
-                                const diff = Math.abs(r - nr) + Math.abs(g - ng) + Math.abs(b - nb);
-                                if (diff < 60) {
-                                    similarCount++;
-                                }
-                            }
-                        }
-                    }
-                    
-                    // 检测5：颜色相近的水印
-                    const isSimilarColor = Math.abs(r - g) < 35 && Math.abs(g - b) < 35 && Math.abs(r - b) < 35;
-                    
-                    // 检测6：结合邻居检测（水印通常成片出现）
-                    let neighborWatermarks = 0;
-                    for (let dy = -2; dy <= 2; dy++) {
-                        for (let dx = -2; dx <= 2; dx++) {
+                    // 检查邻居中是否有链家水印（传播检测）
+                    let hasLianjiaNeighbor = false;
+                    for (let dy = -3; dy <= 3; dy++) {
+                        for (let dx = -3; dx <= 3; dx++) {
                             const ny = y + dy;
                             const nx = x + dx;
                             if (ny > 0 && ny < height && nx > 0 && nx < width) {
                                 if (watermarkMask[ny * width + nx] === 1) {
-                                    neighborWatermarks++;
+                                    hasLianjiaNeighbor = true;
+                                    break;
                                 }
                             }
                         }
+                        if (hasLianjiaNeighbor) break;
                     }
-                    const isNearWatermark = neighborWatermarks >= 2;
                     
-                    // 品牌水印检测（全图）
-                    const isBrandWatermark = isBrandColor || (isSimilarColor && similarCount >= 5);
-                    
-                    // 边缘区域水印检测
-                    const isEdgeWatermark = isSemiTransparent || isGrayText || 
-                                           (isSimilarColor && brightness > 160);
-                    
-                    if (isBrandWatermark || (isEdgeArea && isEdgeWatermark) || isNearWatermark) {
+                    // 标记水印
+                    if (isLianjiaGreen || isBlueWatermark || isOuterArea || 
+                        (isSemiTransparent && (x < width*0.3 || x > width*0.7)) || 
+                        hasLianjiaNeighbor) {
                         watermarkMask[y * width + x] = 1;
                     }
                 }
             }
             
-            // 第二步：扩展水印区域（连接附近的水印像素）
+            // 第三步：多轮膨胀，确保水印区域完整
             const expandedMask = new Uint8Array(watermarkMask);
-            for (let i = 0; i < 3; i++) { // 膨胀三次
-                for (let y = 2; y < height - 2; y++) {
-                    for (let x = 2; x < width - 2; x++) {
-                        if (watermarkMask[y * width + x] === 1) {
-                            for (let dy = -3; dy <= 3; dy++) {
-                                for (let dx = -3; dx <= 3; dx++) {
-                                    expandedMask[(y + dy) * width + (x + dx)] = 1;
+            for (let round = 0; round < 4; round++) {
+                const tempMask = new Uint8Array(expandedMask);
+                for (let y = 3; y < height - 3; y++) {
+                    for (let x = 3; x < width - 3; x++) {
+                        if (expandedMask[y * width + x] === 1) {
+                            for (let dy = -4; dy <= 4; dy++) {
+                                for (let dx = -4; dx <= 4; dx++) {
+                                    tempMask[(y + dy) * width + (x + dx)] = 1;
                                 }
                             }
                         }
                     }
                 }
-                // 更新watermarkMask用于下一轮
+                // 更新掩码
                 for (let i = 0; i < width * height; i++) {
-                    watermarkMask[i] = expandedMask[i];
+                    expandedMask[i] = tempMask[i];
                 }
             }
             
-            // 第三步：使用邻域插值修复水印区域
+            // 第四步：智能修复水印区域（改进版）
             for (let y = 0; y < height; y++) {
                 for (let x = 0; x < width; x++) {
                     if (expandedMask[y * width + x] === 1) {
                         const idx = (y * width + x) * 4;
                         
-                        // 使用更大的采样窗口获取周围像素
-                        let sumR = 0, sumG = 0, sumB = 0, count = 0;
-                        
-                        for (let dy = -20; dy <= 20; dy += 2) {
-                            for (let dx = -20; dx <= 20; dx += 2) {
+                        // 收集非水印邻居像素
+                        const neighborColors = [];
+                        for (let dy = -25; dy <= 25; dy += 3) {
+                            for (let dx = -25; dx <= 25; dx += 3) {
                                 const nx = x + dx;
                                 const ny = y + dy;
-                                
                                 if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-                                    // 只使用非水印像素
                                     if (expandedMask[ny * width + nx] === 0) {
                                         const nIdx = (ny * width + nx) * 4;
-                                        const weight = 1 / (Math.sqrt(dx * dx + dy * dy) + 1);
-                                        sumR += data[nIdx] * weight;
-                                        sumG += data[nIdx + 1] * weight;
-                                        sumB += data[nIdx + 2] * weight;
-                                        count += weight;
+                                        const distance = Math.sqrt(dx*dx + dy*dy);
+                                        neighborColors.push({
+                                            r: data[nIdx],
+                                            g: data[nIdx + 1],
+                                            b: data[nIdx + 2],
+                                            weight: 1 / (distance + 1)
+                                        });
                                     }
                                 }
                             }
                         }
                         
-                        if (count > 0) {
-                            data[idx] = Math.round(sumR / count);
-                            data[idx + 1] = Math.round(sumG / count);
-                            data[idx + 2] = Math.round(sumB / count);
+                        if (neighborColors.length > 0) {
+                            // 加权平均
+                            let sumR = 0, sumG = 0, sumB = 0, sumW = 0;
+                            for (const color of neighborColors) {
+                                sumR += color.r * color.weight;
+                                sumG += color.g * color.weight;
+                                sumB += color.b * color.weight;
+                                sumW += color.weight;
+                            }
+                            
+                            data[idx] = Math.round(sumR / sumW);
+                            data[idx + 1] = Math.round(sumG / sumW);
+                            data[idx + 2] = Math.round(sumB / sumW);
                         }
                     }
                 }
             }
             
-            // 第四步：边缘裁剪（彻底移除边缘水印）
-            const cropTop = Math.floor(edgeHeight * 0.4);
-            const cropBottom = height - Math.floor(edgeHeight * 0.6);
-            const cropLeft = Math.floor(edgeWidth * 0.3);
-            const cropRight = width - Math.floor(edgeWidth * 0.5);
-            
-            // 填充顶部
-            for (let y = 0; y < cropTop; y++) {
+            // 第五步：再次优化修复区域，让过渡更自然
+            for (let y = 0; y < height; y++) {
                 for (let x = 0; x < width; x++) {
-                    const idx = (y * width + x) * 4;
-                    const sourceIdx = ((cropTop + 3) * width + x) * 4;
-                    data[idx] = data[sourceIdx];
-                    data[idx + 1] = data[sourceIdx + 1];
-                    data[idx + 2] = data[sourceIdx + 2];
-                }
-            }
-            
-            // 填充底部
-            for (let y = cropBottom; y < height; y++) {
-                for (let x = 0; x < width; x++) {
-                    const idx = (y * width + x) * 4;
-                    const sourceIdx = ((cropBottom - 4) * width + x) * 4;
-                    data[idx] = data[sourceIdx];
-                    data[idx + 1] = data[sourceIdx + 1];
-                    data[idx + 2] = data[sourceIdx + 2];
-                }
-            }
-            
-            // 填充左侧
-            for (let y = cropTop; y < cropBottom; y++) {
-                for (let x = 0; x < cropLeft; x++) {
-                    const idx = (y * width + x) * 4;
-                    const sourceIdx = (y * width + cropLeft + 4) * 4;
-                    data[idx] = data[sourceIdx];
-                    data[idx + 1] = data[sourceIdx + 1];
-                    data[idx + 2] = data[sourceIdx + 2];
-                }
-            }
-            
-            // 填充右侧
-            for (let y = cropTop; y < cropBottom; y++) {
-                for (let x = cropRight; x < width; x++) {
-                    const idx = (y * width + x) * 4;
-                    const sourceIdx = (y * width + cropRight - 5) * 4;
-                    data[idx] = data[sourceIdx];
-                    data[idx + 1] = data[sourceIdx + 1];
-                    data[idx + 2] = data[sourceIdx + 2];
+                    if (expandedMask[y * width + x] === 1) {
+                        const idx = (y * width + x) * 4;
+                        
+                        // 3x3高斯模糊
+                        let sumR = 0, sumG = 0, sumB = 0, sumW = 0;
+                        const kernel = [
+                            [1, 2, 1],
+                            [2, 4, 2],
+                            [1, 2, 1]
+                        ];
+                        
+                        for (let dy = -1; dy <= 1; dy++) {
+                            for (let dx = -1; dx <= 1; dx++) {
+                                const nx = x + dx;
+                                const ny = y + dy;
+                                if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                                    const nIdx = (ny * width + nx) * 4;
+                                    const w = kernel[dy + 1][dx + 1];
+                                    sumR += data[nIdx] * w;
+                                    sumG += data[nIdx + 1] * w;
+                                    sumB += data[nIdx + 2] * w;
+                                    sumW += w;
+                                }
+                            }
+                        }
+                        
+                        data[idx] = Math.round(sumR / sumW);
+                        data[idx + 1] = Math.round(sumG / sumW);
+                        data[idx + 2] = Math.round(sumB / sumW);
+                    }
                 }
             }
             
@@ -15314,7 +15275,7 @@
                 return;
             }
             
-            showToast('正在处理图片（去除水印 + 优化画质），请稍候...');
+            showToast('正在处理图片（强力去链家水印 + 裁剪外围 + 优化画质），请稍候...');
             
             // 读取文件
             const reader = new FileReader();
@@ -15365,7 +15326,7 @@
                             applyFloorplan(resizedUrl);
                             localStorage.setItem('floorplanData', JSON.stringify(floorplanData));
                             
-                            showToast('户型图已上传，已去除水印、优化画质并缩小');
+                            showToast('户型图已上传，已强力去除链家水印、裁剪外围量尺、优化画质并缩小');
                         };
                         resizeImg.src = simpleUrl;
                     };
