@@ -9015,24 +9015,25 @@
                 // 自动学习并更新数据映射关系
                 learnPropertyData(community, primarySchool, middleSchool, region, layout, decoration, floor);
                 
-                // 保存户型图与房源的关联，并上传到远程存储
+                // 上传户型图到远程仓库
                 if (floorplanUrl && property.id) {
-                    // 先保存到本地
-                    saveFloorplanForProperty(property.id, floorplanUrl);
-                    
-                    // 异步上传到远程存储（不阻塞保存流程）
+                    // 只上传到远程仓库，不保存到本地
                     if (floorplanUrl.startsWith('data:image')) {
-                        uploadFloorplanToStorage(property.id, floorplanUrl)
-                            .then(remoteUrl => {
-                                if (remoteUrl) {
-                                    // 如果上传成功，更新为远程URL
-                                    console.log('户型图已上传到远程存储，更新本地映射');
-                                    saveFloorplanForProperty(property.id, remoteUrl);
-                                }
-                            })
-                            .catch(err => {
-                                console.error('上传户型图到远程存储失败:', err);
-                            });
+                        try {
+                            const remoteUrl = await uploadFloorplanToStorage(property.id, floorplanUrl);
+                            if (remoteUrl) {
+                                console.log('户型图已上传到远程仓库:', remoteUrl);
+                                // 更新表单中的URL为远程URL
+                                document.getElementById('propFloorplan').value = remoteUrl;
+                            } else {
+                                console.warn('户型图上传到远程仓库失败，但本地图片仍可使用');
+                            }
+                        } catch (err) {
+                            console.error('上传户型图到远程仓库失败:', err);
+                        }
+                    } else if (floorplanUrl.startsWith('http')) {
+                        // 如果已经是远程URL，直接使用
+                        console.log('户型图已是远程URL:', floorplanUrl);
                     }
                 }
                 
@@ -15258,7 +15259,7 @@
             });
         }
         
-        // 处理户型图文件上传（高级去水印 + 简约风格转换）
+        // 处理户型图文件上传（强力去水印 + 简约风格转换 + 直接上传到远程仓库）
         function handleFloorplanUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -15293,7 +15294,7 @@
                     // 获取图像数据
                     const imageData = ctx1.getImageData(0, 0, canvas1.width, canvas1.height);
                     
-                    // 执行高级去水印
+                    // 执行强力去水印
                     const cleanedData = removeWatermarkAdvanced(imageData, canvas1.width, canvas1.height);
                     ctx1.putImageData(cleanedData, 0, 0);
                     
@@ -15308,25 +15309,13 @@
                         resizeImg.onload = async function() {
                             const resizedUrl = await resizeImage(resizeImg, 0.5);
                             
-                            // 保存处理结果
-                            const tempId = Date.now();
-                            floorplanData[tempId] = {
-                                url: resizedUrl,
-                                originalUrl: canvas1.toDataURL('image/jpeg', 0.95),
-                                title: file.name,
-                                confirmed: true,
-                                uploadedAt: new Date().toISOString(),
-                                isLocal: true,
-                                watermarkRemoved: true,
-                                simpleStyle: true,
-                                resized: true
-                            };
-                            
                             // 立即应用到表单
                             applyFloorplan(resizedUrl);
-                            localStorage.setItem('floorplanData', JSON.stringify(floorplanData));
                             
-                            showToast('户型图已上传，已强力去除链家水印、裁剪外围量尺、优化画质并缩小');
+                            // 保存到全局变量，供保存房源时上传
+                            window.pendingFloorplanUrl = resizedUrl;
+                            
+                            showToast('户型图已处理完成，保存房源时将自动上传到远程仓库');
                         };
                         resizeImg.src = simpleUrl;
                     };
