@@ -599,6 +599,90 @@
             font-size: 12px;
             opacity: 0.8;
         }
+
+        /* 备忘录页面样式 */
+        .memo-categories {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+        
+        .memo-category {
+            flex-shrink: 0;
+            padding: 8px 16px;
+            background: var(--surface);
+            border-radius: 20px;
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .memo-category.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .memo-item {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+        
+        .memo-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+        
+        .memo-title {
+            font-weight: 600;
+            font-size: 16px;
+            color: var(--text);
+        }
+        
+        .memo-category-badge {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+        
+        .memo-content {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+        
+        .memo-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .memo-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .memo-action {
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+        
+        .memo-action:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
         
         .menu-section {
             background: var(--surface);
@@ -2572,6 +2656,11 @@
                         <span class="menu-text">选项管理</span>
                         <span class="menu-arrow">›</span>
                     </div>
+                    <div class="menu-item menu-item-large" onclick="switchPage('memo')">
+                        <span class="menu-icon">📝</span>
+                        <span class="menu-text">个人备忘录</span>
+                        <span class="menu-arrow">›</span>
+                    </div>
                     <div class="menu-item menu-item-large" onclick="syncLocalData()">
                         <span class="menu-icon">🔄</span>
                         <span class="menu-text">同步数据</span>
@@ -2597,6 +2686,77 @@
                         <span class="menu-text" style="color: #ef4444;">退出登录</span>
                         <span class="menu-arrow">›</span>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 备忘录页面 -->
+        <div class="page" id="pageMemo">
+            <div class="app-header">
+                <div class="header-content">
+                    <span class="header-back" onclick="switchPage('profile')">‹</span>
+                    <span class="header-title">个人备忘录</span>
+                    <span class="header-user" id="headerUserMemo">admin</span>
+                </div>
+            </div>
+            
+            <div class="content-section" style="padding: 16px;">
+                <!-- 分类标签 -->
+                <div class="memo-categories">
+                    <div class="memo-category active" data-category="all" onclick="filterMemos('all')">全部</div>
+                    <div class="memo-category" data-category="work" onclick="filterMemos('work')">工作</div>
+                    <div class="memo-category" data-category="personal" onclick="filterMemos('personal')">个人</div>
+                    <div class="memo-category" data-category="finance" onclick="filterMemos('finance')">财务</div>
+                    <div class="memo-category" data-category="other" onclick="filterMemos('other')">其他</div>
+                </div>
+                
+                <!-- 添加备忘录按钮 -->
+                <button class="btn btn-primary btn-block" style="margin-top: 16px;" onclick="openAddMemoModal()">
+                    + 添加新备忘录
+                </button>
+                
+                <!-- 备忘录列表 -->
+                <div id="memoList" style="margin-top: 16px;">
+                </div>
+                
+                <!-- 空状态 -->
+                <div id="memoEmptyState" style="display: none; text-align: center; padding: 40px 20px; color: #999;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📭</div>
+                    <div>暂无备忘录</div>
+                    <div style="font-size: 14px; margin-top: 8px;">点击上方按钮添加第一条备忘录</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 添加/编辑备忘录模态框 -->
+        <div class="modal" id="addMemoModal">
+            <div class="modal-content" style="max-width: 90%; width: 400px;">
+                <div class="modal-header">
+                    <span class="modal-title" id="memoModalTitle">添加备忘录</span>
+                    <span class="modal-close" onclick="closeAddMemoModal()">×</span>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">标题</label>
+                        <input type="text" id="memoTitle" class="form-input" placeholder="输入备忘录标题">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">分类</label>
+                        <select id="memoCategory" class="form-input">
+                            <option value="work">工作</option>
+                            <option value="personal">个人</option>
+                            <option value="finance">财务</option>
+                            <option value="other">其他</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">内容</label>
+                        <textarea id="memoContent" class="form-input" rows="6" placeholder="输入备忘录内容"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-default" onclick="closeAddMemoModal()">取消</button>
+                    <button class="btn btn-primary" onclick="saveMemo()">保存</button>
                 </div>
             </div>
         </div>
@@ -3122,6 +3282,70 @@
         </div>
     </div>
 
+    <!-- 小区详情模态框 -->
+    <div class="modal" id="communityDetailModal">
+        <div class="modal-content" style="max-height: 80vh;">
+            <div class="modal-header">
+                <span class="modal-title" id="communityDetailTitle">小区详情</span>
+                <button class="modal-close" onclick="closeCommunityDetailModal()">×</button>
+            </div>
+            <div class="modal-body" id="communityDetailBody" style="padding: 16px;">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" onclick="closeCommunityDetailModal()">关闭</button>
+                <button class="btn btn-primary" onclick="openEditCommunityModal()">编辑小区</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑小区模态框 -->
+    <div class="modal" id="editCommunityModal">
+        <div class="modal-content" style="max-height: 90vh;">
+            <div class="modal-header">
+                <span class="modal-title" id="editCommunityModalTitle">编辑小区信息</span>
+                <button class="modal-close" onclick="closeEditCommunityModal()">×</button>
+            </div>
+            <div class="modal-body" style="padding: 16px;">
+                <input type="hidden" id="editCommunityName">
+                <div class="form-group">
+                    <label class="form-label">小区名称</label>
+                    <input type="text" id="communityNameInput" class="form-input" placeholder="输入小区名称" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">所属区域</label>
+                    <select id="communityRegionSelect" class="form-input">
+                        <option value="">请选择区域</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">对口小学</label>
+                    <input type="text" id="communityPrimarySchool" class="form-input" placeholder="输入对口小学">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">对口初中</label>
+                    <input type="text" id="communityMiddleSchool" class="form-input" placeholder="输入对口初中">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">常见户型</label>
+                    <div id="communityLayoutsContainer">
+                        <div style="display: flex; flex-wrap: gap: 8px;">
+                        </div>
+                        <input type="text" id="addLayoutInput" class="form-input" style="margin-top: 8px;" placeholder="添加户型（如：3-2-2）">
+                        <button class="btn btn-primary" style="margin-top: 8px; width: 100%;" onclick="addCommunityLayout()">添加户型</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">小区备注</label>
+                    <textarea id="communityRemark" class="form-input" rows="3" placeholder="输入小区备注信息"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" onclick="closeEditCommunityModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveCommunityInfo()">保存</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 主题颜色模态框 -->
     <div class="modal" id="themeModal">
         <div class="modal-content">
@@ -3412,7 +3636,7 @@
                     <div style="display: flex; align-items: flex-start; gap: 16px; margin-bottom: 24px;">
                         <div style="flex: 1;">
                             <div style="text-align: left;">
-                                <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 8px;">${property.community || '未知小区'}</h3>
+                                <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 8px; cursor: pointer; color: var(--primary); text-decoration: underline;" onclick="openCommunityDetailModal('${property.community || ''}')">${property.community || '未知小区'}</h3>
                                 <div style="padding: 6px 16px; background: rgba(59, 130, 246, 0.1); color: var(--primary); border-radius: 20px; display: inline-block; font-weight: 600; cursor: pointer;" onclick="showRentSaleToggleModal('${property.id}')">
                                     ${typeText}
                                 </div>
@@ -5249,7 +5473,8 @@
                 'profile': 'pageProfile',
                 'agentProperties': 'pageAgentProperties',
                 'coopProperties': 'pageCoopProperties',
-                'share': 'pageShare'
+                'share': 'pageShare',
+                'memo': 'pageMemo'
             };
 
             const navMap = {
@@ -9021,14 +9246,17 @@
                 // 自动学习并更新数据映射关系
                 learnPropertyData(community, primarySchool, middleSchool, region, layout, decoration, floor);
                 
-                // 上传户型图到远程仓库
+                // 上传户型图到远程仓库并保存映射关系
                 if (floorplanUrl && property.id) {
-                    // 只上传到远程仓库，不保存到本地
+                    let finalFloorplanUrl = floorplanUrl;
+                    
+                    // 如果是本地图片(data:image)，上传到远程仓库
                     if (floorplanUrl.startsWith('data:image')) {
                         try {
                             const remoteUrl = await uploadFloorplanToStorage(property.id, floorplanUrl);
                             if (remoteUrl) {
                                 console.log('户型图已上传到远程仓库:', remoteUrl);
+                                finalFloorplanUrl = remoteUrl;
                                 // 更新表单中的URL为远程URL
                                 document.getElementById('propFloorplan').value = remoteUrl;
                             } else {
@@ -9041,6 +9269,10 @@
                         // 如果已经是远程URL，直接使用
                         console.log('户型图已是远程URL:', floorplanUrl);
                     }
+                    
+                    // 保存户型图与房源的映射关系
+                    saveFloorplanForProperty(property.id, finalFloorplanUrl);
+                    console.log('户型图映射已保存:', property.id, finalFloorplanUrl);
                 }
                 
                 // 重新加载数据
@@ -15538,6 +15770,232 @@
             return null;
         }
         
+        // 小区信息数据存储
+        let communityInfo = {};
+        
+        // 加载小区信息
+        function loadCommunityInfo() {
+            try {
+                const saved = localStorage.getItem('communityInfo');
+                if (saved) {
+                    communityInfo = JSON.parse(saved);
+                }
+            } catch (e) {
+                console.error('加载小区信息失败:', e);
+                communityInfo = {};
+            }
+        }
+        
+        // 保存小区信息
+        function saveCommunityInfoToStorage() {
+            try {
+                localStorage.setItem('communityInfo', JSON.stringify(communityInfo));
+            } catch (e) {
+                console.error('保存小区信息失败:', e);
+            }
+        }
+        
+        // 获取小区信息
+        function getCommunityInfo(communityName) {
+            if (!communityName) return null;
+            return communityInfo[communityName] || {
+                region: communityRegionMapping[communityName] || '',
+                primarySchool: communitySchoolMapping[communityName]?.primarySchool || '',
+                middleSchool: communitySchoolMapping[communityName]?.middleSchool || '',
+                layouts: communityLayoutMapping[communityName] ? Array.from(communityLayoutMapping[communityName]) : [],
+                remark: ''
+            };
+        }
+        
+        // 打开小区详情模态框
+        function openCommunityDetailModal(communityName) {
+            if (!communityName || communityName === '未知小区') {
+                showToast('暂无小区信息');
+                return;
+            }
+            
+            const info = getCommunityInfo(communityName);
+            
+            document.getElementById('communityDetailTitle').textContent = communityName + ' - 小区详情';
+            
+            const bodyHTML = `
+                <div style="background: var(--background); border-radius: var(--radius); padding: 20px; margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="color: var(--text-secondary);">所属区域</span>
+                        <span style="font-weight: 600;">${info.region || '未设置'}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="color: var(--text-secondary);">对口小学</span>
+                        <span style="font-weight: 600;">${info.primarySchool || '未设置'}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="color: var(--text-secondary);">对口初中</span>
+                        <span style="font-weight: 600;">${info.middleSchool || '未设置'}</span>
+                    </div>
+                </div>
+                
+                <div style="background: var(--background); border-radius: var(--radius); padding: 20px; margin-bottom: 16px;">
+                    <div style="font-weight: 600; margin-bottom: 12px; color: var(--text-primary);">常见户型</div>
+                    ${info.layouts && info.layouts.length > 0 ? `
+                        <div style="display: flex; flex-wrap: gap: 8px;">
+                            ${info.layouts.map(layout => `<span style="padding: 6px 12px; background: var(--primary); color: white; border-radius: 4px; margin-right: 8px; margin-bottom: 8px; display: inline-block;">${layout}</span>`).join('')}
+                        </div>
+                    ` : `
+                        <div style="color: var(--text-tertiary);">暂无户型信息</div>
+                    `}
+                </div>
+                
+                ${info.remark ? `
+                    <div style="background: var(--background); border-radius: var(--radius); padding: 20px;">
+                        <div style="font-weight: 600; margin-bottom: 12px; color: var(--text-primary);">备注信息</div>
+                        <div style="color: var(--text-secondary);">${info.remark}</div>
+                    </div>
+                ` : ''}
+            `;
+            
+            document.getElementById('communityDetailBody').innerHTML = bodyHTML;
+            document.getElementById('communityDetailModal').style.display = 'flex';
+            document.getElementById('communityDetailModal').classList.add('active');
+            
+            // 保存当前小区名称供编辑使用
+            document.getElementById('editCommunityName').value = communityName;
+        }
+        
+        // 关闭小区详情模态框
+        function closeCommunityDetailModal() {
+            document.getElementById('communityDetailModal').style.display = 'none';
+            document.getElementById('communityDetailModal').classList.remove('active');
+        }
+        
+        // 打开编辑小区模态框
+        function openEditCommunityModal() {
+            const communityName = document.getElementById('editCommunityName').value;
+            const info = getCommunityInfo(communityName);
+            
+            document.getElementById('editCommunityModalTitle').textContent = '编辑小区 - ' + communityName;
+            document.getElementById('communityNameInput').value = communityName;
+            document.getElementById('communityRegionSelect').value = info.region || '';
+            document.getElementById('communityPrimarySchool').value = info.primarySchool || '';
+            document.getElementById('communityMiddleSchool').value = info.middleSchool || '';
+            document.getElementById('communityRemark').value = info.remark || '';
+            
+            // 填充区域选项
+            const regionSelect = document.getElementById('communityRegionSelect');
+            regionSelect.innerHTML = '<option value="">请选择区域</option>';
+            optionsData.region.forEach(region => {
+                regionSelect.innerHTML += `<option value="${region}">${region}</option>`;
+            });
+            
+            // 显示已有的户型
+            const layoutsContainer = document.getElementById('communityLayoutsContainer').querySelector('div');
+            layoutsContainer.innerHTML = '';
+            if (info.layouts && info.layouts.length > 0) {
+                info.layouts.forEach(layout => {
+                    layoutsContainer.innerHTML += `
+                        <span style="padding: 6px 12px; background: var(--primary); color: white; border-radius: 4px; margin-right: 8px; margin-bottom: 8px; display: inline-flex; align-items: center; gap: 4px;">
+                            ${layout}
+                            <span style="cursor: pointer;" onclick="removeCommunityLayout('${layout}')">×</span>
+                        </span>
+                    `;
+                });
+            }
+            
+            closeCommunityDetailModal();
+            document.getElementById('editCommunityModal').style.display = 'flex';
+            document.getElementById('editCommunityModal').classList.add('active');
+        }
+        
+        // 关闭编辑小区模态框
+        function closeEditCommunityModal() {
+            document.getElementById('editCommunityModal').style.display = 'none';
+            document.getElementById('editCommunityModal').classList.remove('active');
+        }
+        
+        // 添加户型
+        function addCommunityLayout() {
+            const input = document.getElementById('addLayoutInput');
+            const layout = input.value.trim();
+            if (!layout) {
+                showToast('请输入户型');
+                return;
+            }
+            
+            const layoutsContainer = document.getElementById('communityLayoutsContainer').querySelector('div');
+            // 检查是否已存在
+            if (layoutsContainer.innerHTML.includes(`>${layout}<`)) {
+                showToast('该户型已存在');
+                return;
+            }
+            
+            layoutsContainer.innerHTML += `
+                <span style="padding: 6px 12px; background: var(--primary); color: white; border-radius: 4px; margin-right: 8px; margin-bottom: 8px; display: inline-flex; align-items: center; gap: 4px;">
+                    ${layout}
+                    <span style="cursor: pointer;" onclick="removeCommunityLayout('${layout}')">×</span>
+                </span>
+            `;
+            input.value = '';
+        }
+        
+        // 移除户型
+        function removeCommunityLayout(layout) {
+            const layoutsContainer = document.getElementById('communityLayoutsContainer').querySelector('div');
+            const spans = layoutsContainer.querySelectorAll('span');
+            spans.forEach(span => {
+                if (span.textContent.trim().replace('×', '').trim() === layout) {
+                    span.remove();
+                }
+            });
+        }
+        
+        // 保存小区信息
+        function saveCommunityInfo() {
+            const communityName = document.getElementById('editCommunityName').value;
+            const region = document.getElementById('communityRegionSelect').value;
+            const primarySchool = document.getElementById('communityPrimarySchool').value;
+            const middleSchool = document.getElementById('communityMiddleSchool').value;
+            const remark = document.getElementById('communityRemark').value;
+            
+            // 获取当前显示的户型列表
+            const layoutsContainer = document.getElementById('communityLayoutsContainer').querySelector('div');
+            const layoutSpans = layoutsContainer.querySelectorAll('span');
+            const layouts = Array.from(layoutSpans).map(span => span.textContent.trim().replace('×', '').trim());
+            
+            // 更新小区信息
+            communityInfo[communityName] = {
+                region,
+                primarySchool,
+                middleSchool,
+                layouts,
+                remark
+            };
+            
+            // 更新映射关系
+            if (region) {
+                communityRegionMapping[communityName] = region;
+            }
+            if (primarySchool || middleSchool) {
+                if (!communitySchoolMapping[communityName]) {
+                    communitySchoolMapping[communityName] = {};
+                }
+                if (primarySchool) {
+                    communitySchoolMapping[communityName].primarySchool = primarySchool;
+                }
+                if (middleSchool) {
+                    communitySchoolMapping[communityName].middleSchool = middleSchool;
+                }
+            }
+            if (layouts && layouts.length > 0) {
+                communityLayoutMapping[communityName] = new Set(layouts);
+            }
+            
+            // 保存到本地存储
+            saveCommunityInfoToStorage();
+            saveLearnedData();
+            
+            showToast('✅ 小区信息已保存');
+            closeEditCommunityModal();
+        }
+        
         // 将base64转换为File对象
         function dataURLToFile(dataURL, filename) {
             const arr = dataURL.split(',');
@@ -15602,14 +16060,21 @@
             // 加载户型图映射
             loadFloorplanMap();
             
+            // 加载小区信息
+            loadCommunityInfo();
+            
             // 点击模态框外部关闭
             document.addEventListener('click', function(e) {
                 const viewModal = document.getElementById('floorplanViewModal');
+                const communityModal = document.getElementById('communityDetailModal');
+                const editCommunityModal = document.getElementById('editCommunityModal');
                 
                 if (e.target === viewModal) closeFloorplanViewModal();
+                if (e.target === communityModal) closeCommunityDetailModal();
+                if (e.target === editCommunityModal) closeEditCommunityModal();
             });
             
-            console.log('户型图功能已初始化');
+            console.log('户型图和小区信息功能已初始化');
         }
         
         // 页面加载后初始化户型图功能
