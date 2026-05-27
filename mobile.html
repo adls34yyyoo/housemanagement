@@ -5310,9 +5310,15 @@
                 
                 // 初始化筛选选项
                 initShareFilterOptions();
-                renderSharePropertyList();
-                // 清空分享内容，等待用户点击生成文案
-                document.getElementById('shareContent').value = '';
+                
+                // 默认选择待发布状态
+                setTimeout(() => {
+                    const statusSelect = document.getElementById('shareFilterStatus');
+                    if (statusSelect) {
+                        statusSelect.value = 'pending';
+                    }
+                    applyShareFilters();
+                }, 50);
             }
         }
 
