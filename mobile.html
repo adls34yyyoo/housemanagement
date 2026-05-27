@@ -10832,31 +10832,145 @@
    18019166290 韩
    13917755549 苏`;
 
-            // 分离出售房源和出租房源
-            const saleProperties = selectedProps.filter(p => p.type === 'sale');
-            const rentProperties = selectedProps.filter(p => p.type !== 'sale');
-
             let shareText = '';
 
-            // 处理出售房源 - 按小区分组，每个小区下面生成合作热线
-            if (saleProperties.length > 0) {
-                // 按小区分组
-                const saleByCommunity = {};
-                saleProperties.forEach(property => {
+            // 专业文案模式 - 应用特殊规则
+            if (currentStyle === 'professional') {
+                // 分离出售房源和出租房源
+                const saleProperties = selectedProps.filter(p => p.type === 'sale');
+                const rentProperties = selectedProps.filter(p => p.type !== 'sale');
+
+                // 处理出售房源 - 按小区分组，每个小区下面生成合作热线
+                if (saleProperties.length > 0) {
+                    const saleByCommunity = {};
+                    saleProperties.forEach(property => {
+                        const community = property.community || '未知小区';
+                        if (!saleByCommunity[community]) {
+                            saleByCommunity[community] = {
+                                properties: [],
+                                primarySchool: property.primarySchool || property.primary_school || '',
+                                middleSchool: property.middleSchool || property.middle_school || ''
+                            };
+                        }
+                        saleByCommunity[community].properties.push(property);
+                    });
+
+                    const saleCommunities = Object.keys(saleByCommunity);
+                    saleCommunities.forEach((community, communityIndex) => {
+                        const group = saleByCommunity[community];
+                        
+                        let schoolInfo = '';
+                        if (group.primarySchool) {
+                            schoolInfo += group.primarySchool;
+                        }
+                        if (group.middleSchool) {
+                            if (schoolInfo) {
+                                schoolInfo += '、';
+                            }
+                            schoolInfo += group.middleSchool;
+                        }
+                        
+                        group.properties.forEach((property, propertyIndex) => {
+                            if (propertyIndex > 0) {
+                                shareText += '\n';
+                            }
+                            
+                            shareText += `🏘️ 出售：${community}\n`;
+                            
+                            if (schoolInfo) {
+                                shareText += `📚 学区：${schoolInfo}\n`;
+                            }
+                            
+                            shareText += `📏 面积：${property.area || '未知'}平\n`;
+                            shareText += `🏠 户型：${property.layout || '未知'}\n`;
+                            shareText += `💰 价格：${property.price || '面议'}万元\n`;
+                            shareText += `🎨 装修：${property.decoration || '未知'}\n`;
+                            shareText += `🏢 楼层：${property.floor || '未知'}楼\n`;
+                        });
+                        
+                        // 每个出售小区下面生成合作热线
+                        shareText += contactInfo;
+                        
+                        if (communityIndex < saleCommunities.length - 1 || rentProperties.length > 0) {
+                            shareText += '\n\n';
+                        }
+                    });
+                }
+
+                // 处理出租房源 - 所有出租房源合在一起，只生成一条合作热线
+                if (rentProperties.length > 0) {
+                    const rentByCommunity = {};
+                    rentProperties.forEach(property => {
+                        const community = property.community || '未知小区';
+                        if (!rentByCommunity[community]) {
+                            rentByCommunity[community] = {
+                                properties: [],
+                                primarySchool: property.primarySchool || property.primary_school || '',
+                                middleSchool: property.middleSchool || property.middle_school || ''
+                            };
+                        }
+                        rentByCommunity[community].properties.push(property);
+                    });
+
+                    const rentCommunities = Object.keys(rentByCommunity);
+                    rentCommunities.forEach((community, communityIndex) => {
+                        const group = rentByCommunity[community];
+                        
+                        let schoolInfo = '';
+                        if (group.primarySchool) {
+                            schoolInfo += group.primarySchool;
+                        }
+                        if (group.middleSchool) {
+                            if (schoolInfo) {
+                                schoolInfo += '、';
+                            }
+                            schoolInfo += group.middleSchool;
+                        }
+                        
+                        group.properties.forEach((property, propertyIndex) => {
+                            if (propertyIndex > 0) {
+                                shareText += '\n';
+                            }
+                            
+                            shareText += `🏘️ 出租：${community}\n`;
+                            
+                            if (schoolInfo) {
+                                shareText += `📚 学区：${schoolInfo}\n`;
+                            }
+                            
+                            shareText += `📏 面积：${property.area || '未知'}平\n`;
+                            shareText += `🏠 户型：${property.layout || '未知'}\n`;
+                            shareText += `💰 价格：${property.price || '面议'}元/月\n`;
+                            shareText += `🎨 装修：${property.decoration || '未知'}\n`;
+                            shareText += `🏢 楼层：${property.floor || '未知'}楼\n`;
+                        });
+                        
+                        if (communityIndex < rentCommunities.length - 1) {
+                            shareText += '\n';
+                        }
+                    });
+                    
+                    // 所有出租房源后面只生成一条合作热线
+                    shareText += '\n' + contactInfo;
+                }
+            } else {
+                // 简洁文案模式 - 使用原有逻辑
+                const propertiesByCommunity = {};
+                selectedProps.forEach(property => {
                     const community = property.community || '未知小区';
-                    if (!saleByCommunity[community]) {
-                        saleByCommunity[community] = {
+                    if (!propertiesByCommunity[community]) {
+                        propertiesByCommunity[community] = {
                             properties: [],
                             primarySchool: property.primarySchool || property.primary_school || '',
                             middleSchool: property.middleSchool || property.middle_school || ''
                         };
                     }
-                    saleByCommunity[community].properties.push(property);
+                    propertiesByCommunity[community].properties.push(property);
                 });
 
-                const saleCommunities = Object.keys(saleByCommunity);
-                saleCommunities.forEach((community, communityIndex) => {
-                    const group = saleByCommunity[community];
+                const communities = Object.keys(propertiesByCommunity);
+                communities.forEach((community, communityIndex) => {
+                    const group = propertiesByCommunity[community];
                     
                     let schoolInfo = '';
                     if (group.primarySchool) {
@@ -10869,13 +10983,14 @@
                         schoolInfo += group.middleSchool;
                     }
                     
-                    // 显示该小区的所有出售房源
                     group.properties.forEach((property, propertyIndex) => {
                         if (propertyIndex > 0) {
                             shareText += '\n';
                         }
                         
-                        shareText += `🏘️ 出售：${community}\n`;
+                        let propertyTypeText = property.type === 'sale' ? '出售：' : '出租：';
+                        
+                        shareText += `🏘️ ${propertyTypeText}${community}\n`;
                         
                         if (schoolInfo) {
                             shareText += `📚 学区：${schoolInfo}\n`;
@@ -10883,79 +10998,17 @@
                         
                         shareText += `📏 面积：${property.area || '未知'}平\n`;
                         shareText += `🏠 户型：${property.layout || '未知'}\n`;
-                        shareText += `💰 价格：${property.price || '面议'}万元\n`;
+                        shareText += `💰 价格：${property.price || '面议'}${property.type === 'sale' ? '万元' : '元/月'}\n`;
                         shareText += `🎨 装修：${property.decoration || '未知'}\n`;
                         shareText += `🏢 楼层：${property.floor || '未知'}楼\n`;
+                        
+                        shareText += `合作热线：18019166290`;
                     });
                     
-                    // 每个出售小区下面生成合作热线
-                    shareText += contactInfo;
-                    
-                    // 小区之间添加空行
-                    if (communityIndex < saleCommunities.length - 1 || rentProperties.length > 0) {
+                    if (communityIndex < communities.length - 1) {
                         shareText += '\n\n';
                     }
                 });
-            }
-
-            // 处理出租房源 - 所有出租房源合在一起，只生成一条合作热线
-            if (rentProperties.length > 0) {
-                // 按小区分组显示
-                const rentByCommunity = {};
-                rentProperties.forEach(property => {
-                    const community = property.community || '未知小区';
-                    if (!rentByCommunity[community]) {
-                        rentByCommunity[community] = {
-                            properties: [],
-                            primarySchool: property.primarySchool || property.primary_school || '',
-                            middleSchool: property.middleSchool || property.middle_school || ''
-                        };
-                    }
-                    rentByCommunity[community].properties.push(property);
-                });
-
-                const rentCommunities = Object.keys(rentByCommunity);
-                rentCommunities.forEach((community, communityIndex) => {
-                    const group = rentByCommunity[community];
-                    
-                    let schoolInfo = '';
-                    if (group.primarySchool) {
-                        schoolInfo += group.primarySchool;
-                    }
-                    if (group.middleSchool) {
-                        if (schoolInfo) {
-                            schoolInfo += '、';
-                        }
-                        schoolInfo += group.middleSchool;
-                    }
-                    
-                    // 显示该小区的所有出租房源
-                    group.properties.forEach((property, propertyIndex) => {
-                        if (propertyIndex > 0) {
-                            shareText += '\n';
-                        }
-                        
-                        shareText += `🏘️ 出租：${community}\n`;
-                        
-                        if (schoolInfo) {
-                            shareText += `📚 学区：${schoolInfo}\n`;
-                        }
-                        
-                        shareText += `📏 面积：${property.area || '未知'}平\n`;
-                        shareText += `🏠 户型：${property.layout || '未知'}\n`;
-                        shareText += `💰 价格：${property.price || '面议'}元/月\n`;
-                        shareText += `🎨 装修：${property.decoration || '未知'}\n`;
-                        shareText += `🏢 楼层：${property.floor || '未知'}楼\n`;
-                    });
-                    
-                    // 小区之间添加空行
-                    if (communityIndex < rentCommunities.length - 1) {
-                        shareText += '\n';
-                    }
-                });
-                
-                // 所有出租房源后面只生成一条合作热线
-                shareText += '\n' + contactInfo;
             }
 
             return shareText;
