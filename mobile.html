@@ -4044,12 +4044,110 @@
             }
         }
         
+        // 初始化应用配置表
+        async function initAppConfigTable() {
+            if (!supabaseClient) return;
+            
+            try {
+                console.log('初始化应用配置表...');
+                
+                const { error: createError } = await supabaseClient.rpc('create_app_config_table');
+                if (createError && !createError.message.includes('already exists')) {
+                    console.warn('创建配置表失败:', createError.message);
+                }
+                
+                // 创建表的SQL（通过rpc函数）
+                const createTableSQL = `
+                    CREATE TABLE IF NOT EXISTS app_config (
+                        id SERIAL PRIMARY KEY,
+                        config_key TEXT UNIQUE NOT NULL,
+                        config_value JSONB NOT NULL,
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+                    );
+                    CREATE INDEX IF NOT EXISTS idx_app_config_key ON app_config(config_key);
+                `;
+                
+                const { error: execError } = await supabaseClient.rpc('execute_sql', { sql: createTableSQL });
+                if (execError) {
+                    console.warn('执行SQL失败:', execError.message);
+                }
+                
+                console.log('✅ 应用配置表初始化完成');
+            } catch (e) {
+                console.warn('初始化配置表时发生错误:', e.message);
+            }
+        }
+        
+        // 从远程数据库获取配置
+        async function getRemoteConfig(key) {
+            if (!supabaseClient) return null;
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('app_config')
+                    .select('config_value')
+                    .eq('config_key', key)
+                    .single();
+                
+                if (error) {
+                    if (error.code === 'PGRST116') {
+                        return null;
+                    }
+                    console.warn('获取远程配置失败:', error.message);
+                    return null;
+                }
+                
+                return data ? data.config_value : null;
+            } catch (e) {
+                console.warn('获取远程配置异常:', e.message);
+                return null;
+            }
+        }
+        
+        // 保存配置到远程数据库
+        async function saveRemoteConfig(key, value) {
+            if (!supabaseClient) return false;
+            
+            try {
+                const existing = await getRemoteConfig(key);
+                
+                if (existing !== null) {
+                    const { error } = await supabaseClient
+                        .from('app_config')
+                        .update({ config_value: value, updated_at: new Date().toISOString() })
+                        .eq('config_key', key);
+                    
+                    if (error) {
+                        console.error('更新远程配置失败:', error.message);
+                        return false;
+                    }
+                } else {
+                    const { error } = await supabaseClient
+                        .from('app_config')
+                        .insert({ config_key: key, config_value: value });
+                    
+                    if (error) {
+                        console.error('插入远程配置失败:', error.message);
+                        return false;
+                    }
+                }
+                
+                console.log(`✅ 配置 ${key} 已保存到远程数据库`);
+                return true;
+            } catch (e) {
+                console.error('保存远程配置异常:', e.message);
+                return false;
+            }
+        }
+        
         // 测试Supabase连接
         async function testSupabaseConnection() {
             if (!supabaseClient) return;
             
             try {
                 console.log('测试Supabase连接...');
+                await initAppConfigTable();
                 const { data, error } = await supabaseClient
                     .from('properties')
                     .select('*')
@@ -4329,13 +4427,15 @@
             saveLearnedData();
         }
         
-        // 保存学习到的数据到本地存储
-        function saveLearnedData() {
+        // 保存学习到的数据到远程数据库
+        async function saveLearnedData() {
             try {
                 const learnedData = {
                     communitySchoolMapping,
                     communityRegionMapping,
-                    communityLayoutMapping,
+                    communityLayoutMapping: Object.fromEntries(
+                        Object.entries(communityLayoutMapping).map(([k, v]) => [k, Array.from(v)])
+                    ),
                     optionsData: {
                         community: optionsData.community,
                         primarySchool: optionsData.primarySchool,
@@ -4345,18 +4445,22 @@
                         region: optionsData.region
                     }
                 };
-                localStorage.setItem('propertyLearnedData', JSON.stringify(learnedData));
+                
+                // 保存到远程数据库
+                await saveRemoteConfig('propertyLearnedData', learnedData);
             } catch (error) {
                 console.error('保存学习数据失败:', error);
             }
         }
         
-        // 从本地存储加载学习到的数据
-        function loadLearnedData() {
+        // 从远程数据库加载学习到的数据
+        async function loadLearnedData() {
             try {
-                const stored = localStorage.getItem('propertyLearnedData');
-                if (stored) {
-                    const learnedData = JSON.parse(stored);
+                // 从远程数据库加载
+                const learnedData = await getRemoteConfig('propertyLearnedData');
+                
+                if (learnedData) {
+                    console.log('✅ 从远程数据库加载学习数据');
                     if (learnedData.communitySchoolMapping) {
                         // 合并映射关系（新数据优先）
                         communitySchoolMapping = { ...communitySchoolMapping, ...learnedData.communitySchoolMapping };
@@ -4370,9 +4474,12 @@
                             if (!communityLayoutMapping[community]) {
                                 communityLayoutMapping[community] = new Set();
                             }
-                            learnedData.communityLayoutMapping[community].forEach(layout => {
-                                communityLayoutMapping[community].add(layout);
-                            });
+                            const layouts = learnedData.communityLayoutMapping[community];
+                            if (Array.isArray(layouts)) {
+                                layouts.forEach(layout => {
+                                    communityLayoutMapping[community].add(layout);
+                                });
+                            }
                         });
                     }
                     if (learnedData.optionsData) {
@@ -5544,6 +5651,9 @@
                     }
                     applyShareFilters();
                 }, 50);
+            } else if (page === 'memo') {
+                // 切换到备忘录页面时，加载备忘录数据
+                loadMemos();
             }
         }
 
@@ -7104,49 +7214,59 @@
 
 
         // 搜索房源
-        // 搜索历史功能
-        function saveSearchHistory(key, value) {
+        // 搜索历史功能（存储到远程数据库）
+        async function saveSearchHistory(key, value) {
             if (!value || value.trim() === '') return;
             
-            let history = JSON.parse(localStorage.getItem(`searchHistory_${key}`) || '[]');
-            history = history.filter(item => item !== value);
-            history.unshift(value);
-            if (history.length > 10) {
-                history = history.slice(0, 10);
+            try {
+                const remoteHistory = await getRemoteConfig(`searchHistory_${key}`) || [];
+                let history = remoteHistory.filter(item => item !== value);
+                history.unshift(value);
+                if (history.length > 10) {
+                    history = history.slice(0, 10);
+                }
+                await saveRemoteConfig(`searchHistory_${key}`, history);
+            } catch (e) {
+                console.error('保存搜索历史失败:', e);
             }
-            localStorage.setItem(`searchHistory_${key}`, JSON.stringify(history));
         }
 
-        function showSearchHistory(key) {
-            const history = JSON.parse(localStorage.getItem(`searchHistory_${key}`) || '[]');
+        async function showSearchHistory(key) {
             const historyElement = document.getElementById(`${key}History`);
             if (!historyElement) return;
             
-            if (history.length === 0) {
-                historyElement.style.display = 'none';
-                return;
-            }
-            
-            let html = '<div style="padding: 8px 16px; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--text-secondary);">最近搜索</div>';
-            history.forEach(item => {
+            try {
+                const history = await getRemoteConfig(`searchHistory_${key}`) || [];
+                
+                if (history.length === 0) {
+                    historyElement.style.display = 'none';
+                    return;
+                }
+                
+                let html = '<div style="padding: 8px 16px; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--text-secondary);">最近搜索</div>';
+                history.forEach(item => {
+                    html += `
+                        <div style="padding: 12px 16px; cursor: pointer; border-bottom: 1px solid var(--border); transition: var(--transition);" 
+                             onclick="selectSearchHistory('${key}', '${item}');"
+                             onmouseover="this.style.background = 'var(--background)';"
+                             onmouseout="this.style.background = 'transparent';">
+                            ${item}
+                        </div>
+                    `;
+                });
                 html += `
-                    <div style="padding: 12px 16px; cursor: pointer; border-bottom: 1px solid var(--border); transition: var(--transition);" 
-                         onclick="selectSearchHistory('${key}', '${item}');"
-                         onmouseover="this.style.background = 'var(--background)';"
-                         onmouseout="this.style.background = 'transparent';">
-                        ${item}
+                    <div style="padding: 12px 16px; cursor: pointer; text-align: center; font-size: 14px; color: var(--primary);" 
+                         onclick="clearSearchHistory('${key}');">
+                        清除历史
                     </div>
                 `;
-            });
-            html += `
-                <div style="padding: 12px 16px; cursor: pointer; text-align: center; font-size: 14px; color: var(--primary);" 
-                     onclick="clearSearchHistory('${key}');">
-                    清除历史
-                </div>
-            `;
-            
-            historyElement.innerHTML = html;
-            historyElement.style.display = 'block';
+                
+                historyElement.innerHTML = html;
+                historyElement.style.display = 'block';
+            } catch (e) {
+                console.error('加载搜索历史失败:', e);
+                historyElement.style.display = 'none';
+            }
         }
 
         function hideSearchHistory(key) {
@@ -7169,8 +7289,12 @@
             }
         }
 
-        function clearSearchHistory(key) {
-            localStorage.removeItem(`searchHistory_${key}`);
+        async function clearSearchHistory(key) {
+            try {
+                await saveRemoteConfig(`searchHistory_${key}`, []);
+            } catch (e) {
+                console.error('清除搜索历史失败:', e);
+            }
             const historyElement = document.getElementById(`${key}History`);
             if (historyElement) {
                 historyElement.style.display = 'none';
@@ -9740,12 +9864,17 @@
                     }
                 }
 
-                // 将客户ID添加到当前用户的客户列表中
+                // 将客户ID添加到当前用户的客户列表中（存储到远程数据库）
                 if (!editingCustomerId) {
-                    const currentUserCustomers = JSON.parse(localStorage.getItem(`customer_${currentUser || 'admin'}`) || '[]');
-                    if (!currentUserCustomers.includes(customer.id)) {
-                        currentUserCustomers.push(customer.id);
-                        localStorage.setItem(`customer_${currentUser || 'admin'}`, JSON.stringify(currentUserCustomers));
+                    try {
+                        const key = `customer_${currentUser || 'admin'}`;
+                        const currentUserCustomers = await getRemoteConfig(key) || [];
+                        if (!currentUserCustomers.includes(customer.id)) {
+                            currentUserCustomers.push(customer.id);
+                            await saveRemoteConfig(key, currentUserCustomers);
+                        }
+                    } catch (e) {
+                        console.error('保存客户列表失败:', e);
                     }
                 }
 
@@ -11072,7 +11201,7 @@
                 const saleProperties = selectedProps.filter(p => p.type === 'sale');
                 const rentProperties = selectedProps.filter(p => p.type !== 'sale');
 
-                // 处理出售房源 - 按小区分组，每个小区下面生成合作热线
+                // 处理出售房源 - 简洁格式
                 if (saleProperties.length > 0) {
                     const saleByCommunity = {};
                     saleProperties.forEach(property => {
@@ -11102,26 +11231,24 @@
                             schoolInfo += group.middleSchool;
                         }
                         
+                        // 小区标题
+                        shareText += `出售：${community}`;
+                        if (schoolInfo) {
+                            shareText += ` | 学区：${schoolInfo}`;
+                        }
+                        shareText += '\n';
+                        
+                        // 房源列表
                         group.properties.forEach((property, propertyIndex) => {
-                            if (propertyIndex > 0) {
+                            shareText += `${property.layout || '未知'} | ${property.area || '未知'}平 | ${property.price || '面议'}万 | ${property.decoration || '未知'} | ${property.floor || '未知'}楼`;
+                            
+                            if (propertyIndex < group.properties.length - 1) {
                                 shareText += '\n';
                             }
-                            
-                            shareText += `🏘️ 出售：${community}\n`;
-                            
-                            if (schoolInfo) {
-                                shareText += `📚 学区：${schoolInfo}\n`;
-                            }
-                            
-                            shareText += `📏 面积：${property.area || '未知'}平\n`;
-                            shareText += `🏠 户型：${property.layout || '未知'}\n`;
-                            shareText += `💰 价格：${property.price || '面议'}万元\n`;
-                            shareText += `🎨 装修：${property.decoration || '未知'}\n`;
-                            shareText += `🏢 楼层：${property.floor || '未知'}楼\n`;
                         });
                         
-                        // 每个出售小区下面生成合作热线
-                        shareText += contactInfo;
+                        // 合作热线
+                        shareText += '\n' + contactInfo;
                         
                         if (communityIndex < saleCommunities.length - 1 || rentProperties.length > 0) {
                             shareText += '\n\n';
@@ -11129,7 +11256,7 @@
                     });
                 }
 
-                // 处理出租房源 - 所有出租房源合在一起，只生成一条合作热线
+                // 处理出租房源 - 简洁格式，所有出租房源合在一起，只生成一条合作热线
                 if (rentProperties.length > 0) {
                     const rentByCommunity = {};
                     rentProperties.forEach(property => {
@@ -11159,26 +11286,24 @@
                             schoolInfo += group.middleSchool;
                         }
                         
+                        // 小区标题
+                        shareText += `出租：${community}`;
+                        if (schoolInfo) {
+                            shareText += ` | 学区：${schoolInfo}`;
+                        }
+                        shareText += '\n';
+                        
+                        // 房源列表
                         group.properties.forEach((property, propertyIndex) => {
-                            if (propertyIndex > 0) {
+                            shareText += `${property.layout || '未知'} | ${property.area || '未知'}平 | ${property.price || '面议'}元/月 | ${property.decoration || '未知'} | ${property.floor || '未知'}楼`;
+                            
+                            if (propertyIndex < group.properties.length - 1) {
                                 shareText += '\n';
                             }
-                            
-                            shareText += `🏘️ 出租：${community}\n`;
-                            
-                            if (schoolInfo) {
-                                shareText += `📚 学区：${schoolInfo}\n`;
-                            }
-                            
-                            shareText += `📏 面积：${property.area || '未知'}平\n`;
-                            shareText += `🏠 户型：${property.layout || '未知'}\n`;
-                            shareText += `💰 价格：${property.price || '面议'}元/月\n`;
-                            shareText += `🎨 装修：${property.decoration || '未知'}\n`;
-                            shareText += `🏢 楼层：${property.floor || '未知'}楼\n`;
                         });
                         
                         if (communityIndex < rentCommunities.length - 1) {
-                            shareText += '\n';
+                            shareText += '\n\n';
                         }
                     });
                     
@@ -13523,8 +13648,6 @@
         function handleLogout() {
             if (confirm('确定要退出登录吗？')) {
                 currentUser = '';
-                // 清除登录状态
-                localStorage.removeItem('loggedInUser');
                 document.getElementById('appContainer').style.display = 'none';
                 document.getElementById('loginPage').style.display = 'flex';
                 document.getElementById('username').value = '';
@@ -13547,15 +13670,6 @@
             
             if (validUsers[username] === password) {
                 currentUser = username;
-                // 保存登录状态到localStorage
-                localStorage.setItem('loggedInUser', username);
-                
-                // 确保用户有客户列表，如果没有则初始化为空数组
-                const userCustomerKey = `customer_${username}`;
-                if (!localStorage.getItem(userCustomerKey)) {
-                    localStorage.setItem(userCustomerKey, JSON.stringify([]));
-                    console.log('为新用户初始化客户列表为空数组');
-                }
                 
                 document.getElementById('loginPage').style.display = 'none';
                 document.getElementById('appContainer').style.display = 'block';
@@ -13584,38 +13698,13 @@
 
         // 自动登录
         async function autoLogin() {
-            const loggedInUser = localStorage.getItem('loggedInUser');
-            if (loggedInUser) {
-                currentUser = loggedInUser;
-                
-                // 确保用户有客户列表，如果没有则初始化为空数组
-                const userCustomerKey = `customer_${loggedInUser}`;
-                if (!localStorage.getItem(userCustomerKey)) {
-                    localStorage.setItem(userCustomerKey, JSON.stringify([]));
-                    console.log('为自动登录用户初始化客户列表为空数组');
-                }
-                
-                document.getElementById('loginPage').style.display = 'none';
-                document.getElementById('appContainer').style.display = 'block';
-                
-                // 安全设置用户名显示，检查元素是否存在
-                const userElements = ['headerUser', 'headerUser2', 'headerUser3', 'headerUser4', 'profileUsername'];
-                userElements.forEach(id => {
-                    const element = document.getElementById(id);
-                    if (element) {
-                        element.textContent = loggedInUser;
-                    }
-                });
-
-                // 初始化
-                initSelectOptions();
-                initVoiceRecognition();
-                
-                // 加载数据
-                await loadData();
-
-                showToast('✅ 自动登录成功');
-            }
+            // 不使用本地存储，直接显示登录页面
+            document.getElementById('loginPage').style.display = 'flex';
+            document.getElementById('appContainer').style.display = 'none';
+            
+            // 初始化
+            initSelectOptions();
+            initVoiceRecognition();
         }
 
         // 转让客户
@@ -14682,25 +14771,6 @@
                 showToast('📵 网络已断开');
             });
 
-            // 监听 localStorage 变化，用于客户转让通知
-            window.addEventListener('storage', (e) => {
-                console.log('localStorage 变化:', e.key, e.newValue);
-                
-                // 检查是否是客户列表变化
-                if (e.key && e.key.startsWith('customer_')) {
-                    const changedUser = e.key.replace('customer_', '');
-                    console.log(`用户 ${changedUser} 的客户列表发生变化`);
-                    
-                    // 不管是哪个用户的客户列表变化，都刷新当前用户的数据
-                    // 因为当前用户可能是接收方，需要看到新客户
-                    console.log('客户列表发生变化，刷新当前用户数据...');
-                    loadData().then(() => {
-                        renderCustomerList();
-                        showToast('🔄 客户列表已更新');
-                    });
-                }
-            });
-
             // 页面可见性变化时的处理 - 添加防抖机制
             let lastLoadTime = 0;
             const minLoadInterval = 30000; // 至少间隔30秒
@@ -15315,8 +15385,8 @@
 
         // ========== 户型图相关功能 ==========
         
-        // 户型图数据存储（从本地存储加载）
-        let floorplanData = JSON.parse(localStorage.getItem('floorplanData') || '{}');
+        // 户型图数据存储
+        let floorplanData = {};
         
         // 应用户型图到表单
         function applyFloorplan(url) {
@@ -15732,12 +15802,15 @@
         // 户型图与房源ID关联管理
         let floorplanMap = {}; // 存储 { propertyId: floorplanUrl }
         
-        // 从本地存储加载户型图映射
-        function loadFloorplanMap() {
+        // 从远程数据库加载户型图映射
+        async function loadFloorplanMap() {
             try {
-                const saved = localStorage.getItem('floorplanMap');
-                if (saved) {
-                    floorplanMap = JSON.parse(saved);
+                // 从远程数据库加载
+                const remoteData = await getRemoteConfig('floorplanMap');
+                
+                if (remoteData) {
+                    console.log('✅ 从远程数据库加载户型图映射');
+                    floorplanMap = remoteData;
                 }
             } catch (e) {
                 console.error('加载户型图映射失败:', e);
@@ -15745,10 +15818,11 @@
             }
         }
         
-        // 保存户型图映射到本地存储
-        function saveFloorplanMap() {
+        // 保存户型图映射到远程数据库
+        async function saveFloorplanMap() {
             try {
-                localStorage.setItem('floorplanMap', JSON.stringify(floorplanMap));
+                // 保存到远程数据库
+                await saveRemoteConfig('floorplanMap', floorplanMap);
             } catch (e) {
                 console.error('保存户型图映射失败:', e);
             }
@@ -15770,15 +15844,230 @@
             return null;
         }
         
+        // 备忘录数据存储
+        let currentMemos = [];
+        let currentEditingMemoId = null;
+        
+        // 从远程数据库加载备忘录
+        async function loadMemos() {
+            try {
+                // 从远程数据库加载
+                const remoteData = await getRemoteConfig('memos');
+                
+                if (remoteData) {
+                    console.log('✅ 从远程数据库加载备忘录');
+                    currentMemos = remoteData;
+                }
+                
+                renderMemos();
+                updateMemoEmptyState();
+            } catch (e) {
+                console.error('加载备忘录失败:', e);
+                currentMemos = [];
+            }
+        }
+        
+        // 保存备忘录到远程数据库
+        async function saveMemos() {
+            try {
+                // 保存到远程数据库
+                await saveRemoteConfig('memos', currentMemos);
+            } catch (e) {
+                console.error('保存备忘录失败:', e);
+            }
+        }
+        
+        // 渲染备忘录列表
+        function renderMemos(category = 'all') {
+            const memoList = document.getElementById('memoList');
+            if (!memoList) return;
+            
+            memoList.innerHTML = '';
+            
+            let filteredMemos = currentMemos;
+            if (category !== 'all') {
+                filteredMemos = currentMemos.filter(memo => memo.category === category);
+            }
+            
+            if (filteredMemos.length === 0) {
+                document.getElementById('memoEmptyState').style.display = 'block';
+                return;
+            }
+            
+            document.getElementById('memoEmptyState').style.display = 'none';
+            
+            filteredMemos.forEach(memo => {
+                const memoItem = document.createElement('div');
+                memoItem.className = 'memo-item';
+                memoItem.innerHTML = `
+                    <div class="memo-item-header">
+                        <div class="memo-title">${memo.title}</div>
+                        <div class="memo-category-badge">${getCategoryName(memo.category)}</div>
+                    </div>
+                    <div class="memo-content">${memo.content}</div>
+                    <div class="memo-footer">
+                        <div>${formatDate(memo.timestamp)}</div>
+                        <div class="memo-actions">
+                            <div class="memo-action" onclick="editMemo('${memo.id}')">编辑</div>
+                            <div class="memo-action" onclick="deleteMemo('${memo.id}')">删除</div>
+                        </div>
+                    </div>
+                `;
+                memoList.appendChild(memoItem);
+            });
+        }
+        
+        // 筛选备忘录
+        window.filterMemos = function(category) {
+            document.querySelectorAll('.memo-category').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.querySelector(`.memo-category[data-category="${category}"]`).classList.add('active');
+            
+            renderMemos(category);
+        }
+        
+        // 打开添加备忘录模态框
+        window.openAddMemoModal = function() {
+            console.log('openAddMemoModal called');
+            currentEditingMemoId = null;
+            
+            const modal = document.getElementById('addMemoModal');
+            const title = document.getElementById('memoModalTitle');
+            const memoTitle = document.getElementById('memoTitle');
+            const memoCategory = document.getElementById('memoCategory');
+            const memoContent = document.getElementById('memoContent');
+            
+            console.log('Elements found:', { modal, title, memoTitle, memoCategory, memoContent });
+            
+            if (title) title.textContent = '添加备忘录';
+            if (memoTitle) memoTitle.value = '';
+            if (memoCategory) memoCategory.value = 'work';
+            if (memoContent) memoContent.value = '';
+            if (modal) {
+                modal.style.display = 'flex';
+                modal.style.justifyContent = 'center';
+                modal.style.alignItems = 'center';
+                console.log('Modal display set to flex');
+            }
+        }
+        
+        // 关闭添加备忘录模态框
+        window.closeAddMemoModal = function() {
+            const modal = document.getElementById('addMemoModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+        
+        // 保存备忘录
+        window.saveMemo = function() {
+            const title = document.getElementById('memoTitle').value.trim();
+            const category = document.getElementById('memoCategory').value;
+            const content = document.getElementById('memoContent').value.trim();
+            
+            if (!title) {
+                alert('请输入备忘录标题');
+                return;
+            }
+            
+            if (currentEditingMemoId) {
+                const index = currentMemos.findIndex(memo => memo.id === currentEditingMemoId);
+                if (index !== -1) {
+                    currentMemos[index] = {
+                        ...currentMemos[index],
+                        title,
+                        category,
+                        content,
+                        timestamp: Date.now()
+                    };
+                }
+            } else {
+                currentMemos.push({
+                    id: Date.now().toString(),
+                    title,
+                    category,
+                    content,
+                    timestamp: Date.now()
+                });
+            }
+            
+            saveMemos();
+            loadMemos();
+            closeAddMemoModal();
+        }
+        
+        // 编辑备忘录
+        window.editMemo = function(id) {
+            const memo = currentMemos.find(memo => memo.id === id);
+            if (!memo) return;
+            
+            currentEditingMemoId = id;
+            
+            const title = document.getElementById('memoModalTitle');
+            const memoTitle = document.getElementById('memoTitle');
+            const memoCategory = document.getElementById('memoCategory');
+            const memoContent = document.getElementById('memoContent');
+            const modal = document.getElementById('addMemoModal');
+            
+            if (title) title.textContent = '编辑备忘录';
+            if (memoTitle) memoTitle.value = memo.title;
+            if (memoCategory) memoCategory.value = memo.category;
+            if (memoContent) memoContent.value = memo.content;
+            if (modal) {
+                modal.style.display = 'flex';
+                modal.style.justifyContent = 'center';
+                modal.style.alignItems = 'center';
+            }
+        }
+        
+        // 删除备忘录
+        window.deleteMemo = function(id) {
+            if (confirm('确定要删除这条备忘录吗？')) {
+                currentMemos = currentMemos.filter(memo => memo.id !== id);
+                saveMemos();
+                loadMemos();
+            }
+        }
+        
+        // 获取分类名称
+        function getCategoryName(category) {
+            const categoryMap = {
+                'work': '工作',
+                'personal': '个人',
+                'finance': '财务',
+                'other': '其他'
+            };
+            return categoryMap[category] || category;
+        }
+        
+        // 格式化日期
+        function formatDate(timestamp) {
+            const date = new Date(timestamp);
+            return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+        }
+        
+        // 更新备忘录空状态
+        function updateMemoEmptyState() {
+            if (currentMemos.length === 0) {
+                document.getElementById('memoEmptyState').style.display = 'block';
+            } else {
+                document.getElementById('memoEmptyState').style.display = 'none';
+            }
+        }
+        
         // 小区信息数据存储
         let communityInfo = {};
         
         // 加载小区信息
-        function loadCommunityInfo() {
+        async function loadCommunityInfo() {
             try {
-                const saved = localStorage.getItem('communityInfo');
-                if (saved) {
-                    communityInfo = JSON.parse(saved);
+                // 从远程数据库加载
+                const remoteData = await getRemoteConfig('communityInfo');
+                
+                if (remoteData) {
+                    console.log('✅ 从远程数据库加载小区信息');
+                    communityInfo = remoteData;
                 }
             } catch (e) {
                 console.error('加载小区信息失败:', e);
@@ -15786,10 +16075,11 @@
             }
         }
         
-        // 保存小区信息
-        function saveCommunityInfoToStorage() {
+        // 保存小区信息到远程数据库
+        async function saveCommunityInfoToStorage() {
             try {
-                localStorage.setItem('communityInfo', JSON.stringify(communityInfo));
+                // 保存到远程数据库
+                await saveRemoteConfig('communityInfo', communityInfo);
             } catch (e) {
                 console.error('保存小区信息失败:', e);
             }
