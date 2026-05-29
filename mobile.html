@@ -11201,7 +11201,7 @@
                 const saleProperties = selectedProps.filter(p => p.type === 'sale');
                 const rentProperties = selectedProps.filter(p => p.type !== 'sale');
 
-                // 处理出售房源 - 按小区分组，每小区独立显示
+                // 处理出售房源 - 按小区分组，每小区独立显示"出售："和合作热线
                 if (saleProperties.length > 0) {
                     const saleByCommunity = {};
                     saleProperties.forEach(property => {
@@ -11219,17 +11219,6 @@
                     const saleCommunities = Object.keys(saleByCommunity);
                     saleCommunities.forEach((community, communityIndex) => {
                         const group = saleByCommunity[community];
-                        
-                        let schoolInfo = '';
-                        if (group.primarySchool) {
-                            schoolInfo += group.primarySchool;
-                        }
-                        if (group.middleSchool) {
-                            if (schoolInfo) {
-                                schoolInfo += '、';
-                            }
-                            schoolInfo += group.middleSchool;
-                        }
                         
                         // 每个小区前面加"出售："
                         shareText += `出售：\n`;
