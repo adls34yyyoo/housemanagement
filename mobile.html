@@ -11201,7 +11201,7 @@
                 const saleProperties = selectedProps.filter(p => p.type === 'sale');
                 const rentProperties = selectedProps.filter(p => p.type !== 'sale');
 
-                // 处理出售房源 - 简洁格式
+                // 处理出售房源 - 简洁格式，每个小区独立显示
                 if (saleProperties.length > 0) {
                     const saleByCommunity = {};
                     saleProperties.forEach(property => {
@@ -11231,14 +11231,14 @@
                             schoolInfo += group.middleSchool;
                         }
                         
-                        // 小区标题
+                        // 每个小区前面加"出售："
                         shareText += `出售：${community}`;
                         if (schoolInfo) {
                             shareText += ` | 学区：${schoolInfo}`;
                         }
                         shareText += '\n';
                         
-                        // 房源列表
+                        // 该小区下所有房源
                         group.properties.forEach((property, propertyIndex) => {
                             shareText += `${property.layout || '未知'} | ${property.area || '未知'}平 | ${property.price || '面议'}万 | ${property.decoration || '未知'} | ${property.floor || '未知'}楼`;
                             
@@ -11247,7 +11247,7 @@
                             }
                         });
                         
-                        // 合作热线
+                        // 每个小区后面加合作热线
                         shareText += '\n' + contactInfo;
                         
                         if (communityIndex < saleCommunities.length - 1 || rentProperties.length > 0) {
