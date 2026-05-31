@@ -3177,7 +3177,7 @@
                 </div>
                 <div class="form-group" id="statusMonthSection" style="display: none;">
                     <label class="form-label" id="statusMonthLabel">月份</label>
-                    <input type="number" class="form-input" id="propStatusMonth" placeholder="请输入月份数" min="1" max="12">
+                    <input type="month" class="form-input" id="propStatusMonth" placeholder="选择月份">
                 </div>
                 <div class="form-group">
                     <label class="form-label">房源描述</label>
@@ -8869,11 +8869,11 @@
             if (reason === 'renting') {
                 monthSection.style.display = 'block';
                 monthLabel.textContent = '出租月份';
-                document.getElementById('propStatusMonth').placeholder = '请输入已出租月份数';
+                document.getElementById('propStatusMonth').placeholder = '选择出租月份';
             } else if (reason === 'self_using') {
                 monthSection.style.display = 'block';
                 monthLabel.textContent = '自住月份';
-                document.getElementById('propStatusMonth').placeholder = '请输入已自住月份数';
+                document.getElementById('propStatusMonth').placeholder = '选择自住月份';
             } else {
                 monthSection.style.display = 'none';
                 document.getElementById('propStatusMonth').value = '';
@@ -9143,7 +9143,7 @@
                 landlord_wechat: isAgentMode ? '' : landlordWechat,
                 status,
                 off_shelf_reason: document.getElementById('propOffShelfReason').value || null,
-                status_month: document.getElementById('propStatusMonth').value ? parseInt(document.getElementById('propStatusMonth').value) : null,
+                status_month: document.getElementById('propStatusMonth').value || null,
                 type: saleOrRentType,
                 description: desc,
                 remark,
@@ -9207,6 +9207,8 @@
                     landlord_name: property.landlordName || property.landlord_name || '',
                     landlord_phone: property.landlordPhone || property.landlord_phone || '',
                     status: property.status,
+                    off_shelf_reason: property.off_shelf_reason || property.offShelfReason || null,
+                    status_month: property.status_month || property.statusMonth || null,
                     type: property.type,
                     description: property.description,
                     remark: property.remark,
@@ -9275,6 +9277,8 @@
                         landlord_name: property.landlordName || property.landlord_name || '',
                         landlord_phone: property.landlordPhone || property.landlord_phone || '',
                         status: property.status || 'pending',
+                        off_shelf_reason: property.off_shelf_reason || property.offShelfReason || null,
+                        status_month: property.status_month || property.statusMonth || null,
                         type: property.type || 'rent',
                         description: property.description || '',
                         remark: property.remark || '',
@@ -9507,6 +9511,27 @@
             document.getElementById('propStatus').value = property.status || 'pending';
             document.getElementById('propDesc').value = property.description || '';
             document.getElementById('propRemark').value = property.remark || '';
+            
+            // 填充已下架原因和月份
+            if (property.status === 'off_shelf') {
+                document.getElementById('propOffShelfReason').value = property.off_shelf_reason || property.offShelfReason || '';
+                handleOffShelfReasonChange();
+                // 如果有月份值，填充月份（兼容旧数据格式）
+                const statusMonth = property.status_month || property.statusMonth;
+                if (statusMonth) {
+                    // 如果是数字（如 5），转换为月份格式
+                    if (typeof statusMonth === 'number' || /^\d+$/.test(String(statusMonth))) {
+                        const currentYear = new Date().getFullYear();
+                        document.getElementById('propStatusMonth').value = `${currentYear}-${String(statusMonth).padStart(2, '0')}`;
+                    } else {
+                        // 已经是月份格式
+                        document.getElementById('propStatusMonth').value = statusMonth;
+                    }
+                }
+            } else {
+                document.getElementById('propOffShelfReason').value = '';
+                document.getElementById('propStatusMonth').value = '';
+            }
             
             // 加载户型图（从映射中获取）
             const savedFloorplan = getFloorplanForProperty(property.id);
