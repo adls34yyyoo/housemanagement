@@ -5125,9 +5125,41 @@
             }
 
             // ========== 小区识别（增强版）==========
-            // 优先匹配：出售/出租后面的小区名（到门牌号为止）
+            // 优先使用已有的小区列表进行匹配
+            if (!result.community && optionsData.community && optionsData.community.length > 0) {
+                const normalizedText = text.replace(/\s/g, '');
+                let bestMatch = null;
+                let bestMatchScore = 0;
+                
+                for (const community of optionsData.community) {
+                    if (!community) continue;
+                    
+                    const normalizedCommunity = community.replace(/\s/g, '');
+                    
+                    // 精确匹配
+                    if (normalizedText.includes(normalizedCommunity)) {
+                        result.community = community;
+                        break;
+                    }
+                    
+                    // 模糊匹配（包含关系）
+                    if (normalizedText.includes(normalizedCommunity.slice(0, -1)) || normalizedCommunity.includes(normalizedText)) {
+                        const score = Math.min(normalizedCommunity.length, normalizedText.length) / Math.max(normalizedCommunity.length, normalizedText.length);
+                        if (score > bestMatchScore && score >= 0.5) {
+                            bestMatchScore = score;
+                            bestMatch = community;
+                        }
+                    }
+                }
+                
+                if (!result.community && bestMatch) {
+                    result.community = bestMatch;
+                }
+            }
+            
+            // 如果前面没匹配到，使用模式匹配
             if (!result.community) {
-                // 匹配"出售：XXX"或"出租：XXX"格式，提取到门牌号之前的内容
+                // 优先匹配：出售/出租后面的小区名（到门牌号为止）
                 const sellRentPattern = /(?:出售|出租)[:：]\s*([\u4e00-\u9fa5]{2,12}(?:新村|小区|花园|家园|新城|公寓|公馆|大厦|苑|庄|里|庭|府|湾|岛|港|居|舍|庐|堡|厦|筑|城))/;
                 const match = text.match(sellRentPattern);
                 if (match) {
@@ -5137,22 +5169,17 @@
             
             // 如果前面没匹配到，使用其他模式
             if (!result.community) {
-                const communitySuffixes = '小区|花园|家园|新城|公寓|公馆|大厦|苑|幢|楼|村|庄|苑|里|庭|府|湾|岛|港|渡|居|舍|庐|堡|厦|筑|庭|舍|第|新城|锦苑|名苑|雅苑|丽苑|佳苑|嘉苑|鑫苑|金苑|银苑|玉苑|宝苑|翠苑|碧苑|青苑|绿苑|蓝苑|紫苑|红苑|彩苑|华苑|美苑|丽苑|雅筑|名筑|嘉筑|鑫筑|金筑|佳筑|丽筑|华筑|美筑|安居|康居|雅居|豪庭|名庭|华庭|丽庭|美景|丽景|美景|华景|嘉景|鑫景|金景|美湖|丽湖|翠湖|碧湖|蓝湖|彩虹|阳光|星光|金华|银华|鑫华|佳华|美华|华丽|华城|锦城|鑫城|金城|佳城|丽城|华府|金府|豪府|名府|贵府|天府|鼎城|瑞城|祥城|福城|安康|康宁|康健|健康|平安|祥和|福祥|福源|财源|金源|水源|木源|火源|土源|桃源|花源|绿源|青源|蓝源|金龙|金凤|金雀|金燕|金鸽|金鹰|金麟|金龟|金蟾|金鲤|金鲨|金鳄|金豹|金虎|金狮|金猴|金鸡|金狗|金猪|金牛|金鼠|金蛇|金马|金羊|金兔|金龙鱼|金大象|金狮子';
-                
                 const communityPatterns = [
                     // 优先匹配：某某公寓、某某公馆、某某苑、某某新村、某某花园等（小区名在前面）
-                    /([\u4e00-\u9fa5]{2,12}(?:公寓|公馆|苑|新村|花园|家园|新城|庭|府|里|庄|湾|岛|港|渡|居|舍|庐|堡|厦|筑|舍|第|锦苑|名苑|雅苑|丽苑|佳苑|嘉苑|鑫苑|金苑|银苑|玉苑|宝苑|翠苑|碧苑|青苑|绿苑|蓝苑|紫苑|红苑|彩苑|华苑|美苑|丽苑|雅筑|名筑|嘉筑|鑫筑|金筑|佳筑|丽筑|华筑|美筑|安居|康居|雅居|豪庭|名庭|华庭|丽庭|美景|丽景|美湖|丽湖|翠湖|碧湖|彩虹|阳光|星光|金华|银华|鑫华|佳华|美华|华丽|华城|锦城|鑫城|金城|佳城|丽城|华府|金府|豪府|名府|贵府|天府|鼎城|瑞城|祥城|福城|安康|康宁|康健|健康|平安|祥和|福祥|福源|财源|金源|水源|木源|火源|土源|桃源|花源|绿源|青源|蓝源|金龙|金凤|金雀|金燕|金鸽|金鹰|金麟|金龟|金蟾|金鲤|金鲨|金鳄|金豹|金虎|金狮|金猴|金鸡|金狗|金猪|金牛|金鼠|金蛇|金马|金羊|金兔|金龙鱼|金大象|金狮子))(?:\d+幢|\d+号楼?|$|·|\s|$)/,
+                    /([\u4e00-\u9fa5]{2,12}(?:公寓|公馆|苑|新村|花园|家园|新城|庭|府|里|庄|湾|岛|港|渡|居|舍|庐|堡|厦|筑))(?:\d+幢|\d+号楼?|·|\s|$)/,
                     // 匹配带"位于"、"在"的小区
                     /(?:位于|在|小区|楼盘)[\s:：]?([\u4e00-\u9fa5]{2,10}(?:小区|花园|家园|新城|公寓|公馆|大厦|苑|庄|里|庭|府|湾|岛|港|渡|居|舍|庐|堡|厦|筑))/,
                     // 匹配"XX·XX"格式的小区名
                     /([\u4e00-\u9fa5]{2,6}[··][\u4e00-\u9fa5]{2,6}(?:苑|花园|公馆|公寓|城|府|湾|庭))/,
-                    // 匹配常见小区名（不带后缀的情况）
-                    /金地城|一方新城|锦绣华都|海曲雅苑|德盈佳园|康达公寓|丽水雅苑|汇锦城|东城花苑|彩虹园|听潮新村|西门新村|北门新村|南门新村|城东新村|东原锦苑|蓝光锦苑|万科城|保利城|中海城|绿地城|华润城|金地自在城|金地长湖|金地铂悦|金地天地|金地格林|金地褐石|金地大社区|金地中央|金地广场|金地商务|金地金融|金地科技|金地创意|金地创业|金地产业|金地工业园|金地物流|金地仓储|金地码头|金地港口|金地船坞|金地渔港|金地水产|金地海鲜|金地肉类|金地蔬菜|金地水果|金地超市|金地商场|金地百货|金地市场|金地门店|金地店铺|金地店面|金地铺面|金地门脸|金地底商|金地商业|金地写字楼|金地办公楼|金地公寓|金地住宅|金地别墅|金地洋房|金地高层|金地小高层|金地多层|金地电梯|金地楼梯|金地毛坯|金地精装|金地豪装|金地简装/,
-                    // 匹配"XX园"、"XX里"格式
-                    /([\u4e00-\u9fa5]{2,6}园)/,
-                    /([\u4e00-\u9fa5]{2,6}里)/,
-                    // 匹配"XX村"格式（新村、花苑村等）
-                    /([\u4e00-\u9fa5]{2,6}村)/
+                    // 匹配"XX园"、"XX里"、"XX村"格式
+                    /([\u4e00-\u9fa5]{2,8}园)/,
+                    /([\u4e00-\u9fa5]{2,8}里)/,
+                    /([\u4e00-\u9fa5]{2,8}村)/
                 ];
 
                 for (const pattern of communityPatterns) {
@@ -5434,10 +5461,52 @@
             if (data.community) {
                 const communitySelect = document.getElementById('propCommunity');
                 const communityCustom = document.getElementById('propCommunityCustom');
-                if (communitySelect && !Array.from(communitySelect.options).some(o => o.value === data.community)) {
+                
+                // 首先尝试精确匹配
+                let foundExact = false;
+                if (communitySelect) {
+                    for (let i = 0; i < communitySelect.options.length; i++) {
+                        if (communitySelect.options[i].value === data.community) {
+                            communitySelect.value = data.community;
+                            communityCustom.value = '';
+                            foundExact = true;
+                            break;
+                        }
+                    }
+                }
+                
+                // 如果精确匹配失败，尝试模糊匹配
+                if (!foundExact && communitySelect) {
+                    const normalizedInput = data.community.replace(/\s/g, '');
+                    let bestMatch = null;
+                    let bestMatchScore = 0;
+                    
+                    for (let i = 0; i < communitySelect.options.length; i++) {
+                        const optionValue = communitySelect.options[i].value;
+                        if (!optionValue) continue;
+                        
+                        const normalizedOption = optionValue.replace(/\s/g, '');
+                        
+                        // 检查是否包含关系
+                        if (normalizedOption.includes(normalizedInput) || normalizedInput.includes(normalizedOption)) {
+                            const score = Math.min(normalizedInput.length, normalizedOption.length) / Math.max(normalizedInput.length, normalizedOption.length);
+                            if (score > bestMatchScore) {
+                                bestMatchScore = score;
+                                bestMatch = optionValue;
+                            }
+                        }
+                    }
+                    
+                    if (bestMatch && bestMatchScore >= 0.6) {
+                        communitySelect.value = bestMatch;
+                        communityCustom.value = '';
+                        foundExact = true;
+                    }
+                }
+                
+                // 如果还是没找到，使用自定义输入
+                if (!foundExact) {
                     communityCustom.value = data.community;
-                } else if (communitySelect) {
-                    communitySelect.value = data.community;
                 }
                 
                 // 自动填充学区信息
