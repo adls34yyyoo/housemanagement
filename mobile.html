@@ -11323,10 +11323,7 @@
             });
             
             // 合作热线内容
-            const contactInfo = `合作热线（微信同号）：
-   13761547030 王
-   18019166290 韩
-   13917755549 苏`;
+            const contactInfo = `合作热线（微信同号）：13761547030 王                      18019166290 韩                      13917755549 苏`;
 
             let shareText = '';
 
@@ -11355,7 +11352,7 @@
                     saleCommunities.forEach((community, communityIndex) => {
                         const group = saleByCommunity[community];
                         
-                        // 每个小区前面加"出售："
+                        // 每个不同小区房源前面加"出售："
                         shareText += `出售：\n`;
                         
                         // 该小区下所有房源
@@ -11367,10 +11364,13 @@
                             }
                         });
                         
-                        // 每个小区后面加合作热线
+                        // 每个不同小区房源结尾加合作热线
                         shareText += '\n' + contactInfo;
                         
-                        if (communityIndex < saleCommunities.length - 1 || rentProperties.length > 0) {
+                        // 不同小区房源之间隔开一行
+                        if (communityIndex < saleCommunities.length - 1) {
+                            shareText += '\n\n';
+                        } else if (rentProperties.length > 0) {
                             shareText += '\n\n';
                         }
                     });
@@ -11395,17 +11395,6 @@
                     rentCommunities.forEach((community, communityIndex) => {
                         const group = rentByCommunity[community];
                         
-                        let schoolInfo = '';
-                        if (group.primarySchool) {
-                            schoolInfo += group.primarySchool;
-                        }
-                        if (group.middleSchool) {
-                            if (schoolInfo) {
-                                schoolInfo += '、';
-                            }
-                            schoolInfo += group.middleSchool;
-                        }
-                        
                         // 小区标题
                         shareText += `出租：\n`;
                         
@@ -11423,7 +11412,7 @@
                         }
                     });
                     
-                    // 所有出租房源后面只生成一条合作热线
+                    // 所有出租房源尾部只生成一条合作热线
                     shareText += '\n' + contactInfo;
                 }
             } else {
