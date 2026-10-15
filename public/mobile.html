@@ -3374,16 +3374,20 @@
                     )
                     .subscribe((status) => {
                         console.log('实时连接状态:', status);
-                        const isConnected = status === 'SUBSCRIBED';
-                        updateConnectionStatus(isConnected);
-                        
-                        // 如果连接成功，重置重连计数器
-                        if (isConnected) {
+
+                        // 注意：实时通道（WebSocket）状态 ≠ 数据库可用性。
+                        // REST 读写正常但通道被网络/代理拦截时会一直不是 SUBSCRIBED，
+                        // 这种情况不能显示成"离线"，否则会误导用户。
+                        if (status === 'SUBSCRIBED') {
                             reconnectCount = 0;
+                            updateConnectionStatus(true);
                             showToast('✅ 数据库连接成功');
                             return;
                         }
-                        
+
+                        // 通道未建立：数据仍可正常读写，只提示实时更新不可用
+                        markRealtimeUnavailable(status);
+
                         // 如果连接失败且不是CHANNEL_ERROR，尝试重连
                         if (status !== 'CHANNEL_ERROR' && reconnectCount < maxReconnectCount) {
                             reconnectCount++;
@@ -3397,16 +3401,29 @@
                             }, 5000 * reconnectCount); // 增加延迟时间，从3秒改为5秒
                         } else if (reconnectCount >= maxReconnectCount) {
                             console.log('已达到最大重连次数，停止重连');
-                            showToast('⚠️ 网络连接不稳定，请检查网络后刷新页面');
                         } else if (status === 'CHANNEL_ERROR') {
-                            console.log('通道错误，可能是数据库配置问题');
-                            showToast('⚠️ 数据库连接失败，请检查数据库配置');
+                            console.log('通道错误，可能是数据库实时同步配置问题');
                         }
                     });
             } catch (e) {
                 console.error('实时连接初始化失败:', e);
-                showToast('⚠️ 实时连接初始化失败，数据可能不是最新');
-                updateConnectionStatus(false);
+                // 实时连接失败不代表数据库不可用，只提示实时更新不可用
+                markRealtimeUnavailable('exception');
+            }
+        }
+        
+        // 实时推送不可用：数据库读写正常，只是收不到实时更新（不能显示成"离线"）
+        let realtimeWarned = false;
+        function markRealtimeUnavailable(status) {
+            console.warn('实时更新通道未建立（不影响数据读写）:', status);
+            const statusEl = document.getElementById('connectionStatus');
+            if (statusEl && !statusEl.classList.contains('offline')) {
+                statusEl.className = 'connection-status online';
+                statusEl.innerHTML = '<span class="dot"></span><span>已连接</span>';
+            }
+            if (!realtimeWarned) {
+                realtimeWarned = true;
+                showToast('ℹ️ 实时更新不可用，数据仍可正常读写');
             }
         }
         
