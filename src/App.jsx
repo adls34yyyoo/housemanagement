@@ -203,7 +203,7 @@ function App() {
 
   // 登录处理
   const handleLogin = async () => {
-    if (username === 'admin' && password === 'admin123') {
+    if (username === 'admin' && password === 'Ly666666') {
       setIsLoggedIn(true);
       message.success('登录成功');
     } else {
@@ -565,7 +565,7 @@ function App() {
               </Form.Item>
               <div style={{ textAlign: 'center', marginTop: 16 }}>
                 <p>默认用户名: admin</p>
-                <p>默认密码: admin123</p>
+                <p>默认密码: Ly666666</p>
               </div>
             </Form>
           </Card>
