@@ -5959,6 +5959,8 @@
         }
 
         // 办事指南数据
+        // 最近更新日期：修改下面 guideData 内容时同步改这个值
+        const GUIDE_UPDATE_DATE = '2026-10-15';
         const guideData = [
             {
                 id: 'gongjijin',
@@ -5966,8 +5968,7 @@
                 summary: '房产证、身份证、银行卡、买卖合同、购房发票',
                 location: '建设银行2楼西大厅公积金管理中心',
                 icon: '🏦',
-                tag: '公积金',
-                date: '2026-10-15'
+                tag: '公积金'
             },
             {
                 id: 'fangchanzheng',
@@ -5975,8 +5976,7 @@
                 summary: '身份证、购房合同、发票、户口本等',
                 location: '浦东新区不动产登记中心',
                 icon: '📄',
-                tag: '产权',
-                date: '2026-10-15'
+                tag: '产权'
             },
             {
                 id: 'daiikuan',
@@ -5984,8 +5984,7 @@
                 summary: '身份证、收入证明、银行流水、购房合同',
                 location: '各大银行网点',
                 icon: '💳',
-                tag: '贷款',
-                date: '2026-10-15'
+                tag: '贷款'
             },
             {
                 id: 'tuihui',
@@ -5993,8 +5992,7 @@
                 summary: '身份证、房产证、完税证明、银行卡',
                 location: '浦东新区税务局',
                 icon: '💰',
-                tag: '税务',
-                date: '2026-10-15'
+                tag: '税务'
             }
         ];
 
@@ -6021,7 +6019,7 @@
                         </div>
                         <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 4px;">📋 ${guide.summary}</div>
                         <div style="font-size: 13px; color: var(--text-secondary);">📍 ${guide.location}</div>
-                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">📅 生成日期: ${guide.date || '—'}</div>
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">📅 更新日期: ${GUIDE_UPDATE_DATE}</div>
                     </div>
                 `;
             });
@@ -6063,8 +6061,8 @@
                             <div style="color: var(--text-secondary); line-height: 1.6;">${guide.summary}</div>
                         </div>
                         <div style="margin-bottom: 16px;">
-                            <div style="font-weight: 600; color: var(--text); margin-bottom: 8px;">📅 生成日期</div>
-                            <div style="color: var(--text-secondary);">${guide.date || '—'}</div>
+                            <div style="font-weight: 600; color: var(--text); margin-bottom: 8px;">📅 更新日期</div>
+                            <div style="color: var(--text-secondary);">${GUIDE_UPDATE_DATE}</div>
                         </div>
                         ${guide.tips ? `
                             <div style="margin-bottom: 16px;">
@@ -6110,7 +6108,7 @@
                         </div>
                         <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 4px;">📋 ${guide.summary}</div>
                         <div style="font-size: 13px; color: var(--text-secondary);">📍 ${guide.location}</div>
-                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">📅 生成日期: ${guide.date || '—'}</div>
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">📅 更新日期: ${GUIDE_UPDATE_DATE}</div>
                     </div>
                 `;
             });
