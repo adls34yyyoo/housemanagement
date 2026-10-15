@@ -26,3 +26,8 @@ logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# 本地临时诊断脚本（内含数据库密钥，勿入库）
+_rt-*.cjs
+_rt-check*
+_probe-*.cjs

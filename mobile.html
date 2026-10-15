@@ -4419,7 +4419,7 @@
         }
         
         // 实时推送不可用：数据库读写正常，只是收不到实时更新（不能显示成"离线"）
-        // 静默降级，不弹 toast（Supabase 免费版 Realtime 默认关闭，每台电脑都会触发）
+        // 静默降级，不弹 toast（实测：两张表未加入 supabase_realtime 发布，通道能 SUBSCRIBED 但事件不会送达）
         function markRealtimeUnavailable(status) {
             console.info('实时推送通道未建立（不影响数据读写，静默降级）:', status);
             const statusEl = document.getElementById('connectionStatus');
