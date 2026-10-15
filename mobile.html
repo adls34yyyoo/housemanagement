@@ -12,10 +12,14 @@
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <!-- TensorFlow -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/4.10.0/tf.min.js"></script>
-    <!-- Supabase (主CDN) -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
-    <!-- Supabase (备用CDN) -->
-    <script src="https://unpkg.com/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+    <!-- Supabase：优先本地文件（jsdelivr 会被网络重置，且原CDN路径 dist/umd/supabase.min.js 并不存在） -->
+    <script src="supabase.js"></script>
+    <script>
+        // 仅当本地文件缺失时才回退到CDN（路径已修正为 dist/umd/supabase.js）
+        if (typeof window.supabase === 'undefined' && typeof window.Supabase === 'undefined') {
+            document.write('<script src="https://unpkg.com/@supabase/supabase-js@2.39.0/dist/umd/supabase.js"><\/script>');
+        }
+    </script>
     <style>
         /* 现代设计系统 - 2024 */
         :root {
@@ -3992,6 +3996,138 @@
             }
         }
         
+        // ========== 数据库连接加固 ==========
+        // 数据库组件是否已加载
+        function isSupabaseLibLoaded() {
+            return typeof window.createClient !== 'undefined' ||
+                   typeof window.Supabase !== 'undefined' ||
+                   typeof window.supabase !== 'undefined';
+        }
+
+        // 动态加载单个脚本
+        function loadScriptOnce(url) {
+            return new Promise((resolve) => {
+                const s = document.createElement('script');
+                s.src = url;
+                s.onload = () => resolve(true);
+                s.onerror = () => resolve(false);
+                document.head.appendChild(s);
+            });
+        }
+
+        // 确保数据库组件已加载：本地文件 → unpkg → jsdelivr 依次兜底
+        let supabaseLibLoading = null;
+        async function ensureSupabaseLib() {
+            if (isSupabaseLibLoaded()) return true;
+            if (supabaseLibLoading) return supabaseLibLoading;
+
+            supabaseLibLoading = (async () => {
+                const sources = [
+                    new URL('supabase.js', location.href).href,
+                    'https://unpkg.com/@supabase/supabase-js@2.39.0/dist/umd/supabase.js',
+                    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.js'
+                ];
+                for (const src of sources) {
+                    console.log('尝试加载数据库组件:', src);
+                    const ok = await loadScriptOnce(src);
+                    if (ok && isSupabaseLibLoaded()) {
+                        console.log('✅ 数据库组件加载成功:', src);
+                        return true;
+                    }
+                    console.warn('数据库组件加载失败:', src);
+                }
+                return false;
+            })();
+
+            const result = await supabaseLibLoading;
+            supabaseLibLoading = null;
+            return result;
+        }
+
+        // 探测数据库服务器域名是否可达（区分"组件没加载"和"该网络访问不了 supabase.co"）
+        async function isDbHostReachable() {
+            try {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 8000);
+                await fetch(supabaseUrl + '/rest/v1/', {
+                    method: 'GET',
+                    headers: { apikey: supabaseKey },
+                    signal: controller.signal
+                });
+                clearTimeout(timer);
+                return true;
+            } catch (e) {
+                console.warn('数据库服务器域名不可达:', e.message);
+                return false;
+            }
+        }
+
+        // 常驻错误横幅（带"重新连接"按钮），避免失败只闪一下 toast 就消失
+        function showDbErrorBanner(reason, detail) {
+            let banner = document.getElementById('dbErrorBanner');
+            if (!banner) {
+                banner = document.createElement('div');
+                banner.id = 'dbErrorBanner';
+                banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#c62828;color:#fff;padding:10px 12px;font-size:13px;line-height:1.5;box-shadow:0 2px 8px rgba(0,0,0,.3);';
+                document.body.appendChild(banner);
+            }
+            banner.innerHTML = `
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                    <span style="flex:1;min-width:200px;">${reason}${detail ? '<br><span style="opacity:.85;font-size:12px;">' + detail + '</span>' : ''}</span>
+                    <button onclick="reconnectDatabase()" style="background:#fff;color:#c62828;border:none;border-radius:4px;padding:6px 12px;font-size:13px;font-weight:600;">重新连接</button>
+                    <button onclick="hideDbErrorBanner()" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,.6);border-radius:4px;padding:6px 10px;font-size:13px;">关闭</button>
+                </div>`;
+        }
+
+        function hideDbErrorBanner() {
+            const banner = document.getElementById('dbErrorBanner');
+            if (banner) banner.remove();
+        }
+
+        // 按根因区分报错：组件未加载 / 域名不可达 / 其他
+        async function diagnoseDbFailure(context) {
+            if (!isSupabaseLibLoaded()) {
+                showDbErrorBanner(
+                    '❌ 数据库组件未加载（' + context + '）',
+                    '请确认 supabase.js 与 mobile.html 在同一目录且可访问；若该电脑网络访问不了 unpkg.com，则必须部署本地 supabase.js 文件'
+                );
+                return;
+            }
+            if (!(await isDbHostReachable())) {
+                showDbErrorBanner(
+                    '❌ 无法连接数据库服务器（' + context + '）',
+                    '组件已加载，但该电脑的网络访问不了 ' + supabaseUrl + '（DNS/防火墙/代理限制），可更换网络后点“重新连接”'
+                );
+                return;
+            }
+            showDbErrorBanner(
+                '❌ 数据库连接失败（' + context + '）',
+                '服务器域名可达，问题可能在密钥或数据表配置，请查看控制台日志'
+            );
+        }
+
+        // 手动重新连接（横幅按钮调用）
+        window.reconnectDatabase = async function () {
+            showToast('🔄 正在重新连接数据库...');
+            hideDbErrorBanner();
+            if (!(await ensureSupabaseLib())) {
+                await diagnoseDbFailure('重新连接');
+                return;
+            }
+            if (!initSupabase()) {
+                updateConnectionStatus(false);
+                await diagnoseDbFailure('重新连接');
+                return;
+            }
+            updateConnectionStatus(true);
+            await loadData();
+            await loadOptionsFromDatabase();
+            initRealtimeConnection();
+            enhanceRealtimeConnection();
+            hideDbErrorBanner();
+            showToast('✅ 数据库已重新连接');
+        };
+
         // 初始化Supabase
         function initSupabase() {
             try {
@@ -4010,7 +4146,7 @@
                 if (!navigator.onLine) {
                     console.warn('网络离线，跳过Supabase初始化');
                     updateConnectionStatus(false);
-                    showToast('⚠️ 网络离线，使用本地数据');
+                    showToast('⚠️ 网络离线，无法连接数据库');
                     return false;
                 }
                 
@@ -4046,8 +4182,7 @@
                     
                     return true;
                 } else {
-                    console.error('❌ Supabase库未加载');
-                    showToast('⚠️ 数据库库未加载，使用本地数据');
+                    console.error('❌ 数据库组件未加载（supabase.js 缺失或该电脑访问不了 CDN）');
                     return false;
                 }
             } catch (e) {
@@ -4055,11 +4190,11 @@
                 console.error('错误详情:', e.message);
                 // 检查是否是网络错误
                 if (e.message && (e.message.includes('fetch') || e.message.includes('network') || e.message.includes('timeout'))) {
-                    showToast('⚠️ 网络连接失败，使用本地数据');
+                    showToast('⚠️ 网络连接失败，无法连接数据库');
                 } else if (e.message && e.message.includes('invalid api key')) {
                     showToast('⚠️ API密钥无效，请检查配置');
                 } else {
-                    showToast('⚠️ 数据库初始化失败，使用本地数据');
+                    showToast('⚠️ 数据库初始化失败，无法连接数据库');
                 }
                 return false;
             }
@@ -4276,7 +4411,7 @@
                     });
             } catch (e) {
                 console.error('实时连接初始化失败:', e);
-                showToast('⚠️ 实时连接初始化失败，使用本地数据');
+                showToast('⚠️ 实时连接初始化失败，数据可能不是最新');
                 updateConnectionStatus(false);
             }
         }
@@ -6275,11 +6410,11 @@
             updateShareButton();
         }
 
-        // 添加可代理房源卖房
-        function addAgentProperty(propertyId) {
+        // 添加可代理房源卖房（直接保存到云数据库）
+        async function addAgentProperty(propertyId) {
             const property = properties.find(p => p.id === propertyId);
             if (!property) return;
-            
+
             // 复制可代理房源为自有房源
             const newProperty = {
                 ...property,
@@ -6290,18 +6425,59 @@
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
             };
-            
-            // 添加到房源列表
-            properties.push(newProperty);
-            
-            // 保存到本地存储
 
-            
-            // 刷新列表
-            renderPropertyList();
-            
-            // 显示成功消息
-            showToast('✅ 成功添加可代理房源为自有房源');
+            try {
+                if (!supabaseClient) {
+                    const initialized = initSupabase();
+                    if (!initialized) {
+                        throw new Error('数据库未连接');
+                    }
+                }
+
+                // 只插入数据库存在的核心字段
+                const insertPayload = {
+                    id: newProperty.id,
+                    community: newProperty.community || '',
+                    decoration: newProperty.decoration || '',
+                    price: parseFloat(newProperty.price) || null,
+                    region: newProperty.region || '',
+                    layout: newProperty.layout || '',
+                    area: parseFloat(newProperty.area) || null,
+                    floor: newProperty.floor || '',
+                    door_number: newProperty.doorNumber || newProperty.door_number || '',
+                    landlord_name: newProperty.landlordName || newProperty.landlord_name || '',
+                    landlord_phone: newProperty.landlordPhone || newProperty.landlord_phone || '',
+                    status: newProperty.status,
+                    type: newProperty.type,
+                    description: newProperty.description || '',
+                    remark: newProperty.remark || '',
+                    created_at: newProperty.created_at,
+                    updated_at: newProperty.updated_at,
+                    primary_school: newProperty.primary_school || newProperty.primarySchool || '',
+                    middle_school: newProperty.middle_school || newProperty.middleSchool || ''
+                };
+
+                const { error } = await supabaseClient
+                    .from('properties')
+                    .insert([insertPayload]);
+
+                if (error) {
+                    throw error;
+                }
+
+                // 以云数据库为准刷新列表
+                await loadData();
+
+                // 刷新列表
+                renderPropertyList();
+                updateStats();
+
+                // 显示成功消息
+                showToast('✅ 成功添加可代理房源为自有房源');
+            } catch (error) {
+                console.error('添加可代理房源失败:', error);
+                showToast('❌ 添加失败：' + (error.message || '网络连接失败') + '，数据未保存');
+            }
         }
 
         // 更新分享按钮显示
@@ -9483,7 +9659,7 @@
                     }
                 }
                 
-                // 即使数据库保存失败，也将房源添加到本地数组
+                // 云数据库保存成功后，同步更新本地镜像数组（随后 loadData 会以云数据库为准刷新）
                 if (isAgentMode) {
                     // 检查是否已存在
                     const existingIndex = agentProperties.findIndex(p => p.id === property.id);
@@ -9554,33 +9730,8 @@
                 updateStats();
             } catch (error) {
                 console.error('保存房源时出错:', error);
-                
-                // 即使保存失败，也将房源添加到本地数组
-                if (isAgentMode) {
-                    // 检查是否已存在
-                    const existingIndex = agentProperties.findIndex(p => p.id === property.id);
-                    if (existingIndex > -1) {
-                        agentProperties[existingIndex] = property;
-                    } else {
-                        agentProperties.push(property);
-                    }
-                    // 刷新列表
-                    renderAgentPropertyList();
-                } else {
-                    // 检查是否已存在
-                    const existingIndex = properties.findIndex(p => p.id === property.id);
-                    if (existingIndex > -1) {
-                        properties[existingIndex] = property;
-                    } else {
-                        properties.push(property);
-                    }
-                    // 刷新列表
-                    renderPropertyList();
-                }
-                
-                showToast('⚠️ 网络连接失败，房源已保存到本地');
-                closePropertyModal();
-                updateStats();
+                // 数据只保存到云数据库，失败时不保留本地副本，保留表单以便用户重试
+                showToast('❌ 保存失败：' + (error.message || '网络连接失败') + '，数据未保存');
             }
         }
 
@@ -13205,31 +13356,6 @@
             }
         }
 
-        // 永久删除指定小区
-        function deleteCommunities() {
-            const communitiesToDelete = ['阳光小区', '幸福花园', '绿地家园'];
-            
-            // 从房源中删除这些小区的房源
-            properties = properties.filter(p => !communitiesToDelete.includes(p.community));
-            agentProperties = agentProperties.filter(p => !communitiesToDelete.includes(p.community));
-            
-            // 从选项数据中删除这些小区
-            optionsData.community = optionsData.community.filter(c => !communitiesToDelete.includes(c));
-            
-            // 保存到本地存储
-
-            
-            // 刷新UI
-            renderPropertyList();
-            renderAgentPropertyList();
-            updateStats();
-            
-            showToast(`✅ 已永久删除 ${communitiesToDelete.join('、')} 小区及其所有房源`);
-        }
-
-        // 执行删除操作
-        deleteCommunities();
-
         // 打开数据导出模态框
         function openExportModal() {
             // 创建导出选项模态框
@@ -14335,7 +14461,7 @@
         }
 
         // 保存沟通记录
-        function saveCallRecord(propertyId, phone) {
+        async function saveCallRecord(propertyId, phone) {
             const time = document.getElementById('callTime').value;
             const remark = document.getElementById('callRemark').value;
             const operator = document.getElementById('callOperator').value || '管理员';
@@ -14357,29 +14483,51 @@
                 property.callRecords = [];
             }
 
-            property.callRecords.push({
+            const newCallRecord = {
                 id: Date.now().toString(),
                 phone,
                 time,
                 remark,
                 operator,
                 created_at: new Date().toISOString()
-            });
+            };
+            property.callRecords.push(newCallRecord);
 
             // 更新房源的更新时间
             property.updated_at = new Date().toISOString();
-            
-            // 标记为未同步
-            property.synced = false;
 
-            // 保存到本地存储
+            // 直接保存到云数据库，失败则回滚本地修改（数据只以云数据库为准）
+            try {
+                if (!supabaseClient) {
+                    const initialized = initSupabase();
+                    if (!initialized) {
+                        throw new Error('数据库未连接');
+                    }
+                }
 
+                const { error } = await supabaseClient
+                    .from('properties')
+                    .update({
+                        call_records: property.callRecords,
+                        updated_at: property.updated_at
+                    })
+                    .eq('id', propertyId);
 
-            // 关闭模态框
-            closeCallRecordModal();
+                if (error) {
+                    throw error;
+                }
 
-            // 显示成功提示
-            showToast('✅ 沟通记录已保存');
+                // 关闭模态框
+                closeCallRecordModal();
+
+                // 显示成功提示
+                showToast('✅ 沟通记录已保存');
+            } catch (error) {
+                console.error('保存沟通记录失败:', error);
+                // 回滚本地修改，保证与云数据库一致
+                property.callRecords = property.callRecords.filter(r => r !== newCallRecord);
+                showToast('❌ 沟通记录保存失败：' + (error.message || '网络连接失败'));
+            }
         }
 
         // 显示沟通记录模态框
@@ -14628,6 +14776,9 @@
                 
                 if (error) {
                     console.error('保存沟通记录失败:', error);
+                    // 云数据库保存失败，回滚本地修改，保证与云数据库一致
+                    customer.communication_records.pop();
+                    customer.communicationRecords = [...customer.communication_records];
                     showToast('❌ 保存沟通记录失败');
                     return;
                 }
@@ -14637,6 +14788,9 @@
 
             } catch (error) {
                 console.error('保存沟通记录时出错:', error);
+                // 云数据库保存失败，回滚本地修改，保证与云数据库一致
+                customer.communication_records.pop();
+                customer.communicationRecords = [...customer.communication_records];
                 showToast('❌ 保存失败，请检查网络连接');
             }
 
@@ -14650,250 +14804,19 @@
             showToast('✅ 沟通记录已保存');
         }
 
-        // 同步本地未上传的数据到云数据库
+        // 数据同步：数据只保存在云数据库，本地不做持久化，直接从云数据库重新加载
         async function syncLocalData() {
-            console.log('开始同步本地数据...');
-            
-            // 检查网络状态
+            console.log('开始从云数据库同步数据...');
+
             if (!navigator.onLine || !supabaseClient) {
                 console.warn('网络离线或Supabase未初始化，跳过同步');
+                showToast('⚠️ 网络离线，无法同步');
                 return;
             }
-            
+
             try {
-                // 1. 同步本地未上传的数据到云数据库
-                
-                // 同步未上传的房源数据
-                const unsyncedProperties = properties.filter(p => !p.synced);
-                if (unsyncedProperties.length > 0) {
-                    console.log(`开始同步 ${unsyncedProperties.length} 条房源数据到云数据库...`);
-                    
-                    for (const property of unsyncedProperties) {
-                        try {
-                            // 检查是否已存在
-                            const { data: existingProps } = await supabaseClient
-                                .from('properties')
-                                .select('id')
-                                .eq('id', property.id)
-                                .limit(1);
-                            
-                            if (existingProps && existingProps.length > 0) {
-                                // 更新现有数据
-                                const { error } = await supabaseClient
-                                    .from('properties')
-                                    .update(property)
-                                    .eq('id', property.id);
-                                
-                                if (!error) {
-                                    property.synced = true;
-                                    console.log(`更新房源成功: ${property.id}`);
-                                } else {
-                                    console.error('更新房源失败:', error);
-                                }
-                            } else {
-                                // 插入新数据
-                                const { error } = await supabaseClient
-                                    .from('properties')
-                                    .insert([property]);
-                                
-                                if (!error) {
-                                    property.synced = true;
-                                    console.log(`插入房源成功: ${property.id}`);
-                                } else {
-                                    console.error('插入房源失败:', error);
-                                }
-                            }
-                        } catch (error) {
-                            console.error('同步房源失败:', error);
-                        }
-                    }
-                }
-                
-                // 同步未上传的客户数据
-                const unsyncedCustomers = customers.filter(c => !c.synced);
-                if (unsyncedCustomers.length > 0) {
-                    console.log(`开始同步 ${unsyncedCustomers.length} 条客户数据到云数据库...`);
-                    
-                    for (const customer of unsyncedCustomers) {
-                        try {
-                            // 检查是否已存在
-                            const { data: existingCustomers } = await supabaseClient
-                                .from('customers')
-                                .select('id')
-                                .eq('id', customer.id)
-                                .limit(1);
-                            
-                            if (existingCustomers && existingCustomers.length > 0) {
-                                // 更新现有数据
-                                const { error } = await supabaseClient
-                                    .from('customers')
-                                    .update(customer)
-                                    .eq('id', customer.id);
-                                
-                                if (!error) {
-                                    customer.synced = true;
-                                    console.log(`更新客户成功: ${customer.id}`);
-                                } else {
-                                    console.error('更新客户失败:', error);
-                                }
-                            } else {
-                                // 插入新数据
-                                const { error } = await supabaseClient
-                                    .from('customers')
-                                    .insert([customer]);
-                                
-                                if (!error) {
-                                    customer.synced = true;
-                                    console.log(`插入客户成功: ${customer.id}`);
-                                } else {
-                                    console.error('插入客户失败:', error);
-                                }
-                            }
-                        } catch (error) {
-                            console.error('同步客户失败:', error);
-                        }
-                    }
-                }
-                
-                // 2. 从云数据库同步本地没有的数据
-                
-                // 获取云数据库中的所有房源数据
-                try {
-                    const { data: cloudProperties } = await supabaseClient
-                        .from('properties')
-                        .select('*');
-                    
-                    if (cloudProperties && cloudProperties.length > 0) {
-                        console.log(`开始从云数据库同步 ${cloudProperties.length} 条房源数据...`);
-                        
-                        // 获取云数据库中所有房源的ID
-                        const cloudPropertyIds = cloudProperties.map(p => p.id);
-                        
-                        // 删除本地存在但云数据库中不存在的房源
-                        for (let i = properties.length - 1; i >= 0; i--) {
-                            if (!cloudPropertyIds.includes(properties[i].id)) {
-                                console.log(`删除本地不存在于云数据库的房源: ${properties[i].id}`);
-                                properties.splice(i, 1);
-                            }
-                        }
-                        
-                        for (const cloudProperty of cloudProperties) {
-                            // 检查本地是否已存在
-                            const localProperty = properties.find(p => p.id === cloudProperty.id);
-                            if (!localProperty) {
-                                // 本地不存在，添加到本地
-                                cloudProperty.synced = true;
-                                properties.push(cloudProperty);
-                                console.log(`从云数据库同步房源成功: ${cloudProperty.id}`);
-                            } else if (new Date(cloudProperty.updated_at) > new Date(localProperty.updated_at)) {
-                                // 云数据库中的数据更新，更新本地数据
-                                Object.assign(localProperty, cloudProperty);
-                                localProperty.synced = true;
-                                console.log(`从云数据库更新房源成功: ${cloudProperty.id}`);
-                            }
-                        }
-                    } else {
-                        // 云数据库中没有房源，清空本地房源
-                        properties = [];
-                        console.log('云数据库中没有房源，清空本地房源');
-                    }
-                } catch (error) {
-                    console.error('从云数据库同步房源失败:', error);
-                }
-                
-                // 获取云数据库中的所有客户数据
-                try {
-                    const { data: cloudCustomers } = await supabaseClient
-                        .from('customers')
-                        .select('*');
-                    
-                    if (cloudCustomers && cloudCustomers.length > 0) {
-                        console.log(`开始从云数据库同步 ${cloudCustomers.length} 条客户数据...`);
-                        
-                        // 获取云数据库中所有客户的ID
-                        const cloudCustomerIds = cloudCustomers.map(c => c.id);
-                        
-                        // 删除本地存在但云数据库中不存在的客户
-                        for (let i = customers.length - 1; i >= 0; i--) {
-                            if (!cloudCustomerIds.includes(customers[i].id)) {
-                                console.log(`删除本地不存在于云数据库的客户: ${customers[i].id}`);
-                                customers.splice(i, 1);
-                            }
-                        }
-                        
-                        for (const cloudCustomer of cloudCustomers) {
-                            // 检查本地是否已存在
-                            const localCustomer = customers.find(c => c.id === cloudCustomer.id);
-                            if (!localCustomer) {
-                                // 本地不存在，添加到本地
-                                cloudCustomer.synced = true;
-                                customers.push(cloudCustomer);
-                                console.log(`从云数据库同步客户成功: ${cloudCustomer.id}`);
-                            } else if (new Date(cloudCustomer.updated_at) > new Date(localCustomer.updated_at)) {
-                                // 云数据库中的数据更新，更新本地数据
-                                Object.assign(localCustomer, cloudCustomer);
-                                localCustomer.synced = true;
-                                console.log(`从云数据库更新客户成功: ${cloudCustomer.id}`);
-                            }
-                        }
-                    } else {
-                        // 云数据库中没有客户，清空本地客户
-                        customers = [];
-                        console.log('云数据库中没有客户，清空本地客户');
-                    }
-                } catch (error) {
-                    console.error('从云数据库同步客户失败:', error);
-                }
-                
-                // 保存同步状态
-    
-                
-                // 3. 获取同步后的本地和云数据库数据数量
-                const localPropertyCount = properties.length;
-                const localCustomerCount = customers.length;
-                
-                let cloudPropertyCount = 0;
-                let cloudCustomerCount = 0;
-                
-                try {
-                    const { data: cloudProperties } = await supabaseClient
-                        .from('properties')
-                        .select('id');
-                    cloudPropertyCount = cloudProperties ? cloudProperties.length : 0;
-                    
-                    const { data: cloudCustomers } = await supabaseClient
-                        .from('customers')
-                        .select('id');
-                    cloudCustomerCount = cloudCustomers ? cloudCustomers.length : 0;
-                } catch (error) {
-                    console.error('获取云数据库数据数量失败:', error);
-                }
-                
-                // 4. 检查数据是否一致
-                const isPropertySync = localPropertyCount === cloudPropertyCount;
-                const isCustomerSync = localCustomerCount === cloudCustomerCount;
-                const isDataSync = isPropertySync && isCustomerSync;
-                
-                // 5. 显示同步结果
-                showToast(`
-✅ 同步完成
-
-本地数据:
-房源: ${localPropertyCount} 条
-客户: ${localCustomerCount} 条
-
-云数据库:
-房源: ${cloudPropertyCount} 条
-客户: ${cloudCustomerCount} 条
-
-数据${isDataSync ? '一致' : '不一致'}
-已同步
-                `.trim());
-                
-                // 6. 刷新列表
-                renderPropertyList();
-                renderCustomerList();
-                
+                await loadData();
+                showToast(`✅ 已从云数据库同步：房源 ${properties.length} 条，客户 ${customers.length} 条`);
                 console.log('数据同步完成');
             } catch (error) {
                 console.error('同步数据出错:', error);
@@ -15497,9 +15420,9 @@
         async function delayedInit() {
             console.log('页面加载完成，开始初始化...');
             
-            // 优先从本地存储加载数据
+            // 数据只从云数据库加载，不做本地持久化
 
-            console.log('本地数据已加载:', properties.length, '条房源,', customers.length, '条客户');
+            console.log('初始化：数据将仅从云数据库加载');
             
             // 初始化主题
             initTheme();
@@ -15510,7 +15433,7 @@
             // 初始化UI
             initSelectOptions();
             
-            // 先渲染本地数据，确保用户立即能看到内容
+            // 先渲染空列表，数据加载完成后由 loadData 刷新
             updateStats();
             renderPropertyList();
             renderCustomerList();
@@ -15527,23 +15450,29 @@
                 console.log('数据已自动更新');
             }, 24 * 60 * 60 * 1000);
             
-            // 延迟初始化Supabase，确保库已加载
+            // 确保数据库组件已加载（本地文件 → unpkg → jsdelivr 兜底）
+            if (!(await ensureSupabaseLib())) {
+                console.error('❌ 数据库组件加载失败：本地文件与备用 CDN 均不可用');
+            }
+
+            // 延迟初始化Supabase（指数退避，兼容慢网络首次连接）
             let supabaseInitialized = false;
             let retryCount = 0;
             const maxRetries = 5;
-            
+            const retryDelays = [0, 800, 1600, 3200, 6400];
+
             while (!supabaseInitialized && retryCount < maxRetries) {
+                if (retryDelays[retryCount] > 0) {
+                    await new Promise(resolve => setTimeout(resolve, retryDelays[retryCount]));
+                }
                 supabaseInitialized = initSupabase();
                 console.log(`Supabase初始化尝试 ${retryCount + 1}/${maxRetries}:`, supabaseInitialized);
-                
                 if (!supabaseInitialized) {
                     retryCount++;
-                    // 等待500ms后重试
-                    await new Promise(resolve => setTimeout(resolve, 500));
                 }
             }
             
-            // 尝试从服务器加载数据（不会覆盖已有本地数据）
+            // 从云数据库加载数据（唯一数据来源）
             await loadData();
             
             // 从数据库加载选项
@@ -15555,8 +15484,10 @@
                 initRealtimeConnection();
                 enhanceRealtimeConnection();
             } else {
-                console.warn('Supabase初始化失败，使用本地数据');
+                console.warn('Supabase初始化失败，无法加载数据');
                 updateConnectionStatus(false);
+                // 按根因给出常驻提示，方便在出问题的电脑上直接看到原因
+                await diagnoseDbFailure('页面初始化');
             }
         }
 
