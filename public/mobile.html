@@ -4202,9 +4202,12 @@
                 filteredProperties = [];
                 renderPropertyList();
             } else if (page === 'agentProperties') {
-                // 切换到可代理房源页面时，清空过滤条件，显示全部可代理房源
-                filteredAgentProperties = [];
-                renderAgentPropertyList();
+                // 切换到可代理房源页面时，选择待发布状态，默认显示待发布房源
+                const agentStatusCheckboxes = document.querySelectorAll('.agent-filter-status');
+                agentStatusCheckboxes.forEach(cb => {
+                    cb.checked = cb.value === 'pending';
+                });
+                applyAgentFilters();
             } else if (page === 'customers') {
                 renderCustomerList();
             }
@@ -4708,7 +4711,8 @@
             const container = document.getElementById('agentPropertyList');
             if (!container) return;
 
-            let propsToRender = filteredAgentProperties.length ? filteredAgentProperties : agentProperties;
+            // 如果没有筛选条件，默认只显示待发布房源
+            let propsToRender = filteredAgentProperties.length ? filteredAgentProperties : agentProperties.filter(p => p.status === 'pending');
 
             if (propsToRender.length === 0) {
                 container.innerHTML = `
