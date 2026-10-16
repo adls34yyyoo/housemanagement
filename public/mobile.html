@@ -3823,6 +3823,62 @@
             }
         }
 
+        // 从门牌号之前的文本中提取小区名称（紧邻门牌号的最后一个片段）
+        function extractCommunityBeforeDoor(prefix) {
+            if (!prefix) return '';
+            // 按常见标点/空白/地址分隔（弄）切分，取最后一段
+            const parts = prefix
+                .split(/[，,。、；;：:\s\n\r\t/|（）()【】\[\]<>《》“”‘’"'!?！？…~～\-—_*#]+|弄/)
+                .map(s => s.trim())
+                .filter(Boolean);
+            let name = parts[parts.length - 1] || '';
+            if (!name) return '';
+            // 去掉开头的引导词
+            name = name.replace(/^(?:房屋地址|房产地址|地址|小区名称?|楼盘名称?|项目名称?|位于|坐落于?|在|出售|出租|急售|急租|转租|整租|合租|房源|个人房源|房东直租|房东直售|业主直租|业主直售)+/, '');
+            // 去掉结尾的楼栋指代词
+            name = name.replace(/(?:幢|栋|号楼?|门牌号?)$/, '');
+            // 只保留中文、英文、数字、间隔号
+            name = name.replace(/[^\u4e00-\u9fa5A-Za-z0-9·]/g, '').trim();
+            if (name.length < 2 || name.length > 15) return '';
+            // 必须含中文或英文（纯数字、纯"X期/X号"不算小区名）
+            if (!/[\u4e00-\u9fa5A-Za-z]/.test(name)) return '';
+            return name;
+        }
+
+        // 用已有小区列表归一化：精确/包含命中返回列表中的标准名，否则原样返回（由表单填入自定义输入框）
+        function normalizeCommunityByList(name, communityList) {
+            if (!name || !communityList || !communityList.length) return name;
+            const norm = s => String(s).replace(/\s/g, '');
+            const target = norm(name);
+            // 去掉末尾的"X期/X区/组团"再比对，如"仁恒河滨城3期"→"仁恒河滨城"
+            const variants = [
+                target,
+                target.replace(/[A-Za-z0-9一二三四五六七八九十两]+期$/, '').replace(/[A-Za-z0-9]+区$/, '').replace(/组团$/, '')
+            ].filter(Boolean);
+            // 精确匹配
+            for (const c of communityList) {
+                if (!c) continue;
+                if (variants.includes(norm(c))) return c;
+            }
+            // 包含关系模糊匹配，取相似度最高且 ≥0.6 的
+            let best = null;
+            let bestScore = 0;
+            for (const c of communityList) {
+                if (!c) continue;
+                const n = norm(c);
+                for (const v of variants) {
+                    if (v.includes(n) || n.includes(v)) {
+                        const score = Math.min(v.length, n.length) / Math.max(v.length, n.length);
+                        if (score > bestScore && score >= 0.6) {
+                            bestScore = score;
+                            best = c;
+                        }
+                    }
+                }
+            }
+            return best || name;
+        }
+
         // 增强的文本分析规则
         function analyzeTextWithEnhancedRules(text) {
             const result = {
@@ -3832,27 +3888,70 @@
                 price: '',
                 area: '',
                 floor: '',
+                doorNumber: '',
                 region: '',
                 landlordName: '',
                 landlordPhone: '',
                 description: ''
             };
 
-            // 小区识别 - 支持惠南镇等上海地区小区
-            const communityPatterns = [
-                /(?:位于|在|小区|楼盘|花园|家园|新城|公寓|大厦|苑|墅|庭|府|里|坊|郡|城)[\s]*([\u4e00-\u9fa5]{2,10}(?:小区|花园|家园|新城|公寓|大厦|苑|墅|庭|府|里|坊|郡|城))/,
-                /([\u4e00-\u9fa5]{2,8}(?:小区|花园|家园|新城|公寓|大厦))/,
-                /金地城|一方新城|锦绣华都|海曲雅苑|德盈佳园|康达公寓|丽水雅苑|汇锦城|东城花苑|彩虹园|听潮新村|西门新村|北门新村|南门新村|城东新村/,
-                /([\u4e00-\u9fa5]{2,6}苑)/,
-                /([\u4e00-\u9fa5]{2,6}里)/,
-                /([\u4e00-\u9fa5]{2,6}园)/
+            // ========== 门牌号识别（前置：门牌号之前的内容即为小区名称）==========
+            let doorMatchIndex = null;
+            const doorNumberPatterns = [
+                /(\d{1,3})\s*幢\s*(\d{1,3})\s*号?\s*(\d{2,4})\s*(?:室|户)?/,
+                /(\d{1,3})\s*号楼?\s*(\d{2,4})\s*(?:室|户)?/,
+                /(?<!\d)(\d{1,3}[-－]\d{2,4})(?!\d)/,
+                /(\d{1,3})\s*号\s*(\d{2,4})\s*(?:室|户)?/,
+                /(\d{1,3})\s*幢\s*(\d{2,4})\s*(?:室|户)?/,
+                /(\d{1,3})[##]\s*(\d{2,4})/,
+                /(\d{1,2})\s*单元[\s-]*(\d{2,4})\s*(?:室|户)?/,
+                /(?<!幢|号)(\d{2,4})\s*室/,
+                /门牌号[\s:：]*(\d{1,3}[-－]?\d{2,4})/,
+                /房间[\s:：]*(\d{1,3}[-－]?\d{2,4})/
             ];
 
-            for (const pattern of communityPatterns) {
+            for (const pattern of doorNumberPatterns) {
                 const match = text.match(pattern);
                 if (match) {
-                    result.community = match[1] || match[0];
-                    break;
+                    let doorNumber = match.length > 2
+                        ? match.slice(1).filter(Boolean).join('-')
+                        : (match[1] || match[0]);
+                    doorNumber = doorNumber.trim();
+                    doorNumber = doorNumber.replace(/(\d{1,3})\s*号\s*(\d{2,4})/, '$1-$2');
+                    doorNumber = doorNumber.replace(/(室|户|单元|楼)$/g, '');
+                    doorNumber = doorNumber.replace(/\s+/g, '');
+                    const validPattern = /^\d{1,3}[-－]?\d{2,4}$|^\d{2,4}$/;
+                    if (validPattern.test(doorNumber) && doorNumber.length >= 2 && doorNumber.length <= 8) {
+                        result.doorNumber = doorNumber;
+                        doorMatchIndex = match.index;
+                        break;
+                    }
+                }
+            }
+
+            // 小区识别 - 规则1（优先）：门牌号之前的内容为小区名称；命中已有小区自动匹配，否则保留原名（填充时进入自定义输入框）
+            const prefixCommunity = extractCommunityBeforeDoor(doorMatchIndex !== null ? text.slice(0, doorMatchIndex) : '');
+            if (prefixCommunity) {
+                result.community = normalizeCommunityByList(prefixCommunity, optionsData.community);
+            }
+
+            // 小区识别 - 规则2（兜底）：后缀词表与常见上海小区名
+            if (!result.community) {
+                const communityPatterns = [
+                    /(?:位于|在|小区|楼盘|花园|家园|新城|公寓|大厦|苑|墅|庭|府|里|坊|郡|城)[\s]*([\u4e00-\u9fa5]{2,10}(?:小区|花园|家园|新城|公寓|大厦|苑|墅|庭|府|里|坊|郡|城))/,
+                    /([\u4e00-\u9fa5]{2,8}(?:小区|花园|家园|新城|公寓|大厦))/,
+                    /金地城|一方新城|锦绣华都|海曲雅苑|德盈佳园|康达公寓|丽水雅苑|汇锦城|东城花苑|彩虹园|听潮新村|西门新村|北门新村|南门新村|城东新村/,
+                    /([\u4e00-\u9fa5]{2,6}苑)/,
+                    /([\u4e00-\u9fa5]{2,6}里)/,
+                    /([\u4e00-\u9fa5]{2,6}园)/
+                ];
+
+                for (const pattern of communityPatterns) {
+                    const match = text.match(pattern);
+                    if (match) {
+                        result.community = match[1] || match[0];
+                        break;
+                    }
                 }
             }
 
@@ -4014,6 +4113,11 @@
                 } else if (communitySelect) {
                     communitySelect.value = data.community;
                 }
+            }
+
+            if (data.doorNumber) {
+                const doorNumberInput = document.getElementById('propDoorNumber');
+                if (doorNumberInput) doorNumberInput.value = data.doorNumber;
             }
 
             if (data.decoration) {
