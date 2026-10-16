@@ -2044,27 +2044,7 @@
                     <h3>📋 上海最新政策</h3>
                 </div>
                 <div class="info-card" id="latestPolicies">
-                    <div class="policy-item" onclick="showPolicyDetail('loan-rate')" style="padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: background-color 0.2s;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span class="policy-date">2026-03-15</span>
-                            <span class="policy-title">房贷利率下调政策</span>
-                            <span style="color: var(--text-secondary);">›</span>
-                        </div>
-                    </div>
-                    <div class="policy-item" onclick="showPolicyDetail('purchase-limit')" style="padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: background-color 0.2s;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span class="policy-date">2026-02-28</span>
-                            <span class="policy-title">限购政策调整</span>
-                            <span style="color: var(--text-secondary);">›</span>
-                        </div>
-                    </div>
-                    <div class="policy-item" onclick="showPolicyDetail('fund')" style="padding: 12px 0; cursor: pointer; transition: background-color 0.2s;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span class="policy-date">2026-01-10</span>
-                            <span class="policy-title">公积金贷款额度提高</span>
-                            <span style="color: var(--text-secondary);">›</span>
-                        </div>
-                    </div>
+                    <!-- 由 JS 渲染：数据来自云数据库 policies 表，内置数据兜底 -->
                 </div>
             </div>
 
@@ -4249,6 +4229,22 @@
         // 渲染最新房源
 
 
+        // 卡片上友好的更新日期：今天/昨天/X天前/MM-DD
+        function formatUpdateRelative(timestamp) {
+            if (!timestamp) return '';
+            const d = new Date(timestamp);
+            if (isNaN(d.getTime())) return '';
+            const now = new Date();
+            const diff = (now - d) / 86400000;
+            if (diff < 1) return '今天';
+            if (diff < 2) return '昨天';
+            if (diff < 7) return Math.floor(diff) + '天前';
+            const mo = (d.getMonth() + 1).toString().padStart(2, '0');
+            const dd = d.getDate().toString().padStart(2, '0');
+            if (diff < 365) return `${mo}-${dd}`;
+            return `${d.getFullYear()}-${mo}-${dd}`;
+        }
+
         // 创建房源卡片HTML
         function createPropertyCard(property) {
             const statusClass = {
@@ -4306,9 +4302,12 @@
                                 <span style="font-weight: 500; color: var(--text);">${property.community || '未知小区'}</span>
                                 <span class="property-status ${statusClass}" style="font-size: 12px;">${statusText}</span>
                             </div>
-                            <div style="font-size: 14px; color: var(--text-secondary); display: flex; justify-content: space-between;">
+                            <div style="font-size: 14px; color: var(--text-secondary); display: flex; justify-content: space-between; align-items: flex-end;">
                                 <span>${property.layout || ''} ${property.area ? property.area + '平' : ''} ${property.floor ? property.floor + '楼' : ''} ${property.decoration || ''}</span>
-                                <span style="font-weight: 500; color: ${property.type === 'sale' ? '#ef4444' : '#22c55e'};">${property.price || '面议'}${priceUnit}</span>
+                                <div style="text-align: right;">
+                                    <div style="font-weight: 500; color: ${property.type === 'sale' ? '#ef4444' : '#22c55e'};">${property.price || '面议'}${priceUnit}</div>
+                                    ${property.updated_at ? `<div style="font-size: 11px; color: var(--text-secondary); opacity: 0.7;">📅 ${formatUpdateRelative(property.updated_at)}</div>` : ''}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -4865,9 +4864,12 @@
                             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
                                 <span style="font-weight: 500; color: var(--text);">${property.community || '未知小区'}</span>
                             </div>
-                            <div style="font-size: 14px; color: var(--text-secondary); display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <div style="font-size: 14px; color: var(--text-secondary); display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 4px;">
                                 <span>${property.layout || ''} ${property.area ? property.area + '平' : ''} ${property.floor ? property.floor + '楼' : ''} ${property.decoration || ''}</span>
-                                <span style="font-weight: 500; color: ${property.type === 'sale' ? '#ef4444' : '#22c55e'};">${property.price || '面议'}${priceUnit}</span>
+                                <div style="text-align: right;">
+                                    <div style="font-weight: 500; color: ${property.type === 'sale' ? '#ef4444' : '#22c55e'};">${property.price || '面议'}${priceUnit}</div>
+                                    ${property.updated_at ? `<div style="font-size: 11px; color: var(--text-secondary); opacity: 0.7;">📅 ${formatUpdateRelative(property.updated_at)}</div>` : ''}
+                                </div>
                             </div>
                             ${renderAgentParties(property)}
                         </div>

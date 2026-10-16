@@ -4477,7 +4477,8 @@
                 
                 loadData().then(function() {
                     console.log('数据加载完成');
-                    // 更新上海最新政策显示
+                    // 加载上海最新政策（云端优先）并启动每日刷新
+                    loadPoliciesFromCloud();
                     updateLatestPolicies();
                     schedulePolicyUpdate();
                     // 更新办事指南显示
@@ -4486,6 +4487,7 @@
                     console.error('数据加载失败:', error);
                     showToast('⚠️ 数据加载失败，请检查网络');
                     // 即使数据加载失败，也显示政策信息和办事指南
+                    loadPoliciesFromCloud();
                     updateLatestPolicies();
                     schedulePolicyUpdate();
                     updateGuideList();
@@ -6203,51 +6205,92 @@
             if (modal) modal.remove();
         }
 
-        // 上海最新政策数据
-        const shanghaiPolicies = [
+        // 上海最新政策数据（内置兜底；启动时会被云数据库 public.policies 覆盖，后台改库即可更新，无需发版）
+        let shanghaiPolicies = [
             {
                 id: 'loan-rate',
                 title: '房贷利率下调政策',
                 date: '2026-03-15',
                 summary: '首套房利率降至4.0%，二套房降至4.5%',
-                tag: '房贷'
+                tag: '房贷',
+                source: '上海市住房和城乡建设委员会',
+                content: '为了促进房地产市场健康发展，上海地区从2026年3月15日起下调房贷利率：\n1. 首套房贷款利率从4.2%降至4.0%\n2. 二套房贷款利率从4.8%降至4.5%\n3. 贷款额度上限提高10%\n4. 审批流程简化，最快3个工作日完成\n\n此政策预计将刺激刚性需求，促进市场活跃度。'
             },
             {
                 id: 'purchase-limit',
                 title: '限购政策调整',
                 date: '2026-02-28',
                 summary: '非沪籍满5年可购房，沪籍可购第三套',
-                tag: '限购'
+                tag: '限购',
+                source: '上海市住房保障和房屋管理局',
+                content: '上海限购政策于2026年2月28日进行调整：\n1. 非上海户籍居民在上海连续缴纳社保或个税满5年即可购房\n2. 本市户籍居民家庭可购买第三套房（需满足一定条件）\n3. 高层次人才购房不受限购限制\n\n此次调整旨在满足合理的住房需求，促进房地产市场平稳发展。'
             },
             {
                 id: 'fund',
                 title: '公积金贷款额度提高',
                 date: '2026-01-10',
                 summary: '单人60万，夫妻120万，年限延至30年',
-                tag: '公积金'
+                tag: '公积金',
+                source: '上海市公积金管理中心',
+                content: '上海公积金管理中心于2026年1月10日宣布提高贷款额度：\n1. 单人公积金贷款上限从50万元提高至60万元\n2. 夫妻双方公积金贷款上限从100万元提高至120万元\n3. 公积金贷款年限延长至30年\n\n这一政策将减轻购房者的还款压力，支持刚性和改善性住房需求。'
             },
             {
                 id: 'tax-reduction',
                 title: '购房税费减免',
                 date: '2026-02-15',
                 summary: '首套房契税减半，个税减免',
-                tag: '税费'
+                tag: '税费',
+                source: '上海市税务局',
+                content: '上海市税务局于2026年2月15日发布通知，实施房地产交易税费减免政策：\n1. 对购买首套房的居民，减半征收契税\n2. 对出售自有住房并在1年内重新购房的居民，免征个人所得税\n3. 对符合条件的保障性住房，免征增值税\n\n这一政策的实施将有效降低居民的购房成本，促进房地产市场的活跃。'
             },
             {
                 id: 'housing-supply',
                 title: '增加保障性住房',
                 date: '2026-01-30',
                 summary: '2026年计划新建5万套保障房',
-                tag: '保障房'
+                tag: '保障房',
+                source: '上海市住房和城乡建设委员会',
+                content: '上海市政府于2026年1月30日宣布增加保障性住房供应：\n1. 2026年计划新建保障性住房5万套\n2. 扩大保障性租赁住房覆盖范围\n3. 完善保障性住房申请审核机制\n4. 提高保障性住房建设质量\n\n这一政策将有效缓解中低收入家庭的住房困难，促进社会和谐稳定。'
             },
             {
                 id: 'new-policy-202605',
                 title: '2026年5月最新政策',
                 date: '2026-05-01',
                 summary: '优化住房交易流程，缩短办理时间',
-                tag: '新规'
+                tag: '新规',
+                source: '上海市规划和自然资源局',
+                content: '上海市政府于2026年5月1日起实施住房交易流程优化政策：\n1. 不动产登记办理时间从5个工作日缩短至3个工作日\n2. 实现线上预约、线下一站式办理\n3. 推行电子证书，支持在线查验\n4. 优化二手房交易资金监管流程\n\n此次优化旨在提升政务服务效率，为市民提供更加便捷高效的服务体验。'
             }
         ];
+
+        // 从云数据库加载最新政策（失败时静默保留内置数据）
+        async function loadPoliciesFromCloud() {
+            try {
+                if (!supabaseClient) return;
+                const { data, error } = await supabaseClient
+                    .from('policies')
+                    .select('id,title,policy_date,summary,tag,content,source,sort_order')
+                    .eq('is_active', true)
+                    .order('policy_date', { ascending: false })
+                    .order('sort_order', { ascending: false });
+                if (error) throw error;
+                if (!data || !data.length) return;
+                const rows = data.map(r => ({
+                    id: r.id,
+                    title: r.title,
+                    date: r.policy_date ? String(r.policy_date).slice(0, 10) : '',
+                    summary: r.summary || '',
+                    tag: r.tag || '新规',
+                    content: r.content || '',
+                    source: r.source || ''
+                }));
+                shanghaiPolicies = rows;
+                updateLatestPolicies();
+                console.log('最新政策已从云端加载:', rows.length, '条');
+            } catch (e) {
+                console.info('云端政策加载失败，使用内置政策:', (e && e.message) || e);
+            }
+        }
 
         // 更新上海最新政策显示
         function updateLatestPolicies() {
@@ -6295,7 +6338,7 @@
             }
             const delay = nextUpdate - now;
             setTimeout(function() {
-                updateLatestPolicies();
+                loadPoliciesFromCloud();
                 schedulePolicyUpdate();
             }, delay);
         }
@@ -6450,9 +6493,12 @@
                                 <span style="font-weight: 500; color: var(--text);">${property.community || '未知小区'}</span>
                                 <span class="property-status ${statusClass}" style="font-size: 12px; cursor: pointer;" onclick="event.stopPropagation(); if ('${statusText}' === '待发布') { switchPage('share', '${property.id}'); }">${statusText}</span>
                             </div>
-                            <div style="font-size: 14px; color: var(--text-secondary); display: flex; justify-content: space-between;">
+                            <div style="font-size: 14px; color: var(--text-secondary); display: flex; justify-content: space-between; align-items: flex-end;">
                                 <span>${property.layout || ''} ${property.area ? property.area + '平' : ''} ${property.floor ? property.floor + '楼' : ''} ${property.decoration || ''}</span>
-                                <span style="font-weight: 500; color: ${property.type === 'sale' ? '#ef4444' : '#22c55e'}; cursor: pointer;" onclick="event.stopPropagation(); openEditPriceModal('${property.id}');">${property.price || '面议'}${priceUnit}</span>
+                                <div style="text-align: right;">
+                                    <div style="font-weight: 500; color: ${property.type === 'sale' ? '#ef4444' : '#22c55e'}; cursor: pointer;" onclick="event.stopPropagation(); openEditPriceModal('${property.id}');">${property.price || '面议'}${priceUnit}</div>
+                                    ${property.updated_at ? `<div style="font-size: 11px; color: var(--text-secondary); opacity: 0.7;">📅 ${formatUpdateRelative(property.updated_at)}</div>` : ''}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -7089,9 +7135,12 @@
                                 <span style="font-weight: 500; color: var(--text);">${property.community || '未知小区'}</span>
                                 <span class="property-status ${statusClass}" style="font-size: 12px;">${statusText}</span>
                             </div>
-                            <div style="font-size: 14px; color: var(--text-secondary); display: flex; justify-content: space-between;">
+                            <div style="font-size: 14px; color: var(--text-secondary); display: flex; justify-content: space-between; align-items: flex-end;">
                                 <span>${property.layout || ''} ${property.area ? property.area + '平' : ''} ${property.floor ? property.floor + '楼' : ''} ${property.decoration || ''}</span>
-                                <span style="font-weight: 500; color: ${property.type === 'sale' ? '#ef4444' : '#22c55e'};">${property.price || '面议'}${priceUnit}</span>
+                                <div style="text-align: right;">
+                                    <div style="font-weight: 500; color: ${property.type === 'sale' ? '#ef4444' : '#22c55e'}; cursor: pointer;" onclick="event.stopPropagation(); openEditPriceModal('${property.id}');">${property.price || '面议'}${priceUnit}</div>
+                                    ${property.updated_at ? `<div style="font-size: 11px; color: var(--text-secondary); opacity: 0.7;">📅 ${formatUpdateRelative(property.updated_at)}</div>` : ''}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -13639,112 +13688,32 @@
 
         // 显示单个政策详情
         function showPolicyDetail(policyId) {
-            // 政策详情数据
-            const policies = {
-                'loan-rate': {
-                    title: '房贷利率下调政策',
-                    date: '2026-03-15',
-                    content: `
-                        <p>为了促进房地产市场健康发展，上海地区从2026年3月15日起下调房贷利率：</p>
-                        <ul style="margin: 10px 0; padding-left: 20px;">
-                            <li>首套房贷款利率从4.2%降至4.0%</li>
-                            <li>二套房贷款利率从4.8%降至4.5%</li>
-                            <li>贷款额度上限提高10%</li>
-                            <li>审批流程简化，最快3个工作日完成</li>
-                        </ul>
-                        <p>此政策预计将刺激刚性需求，促进市场活跃度。</p>
-                        <p style="margin-top: 20px; font-size: 14px; color: var(--text-secondary);">来源：上海市住房和城乡建设委员会</p>
-                    `
-                },
-                'purchase-limit': {
-                    title: '限购政策调整',
-                    date: '2026-02-28',
-                    content: `
-                        <p>上海限购政策于2026年2月28日进行调整：</p>
-                        <ul style="margin: 10px 0; padding-left: 20px;">
-                            <li>非上海户籍居民在上海连续缴纳社保或个税满5年即可购房</li>
-                            <li>本市户籍居民家庭可购买第三套房（需满足一定条件）</li>
-                            <li>高层次人才购房不受限购限制</li>
-                        </ul>
-                        <p>此次调整旨在满足合理的住房需求，促进房地产市场平稳发展。</p>
-                        <p style="margin-top: 20px; font-size: 14px; color: var(--text-secondary);">来源：上海市住房保障和房屋管理局</p>
-                    `
-                },
-                'fund': {
-                    title: '公积金贷款额度提高',
-                    date: '2026-01-10',
-                    content: `
-                        <p>上海公积金管理中心于2026年1月10日宣布提高贷款额度：</p>
-                        <ul style="margin: 10px 0; padding-left: 20px;">
-                            <li>单人公积金贷款上限从50万元提高至60万元</li>
-                            <li>夫妻双方公积金贷款上限从100万元提高至120万元</li>
-                            <li>公积金贷款年限延长至30年</li>
-                        </ul>
-                        <p>这一政策将减轻购房者的还款压力，支持刚性和改善性住房需求。</p>
-                        <p style="margin-top: 20px; font-size: 14px; color: var(--text-secondary);">来源：上海市公积金管理中心</p>
-                    `
-                },
-                'tax-reduction': {
-                    title: '购房税费减免政策',
-                    date: '2026-02-15',
-                    content: `
-                        <p>上海市税务局于2026年2月15日发布通知，实施房地产交易税费减免政策：</p>
-                        <ul style="margin: 10px 0; padding-left: 20px;">
-                            <li>对购买首套房的居民，减半征收契税</li>
-                            <li>对出售自有住房并在1年内重新购房的居民，免征个人所得税</li>
-                            <li>对符合条件的保障性住房，免征增值税</li>
-                        </ul>
-                        <p>这一政策的实施将有效降低居民的购房成本，促进房地产市场的活跃。</p>
-                        <p style="margin-top: 20px; font-size: 14px; color: var(--text-secondary);">来源：上海市税务局</p>
-                    `
-                },
-                'housing-supply': {
-                    title: '增加保障性住房供应',
-                    date: '2026-01-30',
-                    content: `
-                        <p>上海市政府于2026年1月30日宣布增加保障性住房供应：</p>
-                        <ul style="margin: 10px 0; padding-left: 20px;">
-                            <li>2026年计划新建保障性住房5万套</li>
-                            <li>扩大保障性租赁住房覆盖范围</li>
-                            <li>完善保障性住房申请审核机制</li>
-                            <li>提高保障性住房建设质量</li>
-                        </ul>
-                        <p>这一政策将有效缓解中低收入家庭的住房困难，促进社会和谐稳定。</p>
-                        <p style="margin-top: 20px; font-size: 14px; color: var(--text-secondary);">来源：上海市住房和城乡建设委员会</p>
-                    `
-                },
-                'new-policy-202605': {
-                    title: '2026年5月最新政策',
-                    date: '2026-05-01',
-                    content: `
-                        <p>上海市政府于2026年5月1日起实施住房交易流程优化政策：</p>
-                        <ul style="margin: 10px 0; padding-left: 20px;">
-                            <li>不动产登记办理时间从5个工作日缩短至3个工作日</li>
-                            <li>实现线上预约、线下一站式办理</li>
-                            <li>推行电子证书，支持在线查验</li>
-                            <li>优化二手房交易资金监管流程</li>
-                        </ul>
-                        <p>此次优化旨在提升政务服务效率，为市民提供更加便捷高效的服务体验。</p>
-                        <p style="margin-top: 20px; font-size: 14px; color: var(--text-secondary);">来源：上海市规划和自然资源局</p>
-                    `
-                }
-            };
-
-            const policy = policies[policyId];
+            // 政策数据来自 shanghaiPolicies（云端加载，内置兜底）
+            const policy = shanghaiPolicies.find(p => p.id === policyId);
             if (!policy) return;
+
+            // 正文渲染：含 HTML 标签时按 HTML 渲染；否则转义并保留换行（后台直接写纯文本即可）
+            const rawContent = policy.content || '该政策暂无详细信息';
+            const contentHtml = /<[a-z][\s\S]*>/i.test(rawContent)
+                ? rawContent
+                : `<div style="white-space: pre-wrap;">${escapeHtml(rawContent)}</div>`;
+            const sourceHtml = policy.source
+                ? `<p style="margin-top: 20px; font-size: 14px; color: var(--text-secondary);">来源：${escapeHtml(policy.source)}</p>`
+                : '';
 
             // 创建政策详情模态框
             const modalHTML = `
                 <div class="modal" id="policyDetailModal" style="display: flex; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000;">
                     <div class="modal-content" style="background: white; border-radius: var(--radius); padding: 20px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto;">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                            <h3 style="margin: 0; color: var(--text);">${policy.title}</h3>
+                            <h3 style="margin: 0; color: var(--text);">${escapeHtml(policy.title)}</h3>
                             <button onclick="closePolicyDetailModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);">&times;</button>
                         </div>
                         <div class="policy-detail">
-                            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;">${policy.date}</div>
+                            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;">${escapeHtml(policy.date || '')}</div>
                             <div style="font-size: 16px; line-height: 1.5;">
-                                ${policy.content}
+                                ${contentHtml}
+                                ${sourceHtml}
                             </div>
                         </div>
                         <div style="margin-top: 20px; text-align: right;">
@@ -16371,6 +16340,22 @@
         function formatDate(timestamp) {
             const date = new Date(timestamp);
             return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+        }
+
+        // 卡片上友好的更新日期：今天/昨天/X天前/MM-DD
+        function formatUpdateRelative(timestamp) {
+            if (!timestamp) return '';
+            const d = new Date(timestamp);
+            if (isNaN(d.getTime())) return '';
+            const now = new Date();
+            const diff = (now - d) / 86400000; // 天
+            if (diff < 1) return '今天';
+            if (diff < 2) return '昨天';
+            if (diff < 7) return Math.floor(diff) + '天前';
+            const mo = (d.getMonth() + 1).toString().padStart(2, '0');
+            const dd = d.getDate().toString().padStart(2, '0');
+            if (diff < 365) return `${mo}-${dd}`;
+            return `${d.getFullYear()}-${mo}-${dd}`;
         }
         
         // 更新备忘录空状态
