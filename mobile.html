@@ -5200,7 +5200,7 @@
         const AI_EXTRACT_SYSTEM_PROMPT = [
             '你是房产中介系统的房源信息抽取引擎。请从用户给出的房源文本中抽取字段，只输出 JSON 对象，不要输出解释或多余文字。',
             '字段说明：',
-            'community：小区名称。通常是文本开头 2-6 个汉字，遇到楼层/面积/户型数字即止；去掉"出售/出租/急售/急租/房东/业主/个人/整租/合租"等引导词。',
+            'community：小区名称。通常是文本开头 2-6 个汉字，遇到楼层/面积/户型数字即止；去掉"出售/出租/急售/急租/房东/业主/个人/整租/合租"等引导词。户型描述（如"三室一厅""2室1厅""两房"）不是小区名称，绝不能作为 community；以"苑/花园/家园/新村/小区/公寓/公馆/新城/府/湾"结尾的名称（如"爱盛家园东苑"）通常是小区名称。整段确实没有小区名时返回空字符串 ""。',
             'doorNumber：门牌号，统一成"幢号-室号"格式（如 19-601）；只有房间号时保持原样。',
             'layout：户型，格式"室-厅-卫"（如 3-2-1），缺省卫数用 1。',
             'area：面积，只保留数字（平米）。',
@@ -5276,6 +5276,10 @@
                             merged[k] = String(v).trim();
                         }
                     });
+                    // 大模型误把户型（如"三室一厅"）当小区时，回退到本地规则结果
+                    if (merged.community && isLayoutOrDescText(merged.community)) {
+                        merged.community = local.community || '';
+                    }
                     // 户型统一成 室-厅-卫
                     if (merged.layout) {
                         merged.layout = merged.layout
@@ -5402,6 +5406,19 @@
             }
         }
 
+        // 判断片段是否为户型/描述类词（如"三室一厅"），这类词不能作为小区名称
+        function isLayoutOrDescText(name) {
+            const s = String(name || '').trim();
+            if (!s) return false;
+            // 户型描述：三室一厅、2室1厅、两房、1室0厅1卫、三房两厅
+            if (/^(?:[0-9]+|[一二三四五六七八九十两]+)(?:室|房)/.test(s)) return true;
+            if (/^(?:室|厅|卫|房|厨|阳台|朝南|朝北)/.test(s)) return true;
+            if (/(?:室|厅|卫)/.test(s) && /[0-9一二三四五六七八九十两]/.test(s)) return true;
+            // 常见描述词
+            if (/^(?:南北通透|精装修?|简装修?|豪华装修|中等装修|普通装修|新装修|老装修|毛坯房?|采光好|拎包入住|随时看房|看房方便|满五唯一|学区房|电梯房|大平层|整租|合租|押一付三|无中介费|随时入住|首次出租)/.test(s)) return true;
+            return false;
+        }
+
         // 从门牌号之前的文本中提取小区名称（紧邻门牌号的最后一个片段）
         function extractCommunityBeforeDoor(prefix) {
             if (!prefix) return '';
@@ -5421,6 +5438,8 @@
             if (name.length < 2 || name.length > 15) return '';
             // 必须含中文或英文（纯数字、纯"X期/X号"不算小区名）
             if (!/[一-龥A-Za-z]/.test(name)) return '';
+            // 户型/描述类词（如"三室一厅"）不是小区名称
+            if (isLayoutOrDescText(name)) return '';
             return name;
         }
 
@@ -5587,12 +5606,16 @@
                     .replace(/^(?:(?:房屋地址|房产地址|地址|小区名称?|楼盘名称?|项目名称?|位于|坐落于?|在|出售|出租|急售|急租|转租|整租|合租|房源|个人房源|房东直租|房东直售|业主直租|业主直售|房东|业主|个人)[\s，,。、；;：:！!]*)+/, '');
                 const headMatch = headText.match(/^([\u4e00-\u9fa5A-Za-z·]{2,10})/);
                 if (headMatch) {
-                    let name = headMatch[1]
+                    let name = headMatch[1];
+                    // 在户型词处截断："爱盛家园东苑三室一厅" → "爱盛家园东苑"
+                    const layoutIdx = name.search(/[0-9一二三四五六七八九十两]+(?:室|房|厅|卫|厨)/);
+                    if (layoutIdx > 1) name = name.slice(0, layoutIdx);
+                    name = name
                         // 去掉结尾常见的描述词
-                        .replace(/(?:精装修?|简装修?|豪华装修|毛坯房?|中等装修|普通装修|新装修|老装修|南北通透|采光好|拎包入住|随时看房|看房方便|满五唯一|学区房|电梯房|两房|三房|四房|大平层|层高)$/, '')
+                        .replace(/(?:精装修?|简装修?|豪华装修|毛坯房?|中等装修|普通装修|新装修|老装修|南北通透|采光好|拎包入住|随时看房|看房方便|满五唯一|学区房|两房|三房|四房|大平层|层高)$/, '')
                         // 去掉结尾的楼栋指代词
                         .replace(/(?:幢|栋|号楼?|门牌号?)$/, '');
-                    if (name.length >= 2 && name.length <= 10) {
+                    if (name.length >= 2 && name.length <= 10 && !isLayoutOrDescText(name)) {
                         result.community = normalizeCommunityByList(name, optionsData.community);
                     }
                 }
@@ -5612,7 +5635,7 @@
             if (!result.community) {
                 const communityPatterns = [
                     // 优先匹配：某某公寓、某某公馆、某某苑、某某新村、某某花园等（小区名在前面）
-                    /([\u4e00-\u9fa5]{2,12}(?:公寓|公馆|苑|新村|花园|家园|新城|庭|府|里|庄|湾|岛|港|渡|居|舍|庐|堡|厦|筑))(?:\d+幢|\d+号楼?|·|\s|$)/,
+                    /([\u4e00-\u9fa5]{2,12}(?:公寓|公馆|苑|新村|花园|家园|新城|庭|府|里|庄|湾|岛|港|渡|居|舍|庐|堡|厦|筑|城))(?=[\s，,。、；;：:·]|\d+幢|\d+号楼?|[0-9一二三四五六七八九十两]+(?:室|房|厅|卫)|$)/,
                     // 匹配带"位于"、"在"的小区
                     /(?:位于|在|小区|楼盘)[\s:：]?([\u4e00-\u9fa5]{2,10}(?:小区|花园|家园|新城|公寓|公馆|大厦|苑|庄|里|庭|府|湾|岛|港|渡|居|舍|庐|堡|厦|筑))/,
                     // 匹配"XX·XX"格式的小区名
@@ -5634,6 +5657,11 @@
                         }
                     }
                 }
+            }
+
+            // 兜底过滤：户型/描述类词（如"三室一厅"）不能作为小区名称
+            if (result.community && isLayoutOrDescText(result.community)) {
+                result.community = '';
             }
 
             // ========== 装修类型识别（增强版）==========
