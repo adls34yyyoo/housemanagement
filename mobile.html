@@ -2685,6 +2685,11 @@
                         <span class="menu-text">AI训练</span>
                         <span class="menu-arrow">›</span>
                     </div>
+                    <div class="menu-item menu-item-large" onclick="configureAiEngine()">
+                        <span class="menu-icon">🧠</span>
+                        <span class="menu-text">AI识别引擎</span>
+                        <span class="menu-arrow">›</span>
+                    </div>
                     <div class="menu-item menu-item-large" onclick="openThemeModal()">
                         <span class="menu-icon">🎨</span>
                         <span class="menu-text">主题颜色</span>
@@ -5171,21 +5176,142 @@
             }
         }
 
-        // AI识别填充功能
-        function aiExtractFromInput() {
+        // AI识别填充功能（大模型优先，本地增强规则兜底）
+        async function aiExtractFromInput() {
             const inputText = document.getElementById('aiInput').value;
             if (!inputText.trim()) {
                 showToast('请输入房源信息');
                 return;
             }
 
-            const extractedData = analyzeTextWithEnhancedRules(inputText);
-            fillFormWithExtractedData(extractedData);
+            showToast('🤖 AI 正在识别...');
+            const { data, engine } = await analyzePropertyTextSmart(inputText);
+            fillFormWithExtractedData(data);
             
             // 将识别输入框的内容填入房源描述
             document.getElementById('propDesc').value = inputText;
             
-            showToast('✅ AI识别完成，已自动填充表单');
+            showToast(engine === 'llm' ? '✅ 大模型识别完成，已自动填充' : '✅ AI识别完成，已自动填充表单');
+        }
+
+        // ========== AI 识别引擎：大模型（OpenAI 兼容接口）优先，失败自动回退本地规则 ==========
+        let aiLlmConfig = null;
+
+        const AI_EXTRACT_SYSTEM_PROMPT = [
+            '你是房产中介系统的房源信息抽取引擎。请从用户给出的房源文本中抽取字段，只输出 JSON 对象，不要输出解释或多余文字。',
+            '字段说明：',
+            'community：小区名称。通常是文本开头 2-6 个汉字，遇到楼层/面积/户型数字即止；去掉"出售/出租/急售/急租/房东/业主/个人/整租/合租"等引导词。',
+            'doorNumber：门牌号，统一成"幢号-室号"格式（如 19-601）；只有房间号时保持原样。',
+            'layout：户型，格式"室-厅-卫"（如 3-2-1），缺省卫数用 1。',
+            'area：面积，只保留数字（平米）。',
+            'floor：楼层，如 6/12、低楼层、中楼层、高楼层。',
+            'price：价格，保留原始单位（售价写"300万"，租金写"4500元/月"）。',
+            'decoration：装修情况（精装修/简装修/毛坯房 等）。',
+            'region：区域/板块（如 浦东、张江）。',
+            'landlordName：房东或业主姓名。',
+            'landlordPhone：联系电话。',
+            'description：原文中的其他补充说明。',
+            '文本中不存在的字段一律返回空字符串 ""。'
+        ].join('\n');
+
+        // 读取云端大模型配置（app_config 的 ai_llm_config 项）
+        async function loadAiLlmConfig() {
+            try {
+                aiLlmConfig = await getRemoteConfig('ai_llm_config');
+            } catch (e) {
+                aiLlmConfig = null;
+            }
+            return aiLlmConfig;
+        }
+
+        // 调用大模型抽取房源字段，未配置或调用失败返回 null
+        async function callLlmExtract(text) {
+            if (!aiLlmConfig) await loadAiLlmConfig();
+            const cfg = aiLlmConfig;
+            if (!cfg || !cfg.enabled || !cfg.api_key || !cfg.base_url || !cfg.model) return null;
+
+            const url = String(cfg.base_url).replace(/\/+$/, '') + '/chat/completions';
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 20000);
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + cfg.api_key
+                    },
+                    body: JSON.stringify({
+                        model: cfg.model,
+                        temperature: 0.2,
+                        response_format: { type: 'json_object' },
+                        messages: [
+                            { role: 'system', content: AI_EXTRACT_SYSTEM_PROMPT },
+                            { role: 'user', content: text }
+                        ]
+                    }),
+                    signal: controller.signal
+                });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const json = await res.json();
+                let content = (json.choices && json.choices[0] && json.choices[0].message && json.choices[0].message.content) || '';
+                // 兼容模型输出 ```json ... ``` 包裹
+                content = content.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+                const parsed = JSON.parse(content);
+                return parsed && typeof parsed === 'object' ? parsed : null;
+            } finally {
+                clearTimeout(timer);
+            }
+        }
+
+        // 分析房源文本：大模型结果优先，缺失字段用本地规则补足
+        async function analyzePropertyTextSmart(text) {
+            const local = analyzeTextWithEnhancedRules(text);
+            try {
+                const llm = await callLlmExtract(text);
+                if (llm) {
+                    const merged = Object.assign({}, local);
+                    Object.keys(local).forEach(k => {
+                        const v = llm[k];
+                        if (v !== undefined && v !== null && String(v).trim() !== '') {
+                            merged[k] = String(v).trim();
+                        }
+                    });
+                    // 户型统一成 室-厅-卫
+                    if (merged.layout) {
+                        merged.layout = merged.layout
+                            .replace(/室/g, '-').replace(/厅/g, '-').replace(/卫.*$/, '')
+                            .replace(/[^0-9\-]/g, '');
+                    }
+                    return { data: merged, engine: 'llm' };
+                }
+            } catch (e) {
+                console.warn('大模型识别失败，回退本地规则:', e && e.message ? e.message : e);
+            }
+            return { data: local, engine: 'local' };
+        }
+
+        // 「我的」→ AI识别引擎：配置 OpenAI 兼容的大模型接口
+        async function configureAiEngine() {
+            const cfg = aiLlmConfig || await loadAiLlmConfig() || {};
+            const baseUrl = prompt('大模型接口地址（OpenAI 兼容，如 https://api.deepseek.com 或 https://dashscope.aliyuncs.com/compatible-mode/v1）', cfg.base_url || 'https://api.deepseek.com');
+            if (baseUrl === null) return;
+            const model = prompt('模型名称（如 deepseek-chat / qwen-plus / 火山方舟接入点ID）', cfg.model || 'deepseek-chat');
+            if (model === null) return;
+            const apiKey = prompt('API Key（保存在云端配置表，不写进代码）', cfg.api_key || '');
+            if (apiKey === null) return;
+            if (!apiKey.trim()) {
+                showToast('未填写 API Key，配置未变更');
+                return;
+            }
+            const enabled = confirm('启用大模型识别？\n确定 = 大模型优先（失败自动回退本地规则）\n取消 = 仅使用本地增强规则');
+            const next = { enabled: enabled, base_url: baseUrl.trim(), model: model.trim(), api_key: apiKey.trim() };
+            const saved = await saveRemoteConfig('ai_llm_config', next);
+            if (!saved) {
+                showToast('❌ 保存失败，请检查数据库连接');
+                return;
+            }
+            aiLlmConfig = next;
+            showToast(enabled ? '✅ 已启用大模型识别' : '✅ 已切换为本地识别');
         }
 
         // 客户AI识别填充功能
@@ -5450,6 +5576,25 @@
                 
                 if (!result.community && bestMatch) {
                     result.community = bestMatch;
+                }
+            }
+
+            // 规则3：文本开头通常就是小区名（一般 4-6 个汉字），遇到楼层/面积等数字即止
+            if (!result.community) {
+                // 先剥掉开头的标点与引导词（如"房东急售"），再取开头连续的汉字
+                const headText = text
+                    .replace(/^[\s，,。、；;：:【】\[\]（）()《》“”‘’"'!?！？…~～\-—_*#]+/, '')
+                    .replace(/^(?:(?:房屋地址|房产地址|地址|小区名称?|楼盘名称?|项目名称?|位于|坐落于?|在|出售|出租|急售|急租|转租|整租|合租|房源|个人房源|房东直租|房东直售|业主直租|业主直售|房东|业主|个人)[\s，,。、；;：:！!]*)+/, '');
+                const headMatch = headText.match(/^([\u4e00-\u9fa5A-Za-z·]{2,10})/);
+                if (headMatch) {
+                    let name = headMatch[1]
+                        // 去掉结尾常见的描述词
+                        .replace(/(?:精装修?|简装修?|豪华装修|毛坯房?|中等装修|普通装修|新装修|老装修|南北通透|采光好|拎包入住|随时看房|看房方便|满五唯一|学区房|电梯房|两房|三房|四房|大平层|层高)$/, '')
+                        // 去掉结尾的楼栋指代词
+                        .replace(/(?:幢|栋|号楼?|门牌号?)$/, '');
+                    if (name.length >= 2 && name.length <= 10) {
+                        result.community = normalizeCommunityByList(name, optionsData.community);
+                    }
                 }
             }
             
