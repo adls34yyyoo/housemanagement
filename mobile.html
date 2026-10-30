@@ -12788,8 +12788,8 @@
 
         // 重写switchPage函数，确保切换到转发页面时渲染房源列表并默认生成简洁文案
         const originalSwitchPage = switchPage;
-        switchPage = function(page) {
-            originalSwitchPage(page);
+        switchPage = function(page, propertyId, propType) {
+            originalSwitchPage(page, propertyId, propType);
             if (page === 'share') {
                 // 延迟渲染，确保页面已经切换
                 setTimeout(() => {
