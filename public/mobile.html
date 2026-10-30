@@ -2417,11 +2417,17 @@
                 </div>
                 <div class="nav-label">首页</div>
             </div>
-            <div class="nav-item" onclick="switchPage('properties')">
+            <div class="nav-item" onclick="switchPage('properties', null, 'sale')">
                 <div class="nav-icon">
-                    <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                    <svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
                 </div>
-                <div class="nav-label">房源</div>
+                <div class="nav-label">出售</div>
+            </div>
+            <div class="nav-item" onclick="switchPage('properties', null, 'rent')">
+                <div class="nav-icon">
+                    <svg viewBox="0 0 24 24"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
+                </div>
+                <div class="nav-label">出租</div>
             </div>
             <div class="nav-item" onclick="switchPage('agentProperties')">
                 <div class="nav-icon">
@@ -3430,6 +3436,7 @@
         // 全局数据存储
         let customers = [];
         let filteredProperties = [];
+        let ownFilterApplied = false; // 是否有生效的筛选/搜索条件（区分"筛选无结果"与"未筛选"）
         let filteredCustomers = [];
         let selectedProperties = [];
         let currentUser = '';
@@ -4162,7 +4169,7 @@
         }
 
         // 页面切换
-        function switchPage(page) {
+        function switchPage(page, propertyId, propType) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
 
@@ -4178,10 +4185,10 @@
             const navMap = {
             'home': 0,
             'properties': 1,
-            'agentProperties': 2,
-            'share': 3,
-            'customers': 4,
-            'profile': 5
+            'agentProperties': 3,
+            'share': 4,
+            'customers': 5,
+            'profile': 6
         };
 
             const targetPage = document.getElementById(pageMap[page]);
@@ -4189,18 +4196,34 @@
                 targetPage.classList.add('active');
             }
 
+            // 房源页有「出售」「出租」两个入口，按类型选中对应导航
+            let navIndex = navMap[page];
+            if (page === 'properties' && propType === 'rent') {
+                navIndex = 2;
+            }
+
             const navItems = document.querySelectorAll('.nav-item');
-            if (navItems[navMap[page]]) {
-                navItems[navMap[page]].classList.add('active');
+            if (navIndex !== undefined && navItems[navIndex]) {
+                navItems[navIndex].classList.add('active');
             }
 
             // 刷新数据
             if (page === 'home') {
                 updateStats();
             } else if (page === 'properties') {
-                // 切换到房源页面时，清空过滤条件，显示全部房源
-                filteredProperties = [];
-                renderPropertyList();
+                // 出售/出租入口预设类型筛选
+                const typeCheckboxes = document.querySelectorAll('.filter-section:first-child .filter-checkbox-group input[type="checkbox"]');
+                const typeValue = propType || '';
+                typeCheckboxes.forEach(cb => {
+                    cb.checked = !!typeValue && cb.value === typeValue;
+                });
+                if (typeValue) {
+                    applyFilters();
+                } else {
+                    filteredProperties = [];
+                    ownFilterApplied = false;
+                    renderPropertyList();
+                }
             } else if (page === 'agentProperties') {
                 // 切换到可代理房源页面时，选择待发布状态，默认显示待发布房源
                 const agentStatusCheckboxes = document.querySelectorAll('.agent-filter-status');
@@ -4632,11 +4655,10 @@
 
             let propsToRender = [];
             
-            // 如果有筛选结果，显示筛选结果
-            if (filteredProperties.length > 0) {
+            // 有筛选/搜索条件时显示筛选结果；否则显示全部自有房源
+            if (ownFilterApplied) {
                 propsToRender = filteredProperties;
             } else {
-                // 如果没有筛选条件，显示所有自有房源
                 propsToRender = properties;
             }
             
@@ -5194,6 +5216,7 @@
             const keyword = document.getElementById('propertySearch').value.toLowerCase();
             if (!keyword) {
                 filteredProperties = [];
+                ownFilterApplied = false;
                 renderPropertyList();
                 return;
             }
@@ -5204,6 +5227,7 @@
                 (p.layout && p.layout.toLowerCase().includes(keyword)) ||
                 (p.landlordName && p.landlordName.toLowerCase().includes(keyword))
             );
+            ownFilterApplied = true;
             renderPropertyList();
         }
 
@@ -5408,6 +5432,7 @@
         // 筛选可代理房源
         function filterPropertiesByAgent() {
             filteredProperties = properties.filter(p => p.isAgent);
+            ownFilterApplied = true;
             renderPropertyList();
             showToast('已筛选可代理房源');
         }
@@ -5416,8 +5441,10 @@
         function filterProperties(type) {
             if (type === 'all') {
                 filteredProperties = [];
+                ownFilterApplied = false;
             } else {
                 filteredProperties = properties.filter(p => p.type === type);
+                ownFilterApplied = true;
             }
             renderPropertyList();
         }
@@ -5425,6 +5452,7 @@
         // 根据状态筛选房源
         function filterPropertiesByStatus(status) {
             filteredProperties = properties.filter(p => p.status === status);
+            ownFilterApplied = true;
             renderPropertyList();
         }
 
@@ -5552,6 +5580,7 @@
             );
             
             filteredProperties = filteredProps;
+            ownFilterApplied = true;
             
             renderPropertyList();
         }
@@ -5570,6 +5599,7 @@
             document.getElementById('filterPrice').value = '';
             
             filteredProperties = [];
+            ownFilterApplied = false;
             renderPropertyList();
         }
 

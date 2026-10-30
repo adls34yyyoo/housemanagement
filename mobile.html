@@ -2665,6 +2665,11 @@
                         <span class="menu-text">个人备忘录</span>
                         <span class="menu-arrow">›</span>
                     </div>
+                    <div class="menu-item menu-item-large" onclick="switchPage('coopProperties')">
+                        <span class="menu-icon">🤝</span>
+                        <span class="menu-text">合作房源</span>
+                        <span class="menu-arrow">›</span>
+                    </div>
                     <div class="menu-item menu-item-large" onclick="syncLocalData()">
                         <span class="menu-icon">🔄</span>
                         <span class="menu-text">同步数据</span>
@@ -2884,23 +2889,23 @@
                 </div>
                 <div class="nav-label">首页</div>
             </div>
-            <div class="nav-item" onclick="switchPage('properties')">
+            <div class="nav-item" onclick="switchPage('properties', null, 'sale')">
                 <div class="nav-icon">
-                    <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                    <svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
                 </div>
-                <div class="nav-label">房源</div>
+                <div class="nav-label">出售</div>
+            </div>
+            <div class="nav-item" onclick="switchPage('properties', null, 'rent')">
+                <div class="nav-icon">
+                    <svg viewBox="0 0 24 24"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
+                </div>
+                <div class="nav-label">出租</div>
             </div>
             <div class="nav-item" onclick="switchPage('agentProperties')">
                 <div class="nav-icon">
                     <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
                 </div>
                 <div class="nav-label">代理</div>
-            </div>
-            <div class="nav-item" onclick="switchPage('coopProperties')">
-                <div class="nav-icon">
-                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-                </div>
-                <div class="nav-label">合作</div>
             </div>
             <div class="nav-item" onclick="switchPage('share')">
                 <div class="nav-icon">
@@ -4456,6 +4461,7 @@
         // 全局数据存储
         let customers = [];
         let filteredProperties = [];
+        let ownFilterApplied = false; // 是否有生效的筛选/搜索条件（区分"筛选无结果"与"未筛选"）
         let filteredCustomers = [];
         let selectedProperties = [];
         let currentUser = '';
@@ -5920,7 +5926,7 @@
         }
 
         // 页面切换
-        function switchPage(page, propertyId) {
+        function switchPage(page, propertyId, propType) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
 
@@ -5938,11 +5944,11 @@
             const navMap = {
             'home': 0,
             'properties': 1,
-            'agentProperties': 2,
-            'coopProperties': 3,
+            'agentProperties': 3,
             'share': 4,
             'customers': 5,
-            'profile': 6
+            'profile': 6,
+            'memo': 6
         };
 
             const targetPage = document.getElementById(pageMap[page]);
@@ -5950,16 +5956,26 @@
                 targetPage.classList.add('active');
             }
 
+            // 房源页有「出售」「出租」两个入口，按类型选中对应导航
+            let navIndex = navMap[page];
+            if (page === 'properties' && propType === 'rent') {
+                navIndex = 2;
+            }
+
             const navItems = document.querySelectorAll('.nav-item');
-            if (navItems[navMap[page]]) {
-                navItems[navMap[page]].classList.add('active');
+            if (navIndex !== undefined && navItems[navIndex]) {
+                navItems[navIndex].classList.add('active');
             }
 
             // 刷新数据
             if (page === 'home') {
                 updateStats();
             } else if (page === 'properties') {
-                // 切换到房源页面时，选择待发布状态，默认显示待发布房源
+                // 出售/出租入口预设类型筛选；状态默认只看待发布房源
+                const typeValue = propType || 'all';
+                document.querySelectorAll('.own-filter-type').forEach(cb => {
+                    cb.checked = cb.value === typeValue;
+                });
                 const statusCheckboxes = document.querySelectorAll('.own-filter-status');
                 statusCheckboxes.forEach(cb => {
                     cb.checked = cb.value === 'pending';
@@ -6823,11 +6839,10 @@
 
             let propsToRender = [];
             
-            // 如果有筛选结果，显示筛选结果（过滤掉代理房源）
-            if (filteredProperties.length > 0) {
+            // 有筛选/搜索条件时显示筛选结果（过滤掉代理房源）；否则默认只显示待发布房源
+            if (ownFilterApplied) {
                 propsToRender = filteredProperties.filter(p => !(p.isAgent || p.is_agent));
             } else {
-                // 如果没有筛选条件，默认只显示待发布房源
                 propsToRender = properties.filter(p => !(p.isAgent || p.is_agent) && p.status === 'pending');
             }
 
@@ -7756,6 +7771,7 @@
             const keyword = document.getElementById('propertySearch').value.trim();
             if (!keyword) {
                 filteredProperties = [];
+                ownFilterApplied = false;
                 renderPropertyList();
                 return;
             }
@@ -7788,6 +7804,7 @@
                 }
             });
             filteredProperties = uniqueProps;
+            ownFilterApplied = true;
             renderPropertyList();
         }
 
@@ -8170,6 +8187,7 @@
         // 筛选可代理房源
         function filterPropertiesByAgent() {
             filteredProperties = properties.filter(p => p.isAgent);
+            ownFilterApplied = true;
             renderPropertyList();
             showToast('已筛选可代理房源');
         }
@@ -8178,8 +8196,10 @@
         function filterProperties(type) {
             if (type === 'all') {
                 filteredProperties = [];
+                ownFilterApplied = false;
             } else {
                 filteredProperties = properties.filter(p => p.type === type);
+                ownFilterApplied = true;
             }
             renderPropertyList();
         }
@@ -8187,6 +8207,7 @@
         // 根据状态筛选房源
         function filterPropertiesByStatus(status) {
             filteredProperties = properties.filter(p => p.status === status);
+            ownFilterApplied = true;
             renderPropertyList();
         }
 
@@ -8463,6 +8484,7 @@
                 return matchType && matchStatus && matchDecoration && matchFloor && matchArea && matchPrice && matchPrimarySchool && matchMiddleSchool && matchRegion && matchCommunity && matchLayout;
             });
 
+            ownFilterApplied = true;
             renderPropertyList();
         }
 
@@ -8485,6 +8507,7 @@
             if (communityDisplay) communityDisplay.textContent = '全部';
             if (layoutSelect) layoutSelect.value = '';
             filteredProperties = [];
+            ownFilterApplied = false;
             renderPropertyList();
         }
 
