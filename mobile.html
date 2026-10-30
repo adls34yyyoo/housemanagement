@@ -2285,7 +2285,7 @@
         <div class="page" id="pageProperties">
             <div class="app-header">
                 <div class="header-content">
-                    <span class="header-title">自有房源</span>
+                    <span class="header-title" id="propertiesHeaderTitle">出售房源</span>
                     <span class="header-user" id="headerUser2">admin</span>
                 </div>
             </div>
@@ -2303,8 +2303,8 @@
             </div>
             
             <div class="action-buttons">
-                <div class="action-button" onclick="openPropertyModal('sale')"><span style="color: red;">🆕</span> 卖 房</div>
-                <div class="action-button" onclick="openPropertyModal('rent')"><span style="color: red;">🆕</span> 租 房</div>
+                <div class="action-button" id="ownSaleActionBtn" onclick="openPropertyModal('sale')"><span style="color: red;">🆕</span> 卖 房</div>
+                <div class="action-button" id="ownRentActionBtn" onclick="openPropertyModal('rent')"><span style="color: red;">🆕</span> 租 房</div>
                 <div class="action-button" onclick="toggleFilterMenu()">🔍 筛选</div>
             </div>
             
@@ -4462,6 +4462,7 @@
         let customers = [];
         let filteredProperties = [];
         let ownFilterApplied = false; // 是否有生效的筛选/搜索条件（区分"筛选无结果"与"未筛选"）
+        let propertyViewType = 'all'; // 房源页当前视图：sale=出售 / rent=出租 / all=全部
         let filteredCustomers = [];
         let selectedProperties = [];
         let currentUser = '';
@@ -5971,11 +5972,29 @@
             if (page === 'home') {
                 updateStats();
             } else if (page === 'properties') {
-                // 出售/出租入口预设类型筛选；状态默认只看待发布房源
-                const typeValue = propType || 'all';
+                // 出售/出租入口锁定视图类型，出租房源只在「出租」中显示
+                propertyViewType = propType || 'all';
+
+                const titleEl = document.getElementById('propertiesHeaderTitle');
+                if (titleEl) {
+                    titleEl.textContent = propertyViewType === 'rent' ? '出租房源'
+                        : (propertyViewType === 'sale' ? '出售房源' : '全部房源');
+                }
+
+                // 与当前视图无关的新增按钮隐藏
+                const saleBtn = document.getElementById('ownSaleActionBtn');
+                const rentBtn = document.getElementById('ownRentActionBtn');
+                if (saleBtn) saleBtn.style.display = propertyViewType === 'rent' ? 'none' : '';
+                if (rentBtn) rentBtn.style.display = propertyViewType === 'sale' ? 'none' : '';
+
+                // 类型筛选仅「全部」视图可用，出售/出租视图由入口锁定
+                const typeSection = document.querySelector('#filterMenu .filter-body > .filter-section:first-child');
+                if (typeSection) typeSection.style.display = propertyViewType === 'all' ? '' : 'none';
                 document.querySelectorAll('.own-filter-type').forEach(cb => {
-                    cb.checked = cb.value === typeValue;
+                    cb.checked = propertyViewType === 'all' ? cb.value === 'all' : false;
                 });
+
+                // 状态默认只看待发布房源
                 const statusCheckboxes = document.querySelectorAll('.own-filter-status');
                 statusCheckboxes.forEach(cb => {
                     cb.checked = cb.value === 'pending';
@@ -6843,7 +6862,8 @@
             if (ownFilterApplied) {
                 propsToRender = filteredProperties.filter(p => !(p.isAgent || p.is_agent));
             } else {
-                propsToRender = properties.filter(p => !(p.isAgent || p.is_agent) && p.status === 'pending');
+                propsToRender = properties.filter(p => !(p.isAgent || p.is_agent) && p.status === 'pending'
+                    && (propertyViewType === 'all' || p.type === propertyViewType));
             }
 
             if (propsToRender.length === 0) {
@@ -7780,12 +7800,13 @@
             saveSearchHistory('propertySearch', keyword);
 
             const lowerKeyword = keyword.toLowerCase();
-            // 同时搜索自有房源和代理房源
+            // 同时搜索自有房源和代理房源；出售/出租视图只搜对应类型
             const filteredOwnProps = properties.filter(p =>
-                (p.community && p.community.toLowerCase().includes(lowerKeyword)) ||
+                (propertyViewType === 'all' || p.type === propertyViewType) &&
+                ((p.community && p.community.toLowerCase().includes(lowerKeyword)) ||
                 (p.region && p.region.toLowerCase().includes(lowerKeyword)) ||
                 (p.layout && p.layout.toLowerCase().includes(lowerKeyword)) ||
-                (p.landlordName && p.landlordName.toLowerCase().includes(lowerKeyword))
+                (p.landlordName && p.landlordName.toLowerCase().includes(lowerKeyword)))
             );
             const filteredAgentProps = agentProperties.filter(p =>
                 (p.community && p.community.toLowerCase().includes(lowerKeyword)) ||
@@ -8437,6 +8458,9 @@
             filteredProperties = properties.filter(p => {
                 // 排除代理房源
                 if (p.isAgent || p.is_agent) return false;
+
+                // 出售/出租视图只看对应类型的房源
+                if (propertyViewType !== 'all' && p.type !== propertyViewType) return false;
                 
                 const matchType = selectedTypes.length === 0 || selectedTypes.includes('all') || selectedTypes.includes(p.type);
                 const matchStatus = selectedStatuses.length === 0 || selectedStatuses.includes('all') || selectedStatuses.includes(p.status);
