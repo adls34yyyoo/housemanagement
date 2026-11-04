@@ -944,6 +944,10 @@
                     <input type="text" class="form-input" id="propCommunity" placeholder="请输入小区名称（可自由添加）">
                 </div>
                 <div class="form-group">
+                    <label class="form-label">门牌号</label>
+                    <input type="text" class="form-input" id="propDoorNumber" placeholder="如：19-601">
+                </div>
+                <div class="form-group">
                     <label class="form-label">装修</label>
                     <input type="text" class="form-input" id="propDecoration" placeholder="请输入装修情况（如：精装修、简装等）">
                 </div>
@@ -1262,7 +1266,7 @@
                     <div class="property-image">${cardImageText}</div>
                     <div class="property-info">
                         <div class="property-title">
-                            ${property.community || '房源'}
+                            ${property.community || '房源'}${property.doorNumber ? '<span style="font-size:13px;color:#999;font-weight:400;margin-left:6px;">🏠 ' + property.doorNumber + '</span>' : ''}
                             <span class="property-status ${statusClass}">${propertyTypeText}</span>
                         </div>
                         ${property.layout ? `<div class="property-address">户型: ${property.layout}</div>` : ''}
@@ -2010,6 +2014,7 @@
         function clearPropertyForm() {
             document.getElementById('aiInput').value = '';
             document.getElementById('propCommunity').value = '';
+            document.getElementById('propDoorNumber').value = '';
             document.getElementById('propDecoration').value = '';
             document.getElementById('propPrice').value = '';
             document.getElementById('propLayout').value = '';
@@ -2035,6 +2040,7 @@
             const property = {
                 id: Date.now(),
                 community: document.getElementById('propCommunity').value,
+                doorNumber: document.getElementById('propDoorNumber').value,
                 decoration: document.getElementById('propDecoration').value,
                 price: parseInt(document.getElementById('propPrice').value) || 0,
                 layout: document.getElementById('propLayout').value,
