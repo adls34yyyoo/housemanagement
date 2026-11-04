@@ -1266,7 +1266,7 @@
                     <div class="property-image">${cardImageText}</div>
                     <div class="property-info">
                         <div class="property-title">
-                            ${property.community || '房源'}${property.doorNumber ? '<span style="font-size:13px;color:#999;font-weight:400;margin-left:6px;">🏠 ' + property.doorNumber + '</span>' : ''}
+                            ${property.community || '房源'}${(property.door_number || property.doorNumber) ? '<span style="font-size:13px;color:#999;font-weight:400;margin-left:6px;">🏠 ' + (property.door_number || property.doorNumber) + '</span>' : ''}
                             <span class="property-status ${statusClass}">${propertyTypeText}</span>
                         </div>
                         ${property.layout ? `<div class="property-address">户型: ${property.layout}</div>` : ''}
@@ -2040,7 +2040,7 @@
             const property = {
                 id: Date.now(),
                 community: document.getElementById('propCommunity').value,
-                doorNumber: document.getElementById('propDoorNumber').value,
+                door_number: document.getElementById('propDoorNumber').value,
                 decoration: document.getElementById('propDecoration').value,
                 price: parseInt(document.getElementById('propPrice').value) || 0,
                 layout: document.getElementById('propLayout').value,
