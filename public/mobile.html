@@ -4509,7 +4509,7 @@
                         </div>
                         <div style="flex: 1; min-width: 0;" onclick="openPropertyDetailModal('${property.id}')">
                             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-                                <span style="font-weight: 500; color: var(--text);">${property.community || '未知小区'}</span>
+                                <span style="font-weight: 500; color: var(--text);">${property.community || '未知小区'}${property.doorNumber ? '<span style="font-size: 13px; color: var(--text-secondary); font-weight: 400; margin-left: 6px;">🏠 ' + property.doorNumber + '</span>' : ''}</span>
                                 <span class="property-status ${statusClass}" style="font-size: 12px;">${statusText}</span>
                             </div>
                             <div style="font-size: 14px; color: var(--text-secondary); display: flex; justify-content: space-between; align-items: flex-end;">
@@ -5072,7 +5072,7 @@
                         </div>
                         <div style="flex: 1; min-width: 0;" onclick="openPropertyDetailModal('${property.id}')">
                             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-                                <span style="font-weight: 500; color: var(--text);">${property.community || '未知小区'}</span>
+                                <span style="font-weight: 500; color: var(--text);">${property.community || '未知小区'}${property.doorNumber ? '<span style="font-size: 13px; color: var(--text-secondary); font-weight: 400; margin-left: 6px;">🏠 ' + property.doorNumber + '</span>' : ''}</span>
                             </div>
                             <div style="font-size: 14px; color: var(--text-secondary); display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 4px;">
                                 <span>${property.layout || ''} ${property.area ? property.area + '平' : ''} ${property.floor ? property.floor + '楼' : ''} ${property.decoration || ''}</span>
